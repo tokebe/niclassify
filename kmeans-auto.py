@@ -41,6 +41,32 @@ def create_kmeans(x, k, weights=None):
     return kmeans.fit_predict(x, sample_weight=weights)
 
 
+def get_predict(cluster, metadata_known):
+    matches = {}
+    for index, row in metadata_known.iterrows():
+        if row["Status"] not in matches.keys():
+            matches[row["Status"]] = [0] * \
+                metadata_known["Status"].nunique()
+        matches[row["Status"]][cluster[index]] += 1
+    # print(matches)
+    for key, val in matches.copy().items():
+        matches[key] = [x / sum(val) for x in val]
+    # print(matches)
+    m = 0  # the highest proportion of selected values in either cluster
+    lab = ""  # label with the highest proportion of selected values in either cluster
+    for key, val in matches.items():
+        m_v = max(val)
+        if m_v > m:
+            m = m_v
+            lab = key
+    n = [x for x in matches.keys() if x != lab][0]  # other label
+    l_selector = 0 if matches[l][0] > matches[lab][1] else 1
+
+    predict = [lab if x == l_selector else n for x in cluster]
+
+    return predict
+
+
 def powerset(iterable):
     # courtesy of itertools documentation
     # modified not to return empty set
@@ -88,9 +114,6 @@ def kmeans_graph(df, name, weights=None):
     out.savefig("plots/{}.png".format(name))
 
 
-# TODO complete basic feature selection
-# TODO include cross-validation mean ba
-# TODO generalize to work with any number of status levels
 def get_best_features_ba(data_known, metadata_known):
     best_ba = []
     bestba = 0
@@ -100,7 +123,14 @@ def get_best_features_ba(data_known, metadata_known):
             k=metadata_known["Status"].nunique(),
             weights=1 / metadata_known["N"])
 
-        matches = {}
+        predict = get_predict(cluster, metadata_known)
+
+        ba = metrics.balanced_accuracy_score(metadata_known["Status"], predict)
+        if ba > bestba:
+            bestba = ba
+            best_ba = list(s)
+
+    return best_ba
 
 
 # TODO redo argument system to allow designation of column for class prediciton
@@ -134,6 +164,8 @@ def main(args):
     # split into known and unknown
     data_known = data_norm[metadata["Status"].notnull()]
     metadata_known = metadata[metadata["Status"].notnull()]
+
+    best_features = get_best_features_ba(data_known, metadata_known)
 
 
 if __name__ == "__main__":
