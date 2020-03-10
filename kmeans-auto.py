@@ -1,4 +1,7 @@
+import os
 import sys
+import argparse
+import re
 
 import pandas as pd
 import matplotlib as plt
@@ -14,15 +17,12 @@ from sklearn import metrics
 
 from itertools import chain, combinations
 
+
 sns.set()
 
 # ----- Extra Configuration ----
 
 N_TRIALS = 10  # number of trials for mean BA calculation
-
-
-def get_data(filename):
-    return pd.read_csv(filename)
 
 
 def create_kmeans(x, k, weights=None):
@@ -108,7 +108,7 @@ def powerset(iterable):
 def kmeans_graph(data, metadata, filename, c_label="Status", weights=None):
 
     cluster = create_kmeans(data, 2, weights=weights)  # make cluster
-    predict = get_predict(cluster, metadata)  # get predictions
+    predict = get_predict(cluster, metadata, c_label)  # get predictions
 
     df = pd.concat([data, predict], axis=1)
 
@@ -117,7 +117,7 @@ def kmeans_graph(data, metadata, filename, c_label="Status", weights=None):
         vars=df.columns[0:data.shape[1]],
         hue="predict"
     )
-    out.savefig("plots/{}.png".format(filename))
+    out.savefig("output/{}.png".format(filename))
 
 
 def get_best_features_ba(data_known, metadata_known, c_label="Status"):
@@ -134,13 +134,13 @@ def get_best_features_ba(data_known, metadata_known, c_label="Status"):
             # make cluster
             cluster = create_kmeans(
                 data_known[list(s)],
-                k=metadata_known["Status"].nunique(),
+                k=metadata_known[c_label].nunique(),
                 weights=1 / metadata_known["N"])
             # get predictions from cluster assignments
-            predict = get_predict(cluster, metadata_known)
+            predict = get_predict(cluster, metadata_known, c_label)
             # add balanced accuracy to list
             ba.append(metrics.balanced_accuracy_score(
-                metadata_known["Status"], predict))
+                metadata_known[c_label], predict))
 
         # update best features if new mean ba is better
         if np.mean(ba) > bestba:
@@ -168,26 +168,76 @@ def get_best_features_ba(data_known, metadata_known, c_label="Status"):
     return best_ba  # return list of best features
 
 
-# TODO redo argument system to allow designation of column for class prediciton
-# TODO redo argument system to fall in line with most runtime-argument design
-def main(args):
-    """Generate a new datasheet with predictions.
+def getargs(parser):
+    # setup arguments
 
-    runtime args:
-        python kmeans-auto.py a b c
-        a: data filename
-        b: first column number of features (1-indexed)
-        c: output filename (optional)
+    parser.add_argument(
+        "data",
+        help="path/filename of data to be imported for classification")
+    parser.add_argument(
+        "dcol",
+        help="column number range of clustering data in format #:#")
+    parser.add_argument(
+        "clabel",
+        help="column name for classification label to be predicted")
+    parser.add_argument(
+        "-e",
+        "--excel",
+        nargs='?',
+        default=1,
+        help="sheet number (1-indexed) or name, if importing from excel.\
+        Defaults to first sheet if not provided.")
+    parser.add_argument(
+        "-o",
+        "--out",
+        nargs='?',
+        default="output/output.csv",
+        help="path/filename of output file, defaults to output/output.csv. \
+            Only export to csv is supported.")
+    parser.add_argument(
+        "-w",
+        "--weights",
+        nargs='*',
+        help="column name(s) of variables to use in weighting clustering")
 
-    Args:
-        args (str): list of runtime arguments
+    # TODO implement handling for weights argument
 
-    """
-    # get data
-    raw_data = get_data(args[0])
-    col = int(args[1]) - 1
-    metadata = raw_data.iloc[:, :col]
-    data = raw_data.iloc[:, col:]
+    # parse and get arguments
+    return parser.parse_args()
+
+
+def main():
+
+    if not os.path.exists("output"):
+        os.makedirs("output")
+
+    # get args
+    parser = argparse.ArgumentParser()
+    args = getargs(parser)
+
+    # get raw data
+    if ".xlsx" in args.data[-5:]:
+        if args.excel is not None:
+            if args.excel.isdigit():
+                raw_data = pd.read_csv(
+                    args.data, sheet_name=int(args.excel) - 1)
+            else:
+                raw_data = pd.read_csv(args.data, sheet_name=args.excel)
+    elif ".csv" in args.data[-4:]:
+        raw_data = pd.read_csv(args.data)
+    else:
+        parser.error(
+            "data file type is unsupported, or file extension not included")
+
+    # get feature data column range
+    if not re.match("[0-9]:[0-9]", args.dcol):
+        parser.error("data column selection range format invalid (see -h).")
+    else:
+        dcol = args.dcol.split(":")
+
+    # split data into feature data and metadata
+    data = raw_data.iloc[:, dcol[0]:dcol[1]]
+    metadata = raw_data.drop(raw_data.columns[dcol[0]:dcol[1]], axis=1)
 
     # debug
     # print(data.head())
@@ -207,8 +257,8 @@ def main(args):
 
     # split into known and unknown
     print("splitting data...")
-    data_known = data_norm[metadata["Status"].notnull()]
-    metadata_known = metadata[metadata["Status"].notnull()]
+    data_known = data_norm[metadata[args.clabel].notnull()]
+    metadata_known = metadata[metadata[args.clabel].notnull()]
     # reset indices
     data_known.reset_index(drop=True, inplace=True)
     metadata_known.reset_index(drop=True, inplace=True)
@@ -219,7 +269,8 @@ def main(args):
 
     # get best features for known data. Potentially subject to overfitting.
     print("obtaining best features...")
-    best_features = get_best_features_ba(data_known, metadata_known)
+    best_features = get_best_features_ba(
+        data_known, metadata_known, args.clabel)
 
     # create graph to show training clusters
     print("generating training graph...")
@@ -227,6 +278,7 @@ def main(args):
         data_known[best_features],
         metadata_known,
         "md_cluster_training",
+        args.clabel,
         weights=1/metadata_known["N"])
 
     # TODO add cross validation:
@@ -237,16 +289,16 @@ def main(args):
     print("classifying all data...")
     cluster = create_kmeans(
         data_norm[best_features],
-        k=metadata["Status"].nunique(),
+        k=metadata[args.clabel].nunique(),
         weights=1 / metadata["N"])
-    predict = get_predict(cluster, metadata)
+    predict = get_predict(cluster, metadata, args.clabel)
 
     print("saving new output...")
     df = pd.concat([metadata, predict, data], axis=1)
     try:
-        df.to_csv("output/{}".format(args[2]))
-    except KeyError:
-        df.to_csv("output/output.csv".format(args[2]))
+        df.to_csv(args.out)
+    except (KeyError, FileNotFoundError):
+        parser.error("intended output folder does not exist!")
     # change data in frame to be useable for graph
 
     del df
@@ -258,10 +310,10 @@ def main(args):
     print("generating final graph...")
     out = sns.pairplot(
         data=df,
-        vars=df.columns[0:data.shape[1]],
+        vars=df.columns[0:data_norm[best_features].shape[1]],
         hue="predict"
     )
-    out.savefig("plots/{}.png".format("md_cluster_inc_unknown"))
+    out.savefig("output/{}.png".format("md_cluster_inc_unknown"))
 
     print("...done!")
 
