@@ -157,10 +157,15 @@ def get_best_features_ba(data_known, metadata_known, c_label="Status",
     bestba = 0
     nerr = 0
     ierr = 0
-    fset = 1
+    pset = powerset(data_known.columns)  # all possible feature combos
+    fset_len = len(set(pset))  # len of power set; n combos
+    fset = 1  # counter for output
     # look at every possible combination
     for s in powerset(data_known.columns):
-        print("  test set {}".format(fset), end='\r')
+        if fset < fset_len:
+            print("  test set {} / {}".format(fset, fset_len), end='\r')
+        else:
+            print("  test set {} / {}".format(fset, fset_len))
         fset += 1
         # run each set and get the mean ba for 10 runs
         ba = []
@@ -246,12 +251,12 @@ def getargs(parser):
 
 def main():
 
-    if not os.path.exists("output"):
-        os.makedirs("output")
-
     # get args
     parser = argparse.ArgumentParser()
     args = getargs(parser)
+
+    if not os.path.exists("output"):
+        os.makedirs("output")
 
     # get raw data
     if ".xlsx" in args.data[-5:]:
@@ -373,4 +378,6 @@ if __name__ == "__main__":
     main()
     # ----- Things I would like to add for completeness: -----
     # TODO better error checking (are colname arguments valid? etc)
-    # tODO increased and clear comments and documentation
+    # TODO increased and clear comments and documentation
+    # TODO save text file with best features list & metrics
+    # TODO add argument to take list or filename with best features list
