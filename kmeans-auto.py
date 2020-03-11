@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 import re
+import xlrd
 
 import pandas as pd
 import matplotlib as plt
@@ -14,6 +15,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn import metrics
+from sklearn.model_selection import KFold
 
 from itertools import chain, combinations
 
@@ -22,7 +24,7 @@ sns.set()
 
 # ----- Extra Configuration ----
 
-N_TRIALS = 10  # number of trials for mean BA calculation
+N_TRIALS = 10  # number of folds for KFold x-val
 
 
 def create_kmeans(x, k, weights=None):
@@ -120,7 +122,8 @@ def kmeans_graph(data, metadata, filename, c_label="Status", weights=None):
     out.savefig("output/{}.png".format(filename))
 
 
-def get_best_features_ba(data_known, metadata_known, c_label="Status"):
+def get_best_features_ba(data_known, metadata_known, c_label="Status",
+                         w_label="N"):
     # TODO add support for argument weight features weight combine method
     best_ba = []
     bestba = 0
@@ -130,12 +133,12 @@ def get_best_features_ba(data_known, metadata_known, c_label="Status"):
     for s in powerset(data_known.columns):
         # run each set and get the mean ba for 10 runs
         ba = []
-        for i in range(10):
+        for i in range(N_TRIALS):
             # make cluster
             cluster = create_kmeans(
                 data_known[list(s)],
                 k=metadata_known[c_label].nunique(),
-                weights=1 / metadata_known["N"])
+                weights=1 / metadata_known[w_label])
             # get predictions from cluster assignments
             predict = get_predict(cluster, metadata_known, c_label)
             # add balanced accuracy to list
@@ -196,11 +199,15 @@ def getargs(parser):
             Only export to csv is supported.")
     parser.add_argument(
         "-w",
-        "--weights",
+        "--weight",
+        nargs='?',
+        default="N",
+        help="column name to be used for weighted clustering, defaults to N")
+    parser.add_argument(
+        "-n",
+        "--nanval",
         nargs='*',
-        help="column name(s) of variables to use in weighting clustering")
-
-    # TODO implement handling for weights argument
+        help="additional values to be counted as NA/NaN")
 
     # parse and get arguments
     return parser.parse_args()
@@ -215,25 +222,57 @@ def main():
     parser = argparse.ArgumentParser()
     args = getargs(parser)
 
+    nans = [
+        "nan",
+        "NA",
+        '',
+        ' # N/A',
+        '#N/A N/A',
+        '#NA',
+        '-1.#IND',
+        '-1.#QNAN',
+        '-NaN',
+        '-nan',
+        '1.#IND',
+        '1.#QNAN',
+        '<NA>',
+        'N/A',
+        'NA',
+        'NULL',
+        'NaN',
+        'n/a',
+        'nan',
+        'null',
+        '#DIV/0!'
+    ]
+
     # get raw data
     if ".xlsx" in args.data[-5:]:
         if args.excel is not None:
             if args.excel.isdigit():
-                raw_data = pd.read_csv(
-                    args.data, sheet_name=int(args.excel) - 1)
+                raw_data = pd.read_excel(
+                    args.data,
+                    sheet_name=int(args.excel) - 1,
+                    na_values=nans)
             else:
-                raw_data = pd.read_csv(args.data, sheet_name=args.excel)
+                raw_data = pd.read_excel(
+                    args.data,
+                    sheet_name=args.excel,
+                    na_values=nans)
     elif ".csv" in args.data[-4:]:
-        raw_data = pd.read_csv(args.data)
+        raw_data = pd.read_csv(args.data, na_values=nans)
     else:
         parser.error(
             "data file type is unsupported, or file extension not included")
+
+    print(raw_data)
 
     # get feature data column range
     if not re.match("[0-9]:[0-9]", args.dcol):
         parser.error("data column selection range format invalid (see -h).")
     else:
         dcol = args.dcol.split(":")
+        dcol = [int(x) - 1 for x in dcol]
 
     # split data into feature data and metadata
     data = raw_data.iloc[:, dcol[0]:dcol[1]]
@@ -263,6 +302,8 @@ def main():
     data_known.reset_index(drop=True, inplace=True)
     metadata_known.reset_index(drop=True, inplace=True)
 
+    print(data_known)
+
     # debug
     # print(data_known)
     # print(metadata_known)
@@ -270,7 +311,7 @@ def main():
     # get best features for known data. Potentially subject to overfitting.
     print("obtaining best features...")
     best_features = get_best_features_ba(
-        data_known, metadata_known, args.clabel)
+        data_known, metadata_known, args.clabel, args.weight)
 
     # create graph to show training clusters
     print("generating training graph...")
@@ -290,7 +331,7 @@ def main():
     cluster = create_kmeans(
         data_norm[best_features],
         k=metadata[args.clabel].nunique(),
-        weights=1 / metadata["N"])
+        weights=1 / metadata[args.weight])
     predict = get_predict(cluster, metadata, args.clabel)
 
     print("saving new output...")
@@ -319,4 +360,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()
+    # ----- Things I would like to add for completeness: -----
+    # TODO better error checking (are colname arguments valid? etc)
