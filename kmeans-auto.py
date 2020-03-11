@@ -1,23 +1,27 @@
-import os
-import sys
-import argparse
-import re
-import xlrd
+try:
+    import os
+    # import sys
+    import argparse
+    import re
+    import xlrd
 
-import pandas as pd
-import matplotlib as plt
-import seaborn as sns
-import numpy as np
+    import pandas as pd
+    import matplotlib as plt
+    import seaborn as sns
+    import numpy as np
 
-from sklearn import preprocessing
-from sklearn.cluster import KMeans
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.impute import SimpleImputer
-from sklearn import metrics
-from sklearn.model_selection import KFold
+    from sklearn import preprocessing
+    from sklearn.cluster import KMeans
+    # from sklearn.pipeline import make_pipeline
+    # from sklearn.preprocessing import StandardScaler
+    from sklearn.impute import SimpleImputer
+    from sklearn import metrics
+    # from sklearn.model_selection import KFold
 
-from itertools import chain, combinations
+    from itertools import chain, combinations
+except ModuleNotFoundError:
+    print("Missing required modules. Install requirements by running")
+    print("'python -m pip install -r requirements.txt'")
 
 
 sns.set()
@@ -25,6 +29,30 @@ sns.set()
 # ----- Extra Configuration ----
 
 N_TRIALS = 10  # number of folds for KFold x-val
+
+NANS = [
+    "nan",
+    "NA",
+    '',
+    ' # N/A',
+    '#N/A N/A',
+    '#NA',
+    '-1.#IND',
+    '-1.#QNAN',
+    '-NaN',
+    '-nan',
+    '1.#IND',
+    '1.#QNAN',
+    '<NA>',
+    'N/A',
+    'NA',
+    'NULL',
+    'NaN',
+    'n/a',
+    'nan',
+    'null',
+    '#DIV/0!'
+]
 
 
 def create_kmeans(x, k, weights=None):
@@ -47,14 +75,14 @@ def create_kmeans(x, k, weights=None):
     return kmeans.fit_predict(x, sample_weight=weights)
 
 
-def get_predict(cluster, metadata_known, c_labels="Status"):
+def get_predict(cluster, metadata_known, c_label="Status"):
     """Get the predicted labels from cluster assignments and known labels.
 
     Args:
         cluster (Series): A series of cluster assignments.
         metadata_known (DataFrame): Metadata (including class labels) of known
             data.
-        c_labels (str, optional): Name of column containing class labels.
+        c_label (str, optional): Name of column containing class labels.
             Defaults to "Status".
 
     Returns:
@@ -65,9 +93,9 @@ def get_predict(cluster, metadata_known, c_labels="Status"):
     # loop over metadata rows
     # add number of matches to either cluster 0 or 1 per status label
     for index, row in metadata_known.iterrows():
-        if row[c_labels] not in matches.keys():
-            matches[row[c_labels]] = [0] * metadata_known[c_labels].nunique()
-        matches[row[c_labels]][cluster[index]] += 1
+        if row[c_label] not in matches.keys():
+            matches[row[c_label]] = [0] * metadata_known[c_label].nunique()
+        matches[row[c_label]][cluster[index]] += 1
 
     # convert frequencies to proportions
     for key, val in matches.copy().items():
@@ -129,8 +157,11 @@ def get_best_features_ba(data_known, metadata_known, c_label="Status",
     bestba = 0
     nerr = 0
     ierr = 0
+    fset = 1
     # look at every possible combination
     for s in powerset(data_known.columns):
+        print("  test set {}".format(fset), end='\r')
+        fset += 1
         # run each set and get the mean ba for 10 runs
         ba = []
         for i in range(N_TRIALS):
@@ -222,30 +253,6 @@ def main():
     parser = argparse.ArgumentParser()
     args = getargs(parser)
 
-    nans = [
-        "nan",
-        "NA",
-        '',
-        ' # N/A',
-        '#N/A N/A',
-        '#NA',
-        '-1.#IND',
-        '-1.#QNAN',
-        '-NaN',
-        '-nan',
-        '1.#IND',
-        '1.#QNAN',
-        '<NA>',
-        'N/A',
-        'NA',
-        'NULL',
-        'NaN',
-        'n/a',
-        'nan',
-        'null',
-        '#DIV/0!'
-    ]
-
     # get raw data
     if ".xlsx" in args.data[-5:]:
         if args.excel is not None:
@@ -253,19 +260,19 @@ def main():
                 raw_data = pd.read_excel(
                     args.data,
                     sheet_name=int(args.excel) - 1,
-                    na_values=nans)
+                    na_values=NANS)
             else:
                 raw_data = pd.read_excel(
                     args.data,
                     sheet_name=args.excel,
-                    na_values=nans)
+                    na_values=NANS)
     elif ".csv" in args.data[-4:]:
-        raw_data = pd.read_csv(args.data, na_values=nans)
+        raw_data = pd.read_csv(args.data, na_values=NANS)
     else:
         parser.error(
             "data file type is unsupported, or file extension not included")
 
-    print(raw_data)
+    # print(raw_data)
 
     # get feature data column range
     if not re.match("[0-9]:[0-9]", args.dcol):
@@ -274,9 +281,16 @@ def main():
         dcol = args.dcol.split(":")
         dcol = [int(x) - 1 for x in dcol]
 
+    # drop rows with na count. migh need to change for more general program.
+    raw_data = raw_data[raw_data[args.weight].notnull()]
+    raw_data.reset_index(drop=True, inplace=True)
+
     # split data into feature data and metadata
     data = raw_data.iloc[:, dcol[0]:dcol[1]]
     metadata = raw_data.drop(raw_data.columns[dcol[0]:dcol[1]], axis=1)
+
+    # convert class labels to lower
+    metadata.loc[:, args.clabel] = metadata[args.clabel].str.lower()
 
     # debug
     # print(data.head())
@@ -302,7 +316,7 @@ def main():
     data_known.reset_index(drop=True, inplace=True)
     metadata_known.reset_index(drop=True, inplace=True)
 
-    print(data_known)
+    # print(data_known)
 
     # debug
     # print(data_known)
@@ -321,10 +335,6 @@ def main():
         "md_cluster_training",
         args.clabel,
         weights=1/metadata_known["N"])
-
-    # TODO add cross validation:
-    # find best feature using training set, then test ba on test set
-    # repeat for 10 folds
 
     # create kmeans on all data using selected features
     print("classifying all data...")
@@ -363,3 +373,4 @@ if __name__ == "__main__":
     main()
     # ----- Things I would like to add for completeness: -----
     # TODO better error checking (are colname arguments valid? etc)
+    # tODO increased and clear comments and documentation
