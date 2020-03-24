@@ -407,3 +407,4 @@ if __name__ == "__main__":
     # TODO save text file with best features list & metrics
     # TODO add argument to take list or filename with best features list
     # TODO add argument for label to minimize error for, instead of max'ing BA
+    # TODO add logging of printed output
