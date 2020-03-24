@@ -51,7 +51,9 @@ NANS = [
     'n/a',
     'nan',
     'null',
-    '#DIV/0!'
+    '#DIV/0!',
+    "unknown",
+    "Unknown"
 ]
 
 
@@ -93,9 +95,17 @@ def get_predict(cluster, metadata_known, c_label="Status"):
     # loop over metadata rows
     # add number of matches to either cluster 0 or 1 per status label
     for index, row in metadata_known.iterrows():
-        if row[c_label] not in matches.keys():
-            matches[row[c_label]] = [0] * metadata_known[c_label].nunique()
-        matches[row[c_label]][cluster[index]] += 1
+
+        # avoid registering nan as a match label
+        if ((type(row[c_label]) == str)
+                and (row[c_label] not in matches.keys())):
+            matches[row[c_label]] = [0, 0]
+        try:  # increment number of matches to cluster label
+            matches[row[c_label]][cluster[index]] += 1
+        except KeyError:  # catches nan values
+            continue
+
+    # print(matches)
 
     # convert frequencies to proportions
     for key, val in matches.copy().items():
@@ -265,14 +275,16 @@ def main():
                 raw_data = pd.read_excel(
                     args.data,
                     sheet_name=int(args.excel) - 1,
-                    na_values=NANS)
+                    na_values=NANS,
+                    keep_default_na=True)
             else:
                 raw_data = pd.read_excel(
                     args.data,
                     sheet_name=args.excel,
-                    na_values=NANS)
+                    na_values=NANS,
+                    keep_default_na=True)
     elif ".csv" in args.data[-4:]:
-        raw_data = pd.read_csv(args.data, na_values=NANS)
+        raw_data = pd.read_csv(args.data, na_values=NANS, keep_default_na=True)
     else:
         parser.error(
             "data file type is unsupported, or file extension not included")
@@ -290,6 +302,12 @@ def main():
     raw_data = raw_data[raw_data[args.weight].notnull()]
     raw_data.reset_index(drop=True, inplace=True)
 
+    # replace unknown values with nan
+    raw_data.replace({
+        "unknown": np.nan,
+        "Unknown": np.nan,
+        "0": np.nan})
+
     # split data into feature data and metadata
     data = raw_data.iloc[:, dcol[0]:dcol[1]]
     metadata = raw_data.drop(raw_data.columns[dcol[0]:dcol[1]], axis=1)
@@ -298,6 +316,7 @@ def main():
     metadata.loc[:, args.clabel] = metadata[args.clabel].str.lower()
 
     # debug
+    # print(metadata["Final Status"].unique())
     # print(data.head())
     # print(metadata.head())
 
@@ -339,13 +358,19 @@ def main():
         metadata_known,
         "md_cluster_training",
         args.clabel,
-        weights=1/metadata_known["N"])
+        weights=1/metadata_known[args.weight])
+
+    # debug
+    # best_features = ["dN_Distance",
+    #                  "dS_Distance",
+    #                  "AA_Distance",
+    #                  "dN/dS_Distance"]
 
     # create kmeans on all data using selected features
     print("classifying all data...")
     cluster = create_kmeans(
         data_norm[best_features],
-        k=metadata[args.clabel].nunique(),
+        k=2,
         weights=1 / metadata[args.weight])
     predict = get_predict(cluster, metadata, args.clabel)
 
@@ -381,3 +406,4 @@ if __name__ == "__main__":
     # TODO increased and clear comments and documentation
     # TODO save text file with best features list & metrics
     # TODO add argument to take list or filename with best features list
+    # TODO add argument for label to minimize error for, instead of max'ing BA
