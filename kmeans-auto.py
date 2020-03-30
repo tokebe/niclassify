@@ -9,6 +9,7 @@ try:
     import matplotlib as plt
     import seaborn as sns
     import numpy as np
+    import json
 
     from sklearn import preprocessing
     from sklearn.cluster import KMeans
@@ -146,7 +147,17 @@ def powerset(iterable):
 
 
 def kmeans_graph(data, metadata, filename, c_label="Status", weights=None):
+    """Plot the results of a kmeans classification and save it.
 
+    Args:
+        data (DataFrame): Data to be used for classification
+        metadata (DataFrame): Metadata including class labels
+        filename (str): name of image to save
+        c_label (str, optional): column name for class labels in metadata.
+            Defaults to "Status".
+        weights (Series, optional): Weights to use in clustering.
+             Defaults to None.
+    """
     cluster = create_kmeans(data, 2, weights=weights)  # make cluster
     predict = get_predict(cluster, metadata, c_label)  # get predictions
 
@@ -160,9 +171,63 @@ def kmeans_graph(data, metadata, filename, c_label="Status", weights=None):
     out.savefig("output/{}.png".format(filename))
 
 
+def get_misclass_rates(metadata_known, c_label, predict):
+    nerr = metadata_known[
+        (metadata_known[c_label] == "native") & (
+            predict == "introduced")
+    ].shape[0] / metadata_known[
+        metadata_known[c_label] == "native"].shape[0] * 100
+    ierr = metadata_known[
+        (metadata_known[c_label] == "introduced") & (
+            predict == "native")
+    ].shape[0] / metadata_known[
+        metadata_known[c_label] == "introduced"].shape[0] * 100
+
+    return nerr, ierr
+
+
+def test_features(data_known, metadata_known, c_label="Status", w_label=None):
+
+    # run each set and get the mean ba for 10 runs
+    ba = []
+    nerr = []
+    ierr = []
+    # TODO turn this into its own function to re-use in test
+    for i in range(N_TRIALS):
+        # make cluster
+        cluster = create_kmeans(
+            data_known,
+            k=metadata_known[c_label].nunique(),
+            weights=None if w_label is None else 1 / metadata_known[w_label])
+        # get predictions from cluster assignments
+        predict = get_predict(cluster, metadata_known, c_label)
+        # add balanced accuracy to list
+        ba.append(metrics.balanced_accuracy_score(
+            metadata_known[c_label], predict))
+        nerr1, ierr1 = get_misclass_rates(metadata_known, c_label, predict)
+        nerr.append(nerr1)
+        ierr.append(ierr1)
+
+    return np.mean(ba), np.mean(nerr), np.mean(ierr)
+
+
 def get_best_features_ba(data_known, metadata_known, c_label="Status",
-                         w_label="N"):
-    # TODO add support for argument weight features weight combine method
+                         w_label=None):
+    """Get features which give best balanced accuracy predicting known values.
+
+    Args:
+        data_known (DataFrame): data for known class labels used for
+            classification
+        metadata_known (DataFrame): metadata with known class labels
+        c_label (str, optional): column name for class labels in metadata.
+            Defaults to "Status".
+        w_label (str, optional): column name for weight values.
+            Defaults to None.
+
+    Returns:
+        list: a list of optimal feature column names
+
+    """
     best_ba = []
     bestba = 0
     nerr = 0
@@ -177,39 +242,25 @@ def get_best_features_ba(data_known, metadata_known, c_label="Status",
         else:
             print("  test set {} / {}".format(fset, fset_len))
         fset += 1
-        # run each set and get the mean ba for 10 runs
-        ba = []
-        for i in range(N_TRIALS):
-            # make cluster
-            cluster = create_kmeans(
-                data_known[list(s)],
-                k=metadata_known[c_label].nunique(),
-                weights=1 / metadata_known[w_label])
-            # get predictions from cluster assignments
-            predict = get_predict(cluster, metadata_known, c_label)
-            # add balanced accuracy to list
-            ba.append(metrics.balanced_accuracy_score(
-                metadata_known[c_label], predict))
 
+        mean_ba, mean_nerr, mean_ierr = test_features(
+            data_known[list(s)],
+            metadata_known,
+            c_label,
+            w_label)
         # update best features if new mean ba is better
-        if np.mean(ba) > bestba:
-            bestba = np.mean(ba)
+        if mean_ba > bestba:
+            bestba = np.mean(mean_ba)
             best_ba = list(s)
-            nerr = metadata_known[
-                (metadata_known[c_label] == "native") & (
-                    predict == "introduced")
-            ].shape[0] / metadata_known[
-                metadata_known[c_label] == "native"].shape[0] * 100
-            ierr = metadata_known[
-                (metadata_known[c_label] == "introduced") & (
-                    predict == "native")
-            ].shape[0] / metadata_known[
-                metadata_known[c_label] == "introduced"].shape[0] * 100
+            nerr = mean_nerr,
+            ierr = mean_ierr
 
     # print out results
     print("Found best balanced accuracy of {}".format(bestba))
-    print("Percent of Native mislabled to Introduced: {:.2f}%".format(nerr))
-    print("Percent of Introduced mislabled to Native: {:.2f}%".format(ierr))
+    print("Percent of Native mislabled to Introduced: {:.2f}%".format(
+        nerr))
+    print("Percent of Introduced mislabled to Native: {:.2f}%".format(
+        ierr))
     print("Using features:")
     for f in best_ba:
         print("  {}".format(f))
@@ -218,8 +269,15 @@ def get_best_features_ba(data_known, metadata_known, c_label="Status",
 
 
 def getargs(parser):
-    # setup arguments
+    """Get arguments for argparse.
 
+    Args:
+        parser (ArgumentParser): From argparse.
+
+    Returns:
+        NameSpace: Argument parser.
+
+    """
     parser.add_argument(
         "data",
         help="path/filename of data to be imported for classification")
@@ -247,20 +305,38 @@ def getargs(parser):
         "-w",
         "--weight",
         nargs='?',
-        default="N",
+        default=None,
         help="column name to be used for weighted clustering, defaults to N")
     parser.add_argument(
         "-n",
         "--nanval",
         nargs='*',
         help="additional values to be counted as NA/NaN")
+    parser.add_argument(
+        "-p",
+        "--preset",
+        action="store_true",
+        help="use saved json file with preset features instead of obtaining \
+            best features."
+    )
+    parser.add_argument(
+        "-t",
+        "--test",
+        action="store_true",
+        help="test accuracy and misclassification error \
+        of currently saved preset features"
+    )
 
     # parse and get arguments
     return parser.parse_args()
 
 
 def main():
+    """Run the program.
 
+    Takes in user arguments to select data to run on, and outputs a new csv
+    with predictions.
+    """
     # get args
     parser = argparse.ArgumentParser()
     args = getargs(parser)
@@ -299,8 +375,9 @@ def main():
         dcol = [int(x) - 1 for x in dcol]
 
     # drop rows with na count. migh need to change for more general program.
-    raw_data = raw_data[raw_data[args.weight].notnull()]
-    raw_data.reset_index(drop=True, inplace=True)
+    if args.weight is not None:
+        raw_data = raw_data[raw_data[args.weight].notnull()]
+        raw_data.reset_index(drop=True, inplace=True)
 
     # replace unknown values with nan
     raw_data.replace({
@@ -346,19 +423,56 @@ def main():
     # print(data_known)
     # print(metadata_known)
 
-    # get best features for known data. Potentially subject to overfitting.
-    print("obtaining best features...")
-    best_features = get_best_features_ba(
-        data_known, metadata_known, args.clabel, args.weight)
+    # just test saved features (if argument to do so given)
+    if args.test:
+        print("testing saved features...")
+        with open("output/best_features.json", "r") as preset:
+            bf_json = json.load(preset)
+            best_features = bf_json.get("best features")
 
-    # create graph to show training clusters
-    print("generating training graph...")
-    kmeans_graph(
-        data_known[best_features],
-        metadata_known,
-        "md_cluster_training",
-        args.clabel,
-        weights=1/metadata_known[args.weight])
+        mean_ba, mean_nerr, mean_ierr = test_features(
+            data_known[best_features],
+            metadata_known,
+            args.clabel,
+            args.weight)
+
+        print("Balanced accuracy of {}".format(mean_ba))
+        print("Percent of Native mislabled to Introduced: {:.2f}%".format(
+            np.mean(mean_nerr)))
+        print("Percent of Introduced mislabled to Native: {:.2f}%".format(
+            np.mean(mean_ierr)))
+        print("Using features:")
+        for f in best_features:
+            print("  {}".format(f))
+
+        exit()
+
+    # obtain best features if preset is not provided (and chosen)
+    if not args.preset:
+
+        # get best features for known data. Potentially subject to overfitting.
+        print("obtaining best features...")
+        best_features = get_best_features_ba(
+            data_known, metadata_known, args.clabel, args.weight)
+
+        # save best features to json file
+        bf_json = json.dumps({"best features": best_features}, indent=4)
+        with open("output/best_features.json", "w") as preset:
+            preset.write(bf_json)
+
+        # create graph to show training clusters
+        print("generating training graph...")
+        kmeans_graph(
+            data_known[best_features],
+            metadata_known,
+            "md_cluster_training",
+            args.clabel,
+            weights=1/metadata_known[args.weight])
+    # otherwise use saved features list
+    else:
+        with open("output/best_features.json", "r") as preset:
+            bf_json = json.load(preset)
+            best_features = bf_json.get("best features")
 
     # debug
     # best_features = ["dN_Distance",
@@ -374,20 +488,19 @@ def main():
         weights=1 / metadata[args.weight])
     predict = get_predict(cluster, metadata, args.clabel)
 
+    # save output
     print("saving new output...")
     df = pd.concat([metadata, predict, data], axis=1)
     try:
         df.to_csv(args.out)
     except (KeyError, FileNotFoundError):
         parser.error("intended output folder does not exist!")
+
     # change data in frame to be useable for graph
-
     del df
-
     df = pd.concat([data_norm[best_features], predict], axis=1)
 
-    # print(df.head())
-
+    # generate and output graph
     print("generating final graph...")
     out = sns.pairplot(
         data=df,
@@ -404,7 +517,8 @@ if __name__ == "__main__":
     # ----- Things I would like to add for completeness: -----
     # TODO better error checking (are colname arguments valid? etc)
     # TODO increased and clear comments and documentation
-    # TODO save text file with best features list & metrics
-    # TODO add argument to take list or filename with best features list
     # TODO add argument for label to minimize error for, instead of max'ing BA
     # TODO add logging of printed output
+    # TODO add optional debug log which only writes to file
+    # TODO add optional argument to not impute data
+    # TODO add option to test ba on full set, and handling, default to full set
