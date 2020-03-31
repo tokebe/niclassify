@@ -68,11 +68,11 @@ def train_forest(data_known, metadata_known, c_label="Status", w_label=None):
 
     # hyperparameters to optimize
     parameters = {
-        'n_estimators': np.linspace(10, 200).astype(int),
-        'max_depth': list(np.linspace(3, 20).astype(int)),
-        'max_features': ['auto', 'sqrt'] + list(np.arange(0.5, 1, 0.1)),
+        'n_estimators': np.linspace(10, 5000).astype(int),
+        'max_depth': list(np.linspace(2, 20).astype(int)),
+        'max_features': ['auto', 'sqrt'] + list(np.arange(0.1, 1, 0.05)),
         'max_leaf_nodes': list(np.linspace(10, 50, 500).astype(int)),
-        'min_samples_split': [2, 5, 10],
+        'min_samples_split': [2, 3, 4, 5],
         'bootstrap': [True, False]}
 
     rf = RandomForestClassifier(class_weight="balanced")
@@ -344,7 +344,11 @@ if __name__ == "__main__":
     main()
     # ----- Things I would like to add for completeness: -----
     # TODO fix massive overfitting issues
+    # there may be benefit it messing with hyperparameter tuning
     # TODO fix tree graph outputs (or scrap tree graphs idk)
     # TODO pickle the model and use preset argument to simply predict from it
     # TODO basically most of the todo's from kmeans-auto.py
     # TODO see if you can re-implement sample weights
+
+    # note: apparently this sample size is pretty darn small for something like
+    #   this
