@@ -197,13 +197,14 @@ def test_features(data_known, metadata_known, c_label="Status", w_label=None):
         # make cluster
         cluster = create_kmeans(
             data_known,
-            k=metadata_known[c_label].nunique(),
+            k=2,
             weights=None if w_label is None else 1 / metadata_known[w_label])
         # get predictions from cluster assignments
         predict = get_predict(cluster, metadata_known, c_label)
         # add balanced accuracy to list
         ba.append(metrics.balanced_accuracy_score(
-            metadata_known[c_label], predict))
+            metadata_known[c_label][metadata_known[c_label].notnull()],
+            predict[metadata_known[c_label].notnull()]))
         nerr1, ierr1 = get_misclass_rates(metadata_known, c_label, predict)
         nerr.append(nerr1)
         ierr.append(ierr1)
@@ -250,11 +251,11 @@ def get_best_features_ba(data_known, metadata_known, c_label="Status",
             w_label)
         # update best features if new mean ba is better
         if mean_ba > bestba:
-            bestba = np.mean(mean_ba)
+            bestba = mean_ba
             best_ba = list(s)
-            nerr = mean_nerr,
+            nerr = mean_nerr
             ierr = mean_ierr
-
+    # print(nerr)
     # print out results
     print("Found best balanced accuracy of {}".format(bestba))
     print("Percent of Native mislabled to Introduced: {:.2f}%".format(
@@ -326,6 +327,12 @@ def getargs(parser):
         help="test accuracy and misclassification error \
         of currently saved preset features"
     )
+    parser.add_argument(
+        "-k",
+        "--knownset",
+        action="store_true",
+        help="use only known cases for training"
+    )
 
     # parse and get arguments
     return parser.parse_args()
@@ -374,7 +381,7 @@ def main():
         dcol = args.dcol.split(":")
         dcol = [int(x) - 1 for x in dcol]
 
-    # drop rows with na count. migh need to change for more general program.
+    # drop rows with na count. might need to change for more general program.
     if args.weight is not None:
         raw_data = raw_data[raw_data[args.weight].notnull()]
         raw_data.reset_index(drop=True, inplace=True)
@@ -386,7 +393,7 @@ def main():
         "0": np.nan})
 
     # split data into feature data and metadata
-    data = raw_data.iloc[:, dcol[0]:dcol[1]]
+    data = raw_data.iloc[:, dcol[0]:dcol[1] + 1]
     metadata = raw_data.drop(raw_data.columns[dcol[0]:dcol[1]], axis=1)
 
     # convert class labels to lower
@@ -430,17 +437,24 @@ def main():
             bf_json = json.load(preset)
             best_features = bf_json.get("best features")
 
-        mean_ba, mean_nerr, mean_ierr = test_features(
-            data_known[best_features],
-            metadata_known,
-            args.clabel,
-            args.weight)
+        if args.knownset:
+            mean_ba, mean_nerr, mean_ierr = test_features(
+                data_known[best_features],
+                metadata_known,
+                args.clabel,
+                args.weight)
+        else:
+            mean_ba, mean_nerr, mean_ierr = test_features(
+                data_norm[best_features],
+                metadata,
+                args.clabel,
+                args.weight)
 
         print("Balanced accuracy of {}".format(mean_ba))
         print("Percent of Native mislabled to Introduced: {:.2f}%".format(
-            np.mean(mean_nerr)))
+            mean_nerr))
         print("Percent of Introduced mislabled to Native: {:.2f}%".format(
-            np.mean(mean_ierr)))
+            mean_ierr))
         print("Using features:")
         for f in best_features:
             print("  {}".format(f))
@@ -452,8 +466,12 @@ def main():
 
         # get best features for known data. Potentially subject to overfitting.
         print("obtaining best features...")
-        best_features = get_best_features_ba(
-            data_known, metadata_known, args.clabel, args.weight)
+        if args.knownset:
+            best_features = get_best_features_ba(
+                data_known, metadata_known, args.clabel, args.weight)
+        else:
+            best_features = get_best_features_ba(
+                data_norm, metadata, args.clabel, args.weight)
 
         # save best features to json file
         bf_json = json.dumps({"best features": best_features}, indent=4)
@@ -488,11 +506,14 @@ def main():
         weights=1 / metadata[args.weight])
     predict = get_predict(cluster, metadata, args.clabel)
 
+    print(metadata.columns)
+    exit()
+
     # save output
     print("saving new output...")
     df = pd.concat([metadata, predict, data], axis=1)
     try:
-        df.to_csv(args.out)
+        df.to_csv(args.out, index=False)
     except (KeyError, FileNotFoundError):
         parser.error("intended output folder does not exist!")
 

@@ -64,16 +64,15 @@ def train_forest(data_known, metadata_known, c_label="Status", w_label=None):
     x_train, x_test, y_train, y_test = train_test_split(
         data_known, metadata_known[c_label],
         stratify=metadata_known[c_label],
-        test_size=0.3)
+        test_size=0.25)
 
     # hyperparameters to optimize
     parameters = {
-        'n_estimators': np.linspace(10, 5000).astype(int),
+        'n_estimators': np.linspace(10, 1000).astype(int),
         'max_depth': list(np.linspace(2, 20).astype(int)),
         'max_features': ['auto', 'sqrt'] + list(np.arange(0.1, 1, 0.05)),
         'max_leaf_nodes': list(np.linspace(10, 50, 500).astype(int)),
-        'min_samples_split': [2, 3, 4, 5],
-        'bootstrap': [True, False]}
+        'min_samples_split': [2, 3, 4, 5]}
 
     rf = RandomForestClassifier(class_weight="balanced")
 
@@ -262,7 +261,7 @@ def main():
         "0": np.nan})
 
     # split data into feature data and metadata
-    data = raw_data.iloc[:, dcol[0]:dcol[1]]
+    data = raw_data.iloc[:, dcol[0]:dcol[1] + 1]
     metadata = raw_data.drop(raw_data.columns[dcol[0]:dcol[1]], axis=1)
 
     # convert class labels to lower
@@ -270,7 +269,15 @@ def main():
 
     # impute data
     print("imputing data...")
-    data_np = data.to_numpy()
+    # get categorical columns for dummy variable encoding
+    cols_cat = list(data.select_dtypes(exclude=[np.number]).columns.values)
+
+    data_np = pd.get_dummies(
+        data,
+        columns=cols_cat,
+        prefix=cols_cat, drop_first=True)
+    data_cols = data_np.columns.values
+    data_np = data_np.to_numpy()
     imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')
     data_np = imp_mean.fit_transform(data_np)
 
@@ -278,7 +285,7 @@ def main():
     print("scaling data...")
     scaler = preprocessing.MinMaxScaler()
     data_norm = pd.DataFrame(scaler.fit_transform(data_np))
-    data_norm.columns = data.columns
+    data_norm.columns = data_cols
 
     # split into known and unknown
     print("splitting data...")
@@ -306,7 +313,7 @@ def main():
     print("saving new output...")
     df = pd.concat([metadata, predict, predict_prob, data_norm], axis=1)
     try:
-        df.to_csv(args.out)
+        df.to_csv(args.out, index=False)
     except (KeyError, FileNotFoundError):
         parser.error("intended output folder does not exist!")
 
@@ -343,7 +350,9 @@ def main():
 if __name__ == "__main__":
     main()
     # ----- Things I would like to add for completeness: -----
-    # TODO fix massive overfitting issues
+    # TODO try manual tuning of hyperparameters?
+    # TODO fix massive overfitting issues (maybe fixed?)
+    # TODO start converting stuff to package to save implementation time
     # there may be benefit it messing with hyperparameter tuning
     # TODO fix tree graph outputs (or scrap tree graphs idk)
     # TODO pickle the model and use preset argument to simply predict from it
