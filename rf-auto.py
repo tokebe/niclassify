@@ -20,6 +20,7 @@ try:
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.model_selection import RandomizedSearchCV
     from sklearn.model_selection import train_test_split
+    from sklearn.model_selection import StratifiedKFold
 
     from sklearn.tree import export_graphviz
 
@@ -71,7 +72,7 @@ def train_forest(data_known, metadata_known, c_label="Status", w_label=None):
         'n_estimators': np.linspace(100, 1000).astype(int),
         'max_depth': list(np.linspace(2, 20).astype(int)),
         'max_features': ['auto', 'sqrt'] + list(np.arange(0.1, 0.9, 0.05)),
-        'min_samples_split': np.arange(0.05, 0.5, 0.05)}
+        'min_samples_split': list(np.arange(0.05, 0.5, 0.05))}
 
     rf = RandomForestClassifier(class_weight="balanced")
 
@@ -81,7 +82,7 @@ def train_forest(data_known, metadata_known, c_label="Status", w_label=None):
         parameters,
         n_jobs=-1,
         scoring='balanced_accuracy',
-        cv=10)
+        cv=StratifiedKFold(n_splits=10))
 
     # fit the search model
     # if w_label is not None:
@@ -315,14 +316,10 @@ def main():
     # make predictons
     predict = pd.DataFrame(forest.predict(data_norm))
     predict.rename(columns={predict.columns[0]: "predict"}, inplace=True)
-    predict_prob = pd.DataFrame(
-        forest.predict_proba(data_norm))
-    predict_prob.rename(
-        columns={predict_prob.columns[0]: "predict probability"}, inplace=True)
 
     # save output
     print("saving new output...")
-    df = pd.concat([metadata, predict, predict_prob, data_norm], axis=1)
+    df = pd.concat([metadata, predict, data_norm], axis=1)
     try:
         df.to_csv(args.out, index=False)
     except (KeyError, FileNotFoundError):
@@ -363,11 +360,9 @@ def main():
 if __name__ == "__main__":
     main()
     # ----- Things I would like to add for completeness: -----
-    # TODO try manual tuning of hyperparameters?
-    # TODO fix slight overfitting issues (maybe fixed?)
+    # TODO option to save hyperparameters (presented at end of script)
+    # TODO option to use hyperparameters post-completion
     # TODO start converting stuff to package to save implementation time
-    # there may be benefit it messing with hyperparameter tuning
-    # TODO fix tree graph outputs (or scrap tree graphs idk)
     # TODO pickle the model and use preset argument to simply predict from it
     # TODO basically most of the todo's from kmeans-auto.py
     # TODO see if you can re-implement sample weights
