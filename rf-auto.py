@@ -65,16 +65,16 @@ def train_forest(data_known, metadata_known, c_label="Status", w_label=None):
     x_train, x_test, y_train, y_test = train_test_split(
         data_known, metadata_known[c_label],
         stratify=metadata_known[c_label],
-        test_size=0.25)
+        test_size=0.15)
 
     # hyperparameters to optimize
     parameters = {
         'n_estimators': np.linspace(100, 1000).astype(int),
         'max_depth': list(np.linspace(2, 20).astype(int)),
-        'max_features': ['auto', 'sqrt'] + list(np.arange(0.1, 0.9, 0.05)),
+
         'min_samples_split': list(np.arange(0.05, 0.5, 0.05))}
 
-    rf = RandomForestClassifier(class_weight="balanced")
+    rf = RandomForestClassifier(class_weight="balanced", oob_score=True)
 
     # Create the random search
     rs = RandomizedSearchCV(
@@ -95,6 +95,9 @@ def train_forest(data_known, metadata_known, c_label="Status", w_label=None):
         print("    {}: {}".format(key, val))
 
     best_model = rs.best_estimator_
+
+    print("out-of-bag score: {}".format(best_model.oob_score_))
+    print("---")
 
     train_predict = best_model.predict(x_train)
     test_predict = best_model.predict(x_test)
