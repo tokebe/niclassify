@@ -68,11 +68,10 @@ def train_forest(data_known, metadata_known, c_label="Status", w_label=None):
 
     # hyperparameters to optimize
     parameters = {
-        'n_estimators': np.linspace(10, 1000).astype(int),
+        'n_estimators': np.linspace(100, 1000).astype(int),
         'max_depth': list(np.linspace(2, 20).astype(int)),
-        'max_features': ['auto', 'sqrt'] + list(np.arange(0.1, 1, 0.05)),
-        'max_leaf_nodes': list(np.linspace(10, 50, 500).astype(int)),
-        'min_samples_split': [2, 3, 4, 5]}
+        'max_features': ['auto', 'sqrt'] + list(np.arange(0.1, 0.9, 0.05)),
+        'min_samples_split': np.arange(0.05, 0.5, 0.05)}
 
     rf = RandomForestClassifier(class_weight="balanced")
 
@@ -238,12 +237,24 @@ def main():
                     keep_default_na=True)
     elif ".csv" in args.data[-4:]:
         raw_data = pd.read_csv(args.data, na_values=NANS, keep_default_na=True)
+    elif ".tsv" in args.data[-4:]:
+        raw_data = pd.read_csv(
+            args.data,
+            na_values=NANS,
+            keep_default_na=True,
+            sep="\t")
+    elif ".txt" in args.data[-4:]:
+        raw_data = pd.read_csv(
+            args.data,
+            na_values=NANS,
+            keep_default_na=True,
+            sep=None)
     else:
         parser.error(
             "data file type is unsupported, or file extension not included")
 
     # get feature data column range
-    if not re.match("[0-9]:[0-9]", args.dcol):
+    if not re.match("[0-9]+:[0-9]+", args.dcol):
         parser.error("data column selection range format invalid (see -h).")
     else:
         dcol = args.dcol.split(":")
@@ -330,34 +341,33 @@ def main():
     )
     out.savefig("output/{}.png".format("rf_all"))
 
-    # output a graph of each tree in the forest
-    for index, tree in enumerate(forest.estimators_):
-        export_graphviz(tree, out_file='output/tree.dot',
-                        feature_names=data_norm.columns,
-                        class_names=metadata[args.clabel].dropna().unique(),
-                        rounded=True,
-                        proportion=False,
-                        precision=2,
-                        filled=True)
-        call(['dot',
-              '-Tpng',
-              'output/tree.dot',
-              '-o',
-              'output/tree_images/tree{}.png'.format(index),
-              '-Gdpi=600'])
+    # # output a graph of each tree in the forest
+    # for index, tree in enumerate(forest.estimators_):
+    #     export_graphviz(tree, out_file='output/tree.dot',
+    #                     feature_names=data_norm.columns,
+    #                     class_names=metadata[args.clabel].dropna().unique(),
+    #                     rounded=True,
+    #                     proportion=False,
+    #                     precision=2,
+    #                     filled=True)
+    #     call(['dot',
+    #           '-Tpng',
+    #           'output/tree.dot',
+    #           '-o',
+    #           'output/tree_images/tree{}.png'.format(index),
+    #           '-Gdpi=600'])
+
+    print("...done!")
 
 
 if __name__ == "__main__":
     main()
     # ----- Things I would like to add for completeness: -----
     # TODO try manual tuning of hyperparameters?
-    # TODO fix massive overfitting issues (maybe fixed?)
+    # TODO fix slight overfitting issues (maybe fixed?)
     # TODO start converting stuff to package to save implementation time
     # there may be benefit it messing with hyperparameter tuning
     # TODO fix tree graph outputs (or scrap tree graphs idk)
     # TODO pickle the model and use preset argument to simply predict from it
     # TODO basically most of the todo's from kmeans-auto.py
     # TODO see if you can re-implement sample weights
-
-    # note: apparently this sample size is pretty darn small for something like
-    #   this

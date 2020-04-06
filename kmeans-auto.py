@@ -375,7 +375,7 @@ def main():
     # print(raw_data)
 
     # get feature data column range
-    if not re.match("[0-9]:[0-9]", args.dcol):
+    if not re.match("[0-9]+:[0-9]+", args.dcol):
         parser.error("data column selection range format invalid (see -h).")
     else:
         dcol = args.dcol.split(":")

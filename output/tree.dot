@@ -1,17 +1,17 @@
 digraph Tree {
 node [shape=box, style="filled, rounded", color="black", fontname=helvetica] ;
 edge [fontname=helvetica] ;
-0 [label="ML_Distance <= 0.06\ngini = 0.5\nsamples = 377\nvalue = [266.78, 296.75]\nclass = native", fillcolor="#ebf5fc"] ;
-1 [label="gini = 0.0\nsamples = 83\nvalue = [0.0, 72.12]\nclass = native", fillcolor="#399de5"] ;
+0 [label="dS_Distance <= 0.16\ngini = 0.5\nsamples = 408\nvalue = [285.27, 322.79]\nclass = native", fillcolor="#e8f4fc"] ;
+1 [label="dN_Distance <= 0.06\ngini = 0.4\nsamples = 256\nvalue = [79.88, 214.83]\nclass = native", fillcolor="#83c1ef"] ;
 0 -> 1 [labeldistance=2.5, labelangle=45, headlabel="True"] ;
-2 [label="dN/dS_Similarity <= 0.05\ngini = 0.5\nsamples = 294\nvalue = [266.78, 224.63]\nclass = introduced", fillcolor="#fbebe0"] ;
+5 [label="gini = 0.33\nsamples = 236\nvalue = [51.35, 200.03]\nclass = native", fillcolor="#6cb6ec"] ;
+1 -> 5 ;
+6 [label="gini = 0.45\nsamples = 20\nvalue = [28.53, 14.8]\nclass = introduced", fillcolor="#f2c2a0"] ;
+1 -> 6 ;
+2 [label="dN_Distance <= 0.03\ngini = 0.45\nsamples = 152\nvalue = [205.39, 107.96]\nclass = introduced", fillcolor="#f3c3a1"] ;
 0 -> 2 [labeldistance=2.5, labelangle=-45, headlabel="False"] ;
-3 [label="dN_Distance <= 0.02\ngini = 0.49\nsamples = 264\nvalue = [266.78, 199.3]\nclass = introduced", fillcolor="#f8dfcd"] ;
+3 [label="gini = 0.29\nsamples = 32\nvalue = [5.71, 26.85]\nclass = native", fillcolor="#63b2eb"] ;
 2 -> 3 ;
-5 [label="gini = 0.44\nsamples = 88\nvalue = [32.67, 66.07]\nclass = native", fillcolor="#9bcdf2"] ;
-3 -> 5 ;
-6 [label="gini = 0.46\nsamples = 176\nvalue = [234.11, 133.24]\nclass = introduced", fillcolor="#f4c9aa"] ;
-3 -> 6 ;
-4 [label="gini = 0.0\nsamples = 30\nvalue = [0.0, 25.33]\nclass = native", fillcolor="#399de5"] ;
+4 [label="gini = 0.41\nsamples = 120\nvalue = [199.69, 81.11]\nclass = introduced", fillcolor="#f0b489"] ;
 2 -> 4 ;
 }
