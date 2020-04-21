@@ -410,22 +410,6 @@ def main():
     )
     out.savefig("{}.png".format(args.out))
 
-    # # output a graph of each tree in the forest
-    # for index, tree in enumerate(forest.estimators_):
-    #     export_graphviz(tree, out_file='output/tree.dot',
-    #                     feature_names=data_norm.columns,
-    #                     class_names=metadata[args.clabel].dropna().unique(),
-    #                     rounded=True,
-    #                     proportion=False,
-    #                     precision=2,
-    #                     filled=True)
-    #     call(['dot',
-    #           '-Tpng',
-    #           'output/tree.dot',
-    #           '-o',
-    #           'output/tree_images/tree{}.png'.format(index),
-    #           '-Gdpi=600'])
-
     print("...done!")
 
     if args.predicton is None:
@@ -450,7 +434,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # ----- Things I would like to add for completeness: -----
-    # TODO start converting stuff to package to save implementation time
-    # TODO basically most of the todo's from kmeans-auto.py
-    # TODO see if you can re-implement sample weights
