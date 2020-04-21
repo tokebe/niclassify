@@ -59,75 +59,99 @@ NANS = [
 ]
 
 
-def train_forest(data_known, metadata_known, c_label="Status", w_label=None):
+def train_forest(
+        data_known,
+        metadata_known,
+        c_label="Status",
+        w_label=None,
+        multirun=1):
     print("  obtaining best hyperparameters...")
 
     x_train, x_test, y_train, y_test = train_test_split(
         data_known, metadata_known[c_label],
         stratify=metadata_known[c_label],
-        test_size=0.15)
+        test_size=0.2)  # previously .15
 
-    # hyperparameters to optimize
-    parameters = {
-        'n_estimators': np.linspace(100, 1000).astype(int),
-        'max_depth': list(np.linspace(2, 20).astype(int)),
+    best_train_predict = None
+    best_test_predict = None
+    best_train_ba = 0
+    best_test_ba = 0
+    best_model = None
 
-        'min_samples_split': list(np.arange(0.05, 0.5, 0.05))}
+    for i in range(multirun):
 
-    rf = RandomForestClassifier(class_weight="balanced", oob_score=True)
+        print(
+            "    testing forest {} of {}...".format(i + 1, multirun), end="\r")
 
-    # Create the random search
-    rs = RandomizedSearchCV(
-        rf,
-        parameters,
-        n_jobs=-1,
-        scoring='balanced_accuracy',
-        cv=StratifiedKFold(n_splits=10))
+        # hyperparameters to optimize
+        parameters = {
+            'n_estimators': np.linspace(500, 1000).astype(int),
+            'max_depth': list(np.linspace(10, 20).astype(int)),
 
-    # fit the search model
-    # if w_label is not None:
-    #     rs.fit(x_train, y_train, fit_params={
-    #            'classifier__sample_weight': 1 / metadata_known[w_label]})
-    # else:
-    rs.fit(x_train, y_train)
+            'min_samples_split': list(np.arange(0.05, 0.5, 0.05))}
+
+        rf = RandomForestClassifier(class_weight="balanced", oob_score=True)
+
+        # Create the random search
+        rs = RandomizedSearchCV(
+            rf,
+            parameters,
+            n_jobs=-1,
+            scoring='balanced_accuracy',
+            cv=StratifiedKFold(n_splits=10))
+
+        # fit the search model
+        # if w_label is not None:
+        #     rs.fit(x_train, y_train, fit_params={
+        #            'classifier__sample_weight': 1 / metadata_known[w_label]})
+        # else:
+        rs.fit(x_train, y_train)
+
+        train_predict = rs.best_estimator_.predict(x_train)
+        test_predict = rs.best_estimator_.predict(x_test)
+
+        train_ba = metrics.balanced_accuracy_score(y_train, train_predict)
+        test_ba = metrics.balanced_accuracy_score(y_test, test_predict)
+
+        if test_ba > best_test_ba:
+            best_train_predict = train_predict
+            best_test_predict = test_predict
+            best_train_ba = train_ba
+            best_test_ba = test_ba
+            best_model = rs.best_estimator_
+
+    print("\n")
+
     print("  found best hyperparameters (as follows):")
     for key, val in rs.best_params_.items():
         print("    {}: {}".format(key, val))
 
-    best_model = rs.best_estimator_
-
     print("out-of-bag score: {}".format(best_model.oob_score_))
     print("---")
 
-    train_predict = best_model.predict(x_train)
-    test_predict = best_model.predict(x_test)
-
-    train_ba = metrics.balanced_accuracy_score(y_train, train_predict)
-    test_ba = metrics.balanced_accuracy_score(y_test, test_predict)
-
     train_nerr = (y_train[
         (y_train == "native")
-        & (train_predict == "introduced")].shape[0]
+        & (best_train_predict == "introduced")].shape[0]
         / y_train[
             y_train == "native"].shape[0]) * 100
     train_ierr = (y_train[
         (y_train == "introduced")
-        & (train_predict == "native")].shape[0]
+        & (best_train_predict == "native")].shape[0]
         / y_train[
             y_train == "introduced"].shape[0]) * 100
 
     test_nerr = (y_test[
         (y_test == "native")
-        & (test_predict == "introduced")].shape[0]
+        & (best_test_predict == "introduced")].shape[0]
         / y_test[
             y_test == "native"].shape[0]) * 100
     test_ierr = (y_test[
         (y_test == "introduced")
-        & (test_predict == "native")].shape[0]
+        & (best_test_predict == "native")].shape[0]
         / y_test[
             y_test == "introduced"].shape[0]) * 100
 
-    print("train set BA: {}".format(train_ba))
+    print("train set BA: {}".format(best_train_ba))
     print(
         "train set: Percent of Native mislabled to Introduced: {:.2f}%".format(
             train_nerr))
@@ -135,7 +159,7 @@ def train_forest(data_known, metadata_known, c_label="Status", w_label=None):
         "train set: Percent of Introduced mislabled to Native: {:.2f}%".format(
             train_ierr))
     print("---")
-    print("test set BA : {}".format(test_ba))
+    print("test set BA : {}".format(best_test_ba))
     print(
         "test set: Percent of Native mislabled to Introduced: {:.2f}%".format(
             test_nerr))
@@ -161,7 +185,8 @@ def getargs(parser):
         help="path/filename of data to be imported for classification")
     parser.add_argument(
         "dcol",
-        help="column number range of clustering data in format #:#")
+        help="column number (1-indexed)\
+             range of clustering data in format #:#")
     parser.add_argument(
         "clabel",
         help="column name for classification label to be predicted")
@@ -191,19 +216,20 @@ def getargs(parser):
         nargs='*',
         help="additional values to be counted as NA/NaN")
     parser.add_argument(
-        "-p",
-        "--preset",
-        action="store_true",
-        help="use saved json file with preset features instead of obtaining \
-            best features."
-    )
+        "-m",
+        "--multirun",
+        nargs='?',
+        default=1,
+        type=int,
+        help="Train m number of classifiers and \
+            select the best-performing one")
     parser.add_argument(
-        "-t",
-        "--test",
-        action="store_true",
-        help="test accuracy and misclassification error \
-        of currently saved preset features"
-    )
+        "-p",
+        "--predicton",
+        nargs='?',
+        default=None,
+        help="Use a previously saved random forest to predict on data, \
+            specified by given path/filename")
 
     # parse and get arguments
     return parser.parse_args()
@@ -262,7 +288,9 @@ def main():
         parser.error("data column selection range format invalid (see -h).")
     else:
         dcol = args.dcol.split(":")
-        dcol = [int(x) - 1 for x in dcol]
+        dcol = [int(x) for x in dcol]
+        dcol[0] -= 1
+        dcol[1] += 1
 
     # drop rows with na count. migh need to change for more general program.
     if args.weight is not None:
@@ -275,54 +303,95 @@ def main():
         "Unknown": np.nan,
         "0": np.nan})
 
+    # remove instances of >1 group count
+    raw_data = raw_data.loc[raw_data["Group_Count"] <= 1]
+    raw_data.reset_index(drop=True, inplace=True)
+
     # split data into feature data and metadata
-    data = raw_data.iloc[:, dcol[0]:dcol[1] + 1]
+    data = raw_data.iloc[:, dcol[0]:dcol[1]]
     metadata = raw_data.drop(raw_data.columns[dcol[0]:dcol[1]], axis=1)
+
+    # print(metadata.columns)
 
     # convert class labels to lower
     metadata.loc[:, args.clabel] = metadata[args.clabel].str.lower()
 
-    # impute data
-    print("imputing data...")
+    # scale data
+    print("scaling data...")
     # get categorical columns for dummy variable encoding
     cols_cat = list(data.select_dtypes(exclude=[np.number]).columns.values)
-
     data_np = pd.get_dummies(
         data,
         columns=cols_cat,
         prefix=cols_cat, drop_first=True)
     data_cols = data_np.columns.values
     data_np = data_np.to_numpy()
-    imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')
-    data_np = imp_mean.fit_transform(data_np)
-
-    # scale data
-    print("scaling data...")
     scaler = preprocessing.MinMaxScaler()
     data_norm = pd.DataFrame(scaler.fit_transform(data_np))
     data_norm.columns = data_cols
 
-    # split into known and unknown
-    print("splitting data...")
-    data_known = data_norm[metadata[args.clabel].notnull()]
-    metadata_known = metadata[metadata[args.clabel].notnull()]
-    # reset indices
-    data_known.reset_index(drop=True, inplace=True)
-    metadata_known.reset_index(drop=True, inplace=True)
+    # stuff for training classifier if none is provided
+    if args.predicton is None:
+        # split into known and unknown
+        print("splitting data...")
+        data_known = data_norm[metadata[args.clabel].notnull()]
+        metadata_known = metadata[metadata[args.clabel].notnull()]
+        # reset indices
+        data_known.reset_index(drop=True, inplace=True)
+        metadata_known.reset_index(drop=True, inplace=True)
 
-    # print(data_norm)
+        # print(data_norm)
 
-    # get classifier (train it)
-    print("training random forest...")
-    forest = train_forest(data_known, metadata_known, args.clabel, args.weight)
+        # remove null rows from known data
+        print("extracting fully known data...")
+        data_known = data_known.dropna()
+        metadata_known = metadata_known.iloc[data_known.index]
+        data_known.reset_index(drop=True, inplace=True)
+        metadata_known.reset_index(drop=True, inplace=True)
+
+        v = metadata_known[args.clabel].value_counts()
+        print("  {} {}\n  {} {}".format(
+            v[0],
+            v.index[0],
+            v[1],
+            v.index[1]))
+
+        # get classifier (train it)
+        print("training random forest...")
+        forest = train_forest(data_known, metadata_known,
+                              args.clabel, args.weight, args.multirun)
+    # stuff for opening provided classifier
+    else:
+        from joblib import load
+        forest = load(args.predicton)
+
+    # impute data
+    print("imputing data...")
+    # get categorical columns for dummy variable encoding
+    cols_cat = list(data_norm.select_dtypes(
+        exclude=[np.number]).columns.values)
+    data_np = pd.get_dummies(
+        data_norm,
+        columns=cols_cat,
+        prefix=cols_cat, drop_first=True)
+    data_cols = data_np.columns.values
+    data_np = data_np.to_numpy()
+    imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')
+    data_np = imp_mean.fit_transform(data_np)
+    # return to dataframe
+    data_norm = pd.DataFrame(scaler.fit_transform(data_np))
+    data_norm.columns = data_cols
 
     # make predictons
     predict = pd.DataFrame(forest.predict(data_norm))
+    predict_prob = pd.DataFrame(forest.predict_proba(data_norm))
+    predict_prob.rename(
+        columns={predict_prob.columns[0]: "predict prob"}, inplace=True)
     predict.rename(columns={predict.columns[0]: "predict"}, inplace=True)
 
     # save output
     print("saving new output...")
-    df = pd.concat([metadata, predict, data_norm], axis=1)
+    df = pd.concat([metadata, predict, predict_prob, data_norm], axis=1)
     try:
         df.to_csv(args.out, index=False)
     except (KeyError, FileNotFoundError):
@@ -339,7 +408,7 @@ def main():
         vars=df.columns[0:data_norm.shape[1]],
         hue="predict"
     )
-    out.savefig("output/{}.png".format("rf_all"))
+    out.savefig("{}.png".format(args.out))
 
     # # output a graph of each tree in the forest
     # for index, tree in enumerate(forest.estimators_):
@@ -359,13 +428,29 @@ def main():
 
     print("...done!")
 
+    if args.predicton is None:
+
+        print("would you like to save the trained classifier? (y/n)")
+        while 1:
+            answer = input("> ")
+            if answer in ["y", "yes"]:
+                if not os.path.exists("output/forests"):
+                    os.makedirs("output/forests")
+                from joblib import dump
+                i = 0
+                while os.path.exists("output/forest{}.joblib".format(i)):
+                    i += 1
+                dump(forest, "output/forests/forest{}.joblib".format(i))
+                break
+            elif answer in ["n", "no"]:
+                break
+            else:
+                continue
+
 
 if __name__ == "__main__":
     main()
     # ----- Things I would like to add for completeness: -----
-    # TODO option to save hyperparameters (presented at end of script)
-    # TODO option to use hyperparameters post-completion
     # TODO start converting stuff to package to save implementation time
-    # TODO pickle the model and use preset argument to simply predict from it
     # TODO basically most of the todo's from kmeans-auto.py
     # TODO see if you can re-implement sample weights
