@@ -75,7 +75,7 @@ def create_kmeans(x, k, weights=None):
     # )
     kmeans = KMeans(n_clusters=k)
 
-    return kmeans.fit_predict(x, sample_weight=weights)
+    return kmeans.fit(x, sample_weight=weights)
 
 
 def get_predict(cluster, metadata_known, c_label="Status"):
@@ -122,10 +122,11 @@ def get_predict(cluster, metadata_known, c_label="Status"):
             lab = key
     n = [x for x in matches.keys() if x != lab][0]  # other label
     l_selector = 0 if matches[lab][0] > matches[lab][1] else 1
-    # generate predicted labels
-    predict = pd.Series(
-        [lab if x == l_selector else n for x in cluster],
-        name="predict", dtype="object")
+    # generate predicted label map
+    # predict = pd.Series(
+    #     [lab if x == l_selector else n for x in cluster],
+    #     name="predict", dtype="object")
+    predict = {l_selector: lab, 0 if l_selector == 1 else 1: n}
 
     return predict
 
@@ -144,31 +145,6 @@ def powerset(iterable):
     # modified not to return empty set
     s = list(iterable)
     return chain.from_iterable(combinations(s, r) for r in range(1, len(s)+1))
-
-
-def kmeans_graph(data, metadata, filename, c_label="Status", weights=None):
-    """Plot the results of a kmeans classification and save it.
-
-    Args:
-        data (DataFrame): Data to be used for classification
-        metadata (DataFrame): Metadata including class labels
-        filename (str): name of image to save
-        c_label (str, optional): column name for class labels in metadata.
-            Defaults to "Status".
-        weights (Series, optional): Weights to use in clustering.
-             Defaults to None.
-    """
-    cluster = create_kmeans(data, 2, weights=weights)  # make cluster
-    predict = get_predict(cluster, metadata, c_label)  # get predictions
-
-    df = pd.concat([data, predict], axis=1)
-
-    out = sns.pairplot(
-        data=df,
-        vars=df.columns[0:data.shape[1]],
-        hue="predict"
-    )
-    out.savefig("output/{}.png".format(filename))
 
 
 def get_misclass_rates(metadata_known, c_label, predict):
@@ -195,12 +171,19 @@ def test_features(data_known, metadata_known, c_label="Status", w_label=None):
     # TODO turn this into its own function to re-use in test
     for i in range(N_TRIALS):
         # make cluster
-        cluster = create_kmeans(
+        km = create_kmeans(
             data_known,
             k=2,
             weights=None if w_label is None else 1 / metadata_known[w_label])
-        # get predictions from cluster assignments
-        predict = get_predict(cluster, metadata_known, c_label)
+        cluster = km.predict(
+            data_known,
+            sample_weight=(None
+                           if w_label is None
+                           else 1 / metadata_known[w_label]))
+        # get cluster assignments
+        cluster_assign = get_predict(cluster, metadata_known, c_label)
+        # get predictions
+        predict = pd.Series(cluster).replace(cluster_assign)
         # add balanced accuracy to list
         ba.append(metrics.balanced_accuracy_score(
             metadata_known[c_label][metadata_known[c_label].notnull()],
@@ -315,18 +298,11 @@ def getargs(parser):
         help="additional values to be counted as NA/NaN")
     parser.add_argument(
         "-p",
-        "--preset",
-        action="store_true",
-        help="use saved json file with preset features instead of obtaining \
-            best features."
-    )
-    parser.add_argument(
-        "-t",
-        "--test",
-        action="store_true",
-        help="test accuracy and misclassification error \
-        of currently saved preset features"
-    )
+        "--predicton",
+        nargs=2,
+        default=None,
+        help="Use a previously saved random forest to predict on data, \
+            specified by given path/filename for classifier AND features json")
     parser.add_argument(
         "-k",
         "--knownset",
@@ -368,6 +344,18 @@ def main():
                     keep_default_na=True)
     elif ".csv" in args.data[-4:]:
         raw_data = pd.read_csv(args.data, na_values=NANS, keep_default_na=True)
+    elif ".tsv" in args.data[-4:]:
+        raw_data = pd.read_csv(
+            args.data,
+            na_values=NANS,
+            keep_default_na=True,
+            sep="\t")
+    elif ".txt" in args.data[-4:]:
+        raw_data = pd.read_csv(
+            args.data,
+            na_values=NANS,
+            keep_default_na=True,
+            sep=None)
     else:
         parser.error(
             "data file type is unsupported, or file extension not included")
@@ -379,9 +367,11 @@ def main():
         parser.error("data column selection range format invalid (see -h).")
     else:
         dcol = args.dcol.split(":")
-        dcol = [int(x) - 1 for x in dcol]
+        dcol = [int(x) for x in dcol]
+        dcol[0] -= 1
+        dcol[1] += 1
 
-    # drop rows with na count. might need to change for more general program.
+    # drop rows with na count. migh need to change for more general program.
     if args.weight is not None:
         raw_data = raw_data[raw_data[args.weight].notnull()]
         raw_data.reset_index(drop=True, inplace=True)
@@ -430,39 +420,8 @@ def main():
     # print(data_known)
     # print(metadata_known)
 
-    # just test saved features (if argument to do so given)
-    if args.test:
-        print("testing saved features...")
-        with open("output/best_features.json", "r") as preset:
-            bf_json = json.load(preset)
-            best_features = bf_json.get("best features")
-
-        if args.knownset:
-            mean_ba, mean_nerr, mean_ierr = test_features(
-                data_known[best_features],
-                metadata_known,
-                args.clabel,
-                args.weight)
-        else:
-            mean_ba, mean_nerr, mean_ierr = test_features(
-                data_norm[best_features],
-                metadata,
-                args.clabel,
-                args.weight)
-
-        print("Balanced accuracy of {}".format(mean_ba))
-        print("Percent of Native mislabled to Introduced: {:.2f}%".format(
-            mean_nerr))
-        print("Percent of Introduced mislabled to Native: {:.2f}%".format(
-            mean_ierr))
-        print("Using features:")
-        for f in best_features:
-            print("  {}".format(f))
-
-        exit()
-
     # obtain best features if preset is not provided (and chosen)
-    if not args.preset:
+    if args.predicton is None:
 
         # get best features for known data. Potentially subject to overfitting.
         print("obtaining best features...")
@@ -473,41 +432,38 @@ def main():
             best_features = get_best_features_ba(
                 data_norm, metadata, args.clabel, args.weight)
 
-        # save best features to json file
-        bf_json = json.dumps({"best features": best_features}, indent=4)
-        with open("output/best_features.json", "w") as preset:
-            preset.write(bf_json)
+        print("classifying all data...")
+        km = create_kmeans(
+            data_known,
+            k=2,
+            weights=(None
+                     if args.weight is None
+                     else 1 / metadata_known[args.weight]))
+        cluster = km.predict(
+            data_known,
+            sample_weight=(None
+                           if args.weight is None
+                           else 1 / metadata_known[args.weight]))
+        # get cluster assignments
+        cluster_assign = get_predict(cluster, metadata_known, args.clabel)
+        # get predictions
+        predict = pd.Series(cluster).replace(cluster_assign)
 
-        # create graph to show training clusters
-        print("generating training graph...")
-        kmeans_graph(
-            data_known[best_features],
-            metadata_known,
-            "md_cluster_training",
-            args.clabel,
-            weights=1/metadata_known[args.weight])
     # otherwise use saved features list
     else:
-        with open("output/best_features.json", "r") as preset:
+        with open(args.predicton[1], "r") as preset:
             bf_json = json.load(preset)
             best_features = bf_json.get("best features")
-
-    # debug
-    # best_features = ["dN_Distance",
-    #                  "dS_Distance",
-    #                  "AA_Distance",
-    #                  "dN/dS_Distance"]
-
-    # create kmeans on all data using selected features
-    print("classifying all data...")
-    cluster = create_kmeans(
-        data_norm[best_features],
-        k=2,
-        weights=1 / metadata[args.weight])
-    predict = get_predict(cluster, metadata, args.clabel)
-
-    print(metadata.columns)
-    exit()
+            cluster_assign = bf_json.get("cluster assign")
+            from joblib import load
+            km = load(args.predicton)
+            cluster = km.predict(
+                data_known,
+                sample_weight=(None
+                               if args.weight is None
+                               else 1 / metadata_known[args.weight]))
+            predict = pd.Series(cluster).replace(cluster_assign)
+        exit()
 
     # save output
     print("saving new output...")
@@ -522,24 +478,62 @@ def main():
     df = pd.concat([data_norm[best_features], predict], axis=1)
 
     # generate and output graph
-    print("generating final graph...")
+    print("generating graphs...")
     out = sns.pairplot(
         data=df,
         vars=df.columns[0:data_norm[best_features].shape[1]],
         hue="predict"
     )
-    out.savefig("output/{}.png".format("md_cluster_inc_unknown"))
+    out.savefig("{}.png".format(args.out))
+
+    fig, ax = plt.pyplot.subplots(nrows=1, ncols=1)
+    metrics.plot_confusion_matrix(
+        km,
+        data_known,
+        metadata_known[args.clabel],
+        ax=ax,
+        normalize="true")
+    ax.grid(False)
+    fig.savefig("{}.cm.png".format(args.out))
 
     print("...done!")
+
+    if args.predicton is None:
+
+        print("would you like to save the trained classifier? (y/n)")
+        while 1:
+            answer = input("> ")
+            if answer in ["y", "yes"]:
+                if not os.path.exists("output/forests"):
+                    os.makedirs("output/forests")
+                from joblib import dump
+                i = 0
+                while os.path.exists(
+                        "output/classifiers/classifier{}.joblib".format(i)):
+                    i += 1
+                dump(km, "output/classifiers/kmeans{}.joblib".format(i))
+                # save best features to json file
+                bf_json = json.dumps(
+                    {"best features": best_features,
+                     "cluster assign": cluster_assign},
+                    indent=4)
+                i = 0
+                while os.path.exists(
+                        "output/classifiers/km_feat{}.joblib".format(i)):
+                    i += 1
+                with open(
+                    "output/classifiers/km_feat{}.joblib".format(i), "w") \
+                        as preset:
+                    preset.write(bf_json)
+                break
+            elif answer in ["n", "no"]:
+                break
+            else:
+                continue
 
 
 if __name__ == "__main__":
     main()
     # ----- Things I would like to add for completeness: -----
-    # TODO better error checking (are colname arguments valid? etc)
-    # TODO increased and clear comments and documentation
-    # TODO add argument for label to minimize error for, instead of max'ing BA
-    # TODO add logging of printed output
-    # TODO add optional debug log which only writes to file
-    # TODO add optional argument to not impute data
-    # TODO add option to test ba on full set, and handling, default to full set
+    # TODO save the classifier (dump) / read in saved classifier
+    # TODO

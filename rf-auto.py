@@ -402,13 +402,23 @@ def main():
     df = pd.concat([data_norm, predict], axis=1)
 
     # generate and output graph
-    print("generating final graph...")
+    print("generating final graphs...")
     out = sns.pairplot(
         data=df,
         vars=df.columns[0:data_norm.shape[1]],
         hue="predict"
     )
     out.savefig("{}.png".format(args.out))
+
+    fig, ax = plt.pyplot.subplots(nrows=1, ncols=1)
+    metrics.plot_confusion_matrix(
+        forest,
+        data_known,
+        metadata_known[args.clabel],
+        ax=ax,
+        normalize="true")
+    ax.grid(False)
+    fig.savefig("{}.cm.png".format(args.out))
 
     print("...done!")
 
@@ -422,9 +432,9 @@ def main():
                     os.makedirs("output/forests")
                 from joblib import dump
                 i = 0
-                while os.path.exists("output/forest{}.joblib".format(i)):
+                while os.path.exists("output/classifiers/classifier{}.joblib".format(i)):
                     i += 1
-                dump(forest, "output/forests/forest{}.joblib".format(i))
+                dump(forest, "output/classifiers/forest{}.joblib".format(i))
                 break
             elif answer in ["n", "no"]:
                 break
@@ -434,3 +444,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+    # TODO when using preset classifier output measures (BA, confusion matrix?)
+    # TODO documentation
