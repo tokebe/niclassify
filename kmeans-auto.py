@@ -106,8 +106,6 @@ def get_predict(cluster, metadata_known, c_label="Status"):
         except KeyError:  # catches nan values
             continue
 
-    # print(matches)
-
     # convert frequencies to proportions
     for key, val in matches.copy().items():
         matches[key] = [x / sum(val) for x in val]
@@ -168,7 +166,6 @@ def test_features(data_known, metadata_known, c_label="Status", w_label=None):
     ba = []
     nerr = []
     ierr = []
-    # TODO turn this into its own function to re-use in test
     for i in range(N_TRIALS):
         # make cluster
         km = create_kmeans(
@@ -432,7 +429,6 @@ def main():
             best_features = get_best_features_ba(
                 data_norm, metadata, args.clabel, args.weight)
 
-        print("classifying all data...")
         km = create_kmeans(
             data_known,
             k=2,
@@ -444,26 +440,63 @@ def main():
             sample_weight=(None
                            if args.weight is None
                            else 1 / metadata_known[args.weight]))
-        # get cluster assignments
+        # get cluster assignments for known
         cluster_assign = get_predict(cluster, metadata_known, args.clabel)
         # get predictions
         predict = pd.Series(cluster).replace(cluster_assign)
+        predict = predict.to_frame()
+        predict.rename(
+            columns={predict.columns[0]: "predict"}, inplace=True)
+
+        # print("saving confusion matrix...")
+        # labels = metadata_known[args.clabel].unique().tolist()
+        # cm = metrics.confusion_matrix(
+        #     metadata_known[args.clabel],
+        #     predict,
+        #     normalize='true',
+        #     labels=labels)
+        # cm_plot = sns.heatmap(pd.DataFrame(cm), annot=True, cmap="viridis")
+        # cm_plot.set_xticklabels(labels)
+        # cm_plot.set_yticklabels(labels)
+        # plt.pyplot.xlabel("Predicted label")
+        # plt.pyplot.ylabel("True label")
+        # plt.pyplot.savefig("{}.cm.png".format(args.out))
+
+        print("classifying all data...")
+        cluster = km.predict(
+            data_norm,
+            sample_weight=(None
+                           if args.weight is None
+                           else 1 / metadata_known[args.weight]))
+        # get cluster assignments for known
+        cluster_assign = get_predict(cluster, metadata_known, args.clabel)
+        # get predictions
+        predict = pd.Series(cluster).replace(cluster_assign)
+        predict = predict.to_frame()
+        predict.rename(
+            columns={predict.columns[0]: "predict"}, inplace=True)
 
     # otherwise use saved features list
     else:
         with open(args.predicton[1], "r") as preset:
             bf_json = json.load(preset)
             best_features = bf_json.get("best features")
-            cluster_assign = bf_json.get("cluster assign")
+            cluster_assign = {
+                int(k): v for k, v in bf_json.get("cluster assign").items()}
             from joblib import load
-            km = load(args.predicton)
+            km = load(args.predicton[0])
             cluster = km.predict(
-                data_known,
+                data_norm,
                 sample_weight=(None
                                if args.weight is None
                                else 1 / metadata_known[args.weight]))
             predict = pd.Series(cluster).replace(cluster_assign)
-        exit()
+            # print(predict)
+            predict = predict.to_frame()
+            predict.rename(
+                columns={predict.columns[0]: "predict"}, inplace=True)
+
+    # print(predict)
 
     # save output
     print("saving new output...")
@@ -477,24 +510,16 @@ def main():
     del df
     df = pd.concat([data_norm[best_features], predict], axis=1)
 
+    # print(df.head())
+
     # generate and output graph
-    print("generating graphs...")
+    print("generating graph...")
     out = sns.pairplot(
         data=df,
         vars=df.columns[0:data_norm[best_features].shape[1]],
         hue="predict"
     )
     out.savefig("{}.png".format(args.out))
-
-    fig, ax = plt.pyplot.subplots(nrows=1, ncols=1)
-    metrics.plot_confusion_matrix(
-        km,
-        data_known,
-        metadata_known[args.clabel],
-        ax=ax,
-        normalize="true")
-    ax.grid(False)
-    fig.savefig("{}.cm.png".format(args.out))
 
     print("...done!")
 
@@ -504,12 +529,14 @@ def main():
         while 1:
             answer = input("> ")
             if answer in ["y", "yes"]:
-                if not os.path.exists("output/forests"):
-                    os.makedirs("output/forests")
+                if not os.path.exists("output/classifiers"):
+                    os.makedirs("output/classifiers")
+                if not os.path.exists("output/classifiers/kmeans"):
+                    os.makedirs("output/classifiers/kmeans")
                 from joblib import dump
                 i = 0
                 while os.path.exists(
-                        "output/classifiers/classifier{}.joblib".format(i)):
+                        "output/classifiers/kmeans{}.joblib".format(i)):
                     i += 1
                 dump(km, "output/classifiers/kmeans{}.joblib".format(i))
                 # save best features to json file
@@ -519,10 +546,10 @@ def main():
                     indent=4)
                 i = 0
                 while os.path.exists(
-                        "output/classifiers/km_feat{}.joblib".format(i)):
+                        "output/classifiers/kmeans/km_feat{}.joblib".format(i)):
                     i += 1
                 with open(
-                    "output/classifiers/km_feat{}.joblib".format(i), "w") \
+                    "output/classifiers/kmeans/km_feat{}.joblib".format(i), "w") \
                         as preset:
                     preset.write(bf_json)
                 break
@@ -534,6 +561,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # ----- Things I would like to add for completeness: -----
-    # TODO save the classifier (dump) / read in saved classifier
-    # TODO

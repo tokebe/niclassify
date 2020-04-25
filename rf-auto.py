@@ -63,7 +63,6 @@ def train_forest(
         data_known,
         metadata_known,
         c_label="Status",
-        w_label=None,
         multirun=1):
     print("  obtaining best hyperparameters...")
 
@@ -100,11 +99,6 @@ def train_forest(
             scoring='balanced_accuracy',
             cv=StratifiedKFold(n_splits=10))
 
-        # fit the search model
-        # if w_label is not None:
-        #     rs.fit(x_train, y_train, fit_params={
-        #            'classifier__sample_weight': 1 / metadata_known[w_label]})
-        # else:
         rs.fit(x_train, y_train)
 
         train_predict = rs.best_estimator_.predict(x_train)
@@ -205,12 +199,6 @@ def getargs(parser):
         help="path/filename of output file, defaults to output/output.csv. \
             Only export to csv is supported.")
     parser.add_argument(
-        "-w",
-        "--weight",
-        nargs='?',
-        default=None,
-        help="column name to be used for weighted clustering, defaults to N")
-    parser.add_argument(
         "-n",
         "--nanval",
         nargs='*',
@@ -292,11 +280,6 @@ def main():
         dcol[0] -= 1
         dcol[1] += 1
 
-    # drop rows with na count. migh need to change for more general program.
-    if args.weight is not None:
-        raw_data = raw_data[raw_data[args.weight].notnull()]
-        raw_data.reset_index(drop=True, inplace=True)
-
     # replace unknown values with nan
     raw_data.replace({
         "unknown": np.nan,
@@ -359,7 +342,18 @@ def main():
         # get classifier (train it)
         print("training random forest...")
         forest = train_forest(data_known, metadata_known,
-                              args.clabel, args.weight, args.multirun)
+                              args.clabel, args.multirun)
+
+        print("saving confusion matrix...")
+        fig, ax = plt.pyplot.subplots(nrows=1, ncols=1)
+        metrics.plot_confusion_matrix(
+            forest,
+            data_known,
+            metadata_known[args.clabel],
+            ax=ax,
+            normalize="true")
+        ax.grid(False)
+        fig.savefig("{}.cm.png".format(args.out))
     # stuff for opening provided classifier
     else:
         from joblib import load
@@ -384,10 +378,11 @@ def main():
 
     # make predictons
     predict = pd.DataFrame(forest.predict(data_norm))
+    predict.rename(columns={predict.columns[0]: "predict"}, inplace=True)
     predict_prob = pd.DataFrame(forest.predict_proba(data_norm))
     predict_prob.rename(
         columns={predict_prob.columns[0]: "predict prob"}, inplace=True)
-    predict.rename(columns={predict.columns[0]: "predict"}, inplace=True)
+
 
     # save output
     print("saving new output...")
@@ -410,16 +405,6 @@ def main():
     )
     out.savefig("{}.png".format(args.out))
 
-    fig, ax = plt.pyplot.subplots(nrows=1, ncols=1)
-    metrics.plot_confusion_matrix(
-        forest,
-        data_known,
-        metadata_known[args.clabel],
-        ax=ax,
-        normalize="true")
-    ax.grid(False)
-    fig.savefig("{}.cm.png".format(args.out))
-
     print("...done!")
 
     if args.predicton is None:
@@ -428,13 +413,15 @@ def main():
         while 1:
             answer = input("> ")
             if answer in ["y", "yes"]:
-                if not os.path.exists("output/forests"):
-                    os.makedirs("output/forests")
+                if not os.path.exists("output/classifiers"):
+                    os.makedirs("output/classifiers")
+                if not os.path.exists("output/classifiers/forests"):
+                    os.makedirs("output/classifiers/forests")
                 from joblib import dump
                 i = 0
-                while os.path.exists("output/classifiers/classifier{}.joblib".format(i)):
+                while os.path.exists("output/classifiers/forests/forest{}.joblib".format(i)):
                     i += 1
-                dump(forest, "output/classifiers/forest{}.joblib".format(i))
+                dump(forest, "output/classifiers/forests/forest{}.joblib".format(i))
                 break
             elif answer in ["n", "no"]:
                 break
@@ -444,5 +431,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # TODO when using preset classifier output measures (BA, confusion matrix?)
-    # TODO documentation
