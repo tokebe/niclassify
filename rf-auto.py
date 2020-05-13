@@ -383,7 +383,6 @@ def main():
     predict_prob.rename(
         columns={predict_prob.columns[0]: "predict prob"}, inplace=True)
 
-
     # save output
     print("saving new output...")
     df = pd.concat([metadata, predict, predict_prob, data_norm], axis=1)
