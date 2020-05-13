@@ -2,19 +2,25 @@
 
 Strictly to be used in concert with the rest of the niclassify package.
 """
+try:
+    import os
+    import pandas as pd
+    import re
+    import numpy as np
+    from sklearn import preprocessing
+    import seaborn as sns
+    import matplotlib as plt
+    from sklearn import metrics
+    from sklearn.impute import SimpleImputer
 
-import os
-import pandas as pd
-import re
-import numpy as np
-from sklearn import preprocessing
-import seaborn as sns
-import matplotlib as plt
-from sklearn import metrics
-from sklearn.impute import SimpleImputer
+except ModuleNotFoundError:
+    print("Missing required modules. Install requirements by running")
+    print("'python -m pip install -r requirements.txt'")
+
 
 sns.set()
 
+# possible null values to be converted to np.nan
 NANS = [
     "nan",
     "NA",
@@ -49,8 +55,6 @@ def assure_path():
     """
     if not os.path.exists("output"):
         os.makedirs("output")
-    if not os.path.exists("output/tree_images"):
-        os.makedirs("output/tree_images")
     if not os.path.exists("output/classifiers"):
         os.makedirs("output/classifiers")
     if not os.path.exists("output/classifiers/forests"):
@@ -118,7 +122,7 @@ def get_data(parser, filename, excel=None):
     raw_data.replace({
         "unknown": np.nan,
         "Unknown": np.nan,
-        "0": np.nan})
+        "0": np.nan})  # replace string zero with nan (shouldn't exist)
 
     return raw_data  # return extracted data
 
@@ -143,7 +147,7 @@ def get_col_range(parser, rangestring):
     else:
         dcol = rangestring.split(":")
         dcol = [int(x) for x in dcol]
-        dcol[0] -= 1
+        dcol[0] -= 1 # adjust numbers to be 0-indexed and work for Python slice
         dcol[1] += 1
 
     return dcol
@@ -167,11 +171,11 @@ def scale_data(data):
         data,
         columns=cols_cat,
         prefix=cols_cat, drop_first=True)
-    data_cols = data_np.columns.values
+    data_cols = data_np.columns.values  # save column names
     data_np = data_np.to_numpy()
     scaler = preprocessing.MinMaxScaler()
     data_norm = pd.DataFrame(scaler.fit_transform(data_np))
-    data_norm.columns = data_cols
+    data_norm.columns = data_cols  # add column names back
 
     return data_norm
 

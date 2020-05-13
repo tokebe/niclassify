@@ -1,30 +1,10 @@
+"""Setup for commend-line arguments on run-time.
+
+Change to add new arguments are required.
+"""
 try:
-    import os
-    # import sys
     import argparse
-    import re
-    import xlrd
 
-    import pandas as pd
-    import matplotlib as plt
-    import seaborn as sns
-    import numpy as np
-    import json
-
-    from subprocess import call
-
-    from sklearn import preprocessing
-
-    from sklearn.impute import SimpleImputer
-    from sklearn import metrics
-    from sklearn.ensemble import RandomForestClassifier
-    from sklearn.model_selection import RandomizedSearchCV
-    from sklearn.model_selection import train_test_split
-    from sklearn.model_selection import StratifiedKFold
-
-    from sklearn.tree import export_graphviz
-
-    # from itertools import chain, combinations
 except ModuleNotFoundError:
     print("Missing required modules. Install requirements by running")
     print("'python -m pip install -r requirements.txt'")

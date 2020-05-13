@@ -9,12 +9,10 @@ try:
     # import rest of program modules
     import core
 
-    # from itertools import chain, combinations
 except ModuleNotFoundError:
     print("Missing required modules. Install requirements by running")
     print("'python -m pip install -r requirements.txt'")
     exit(-1)
-
 
 sns.set()
 
@@ -53,6 +51,7 @@ def main():
     data_norm = core.scale_data(data)
 
     if args.predicton is None:  # no classifier provided; train a new one
+        # get only known data and metadata
         data_known, metadata_known = core.get_known(
             data_norm, metadata, args.clabel)
 
@@ -61,6 +60,7 @@ def main():
         forest = core.train_forest(data_known, metadata_known,
                                    args.clabel, args.multirun)
 
+        # save confusion matrix
         print("saving confusion matrix...")
         core.save_confm(forest, data_known,
                         metadata_known, args.clabel, args.out)
@@ -73,10 +73,13 @@ def main():
     print("imputing data...")
     data_norm = core.impute_data(data_norm)
 
-    # make predictons
+    # make predictions
     predict = pd.DataFrame(forest.predict(data_norm))
+    # rename predict column
     predict.rename(columns={predict.columns[0]: "predict"}, inplace=True)
+    # get predict probabilities
     predict_prob = pd.DataFrame(forest.predict_proba(data_norm))
+    # rename column
     predict_prob.rename(
         columns={predict_prob.columns[0]: "predict prob"}, inplace=True)
 
@@ -94,6 +97,7 @@ def main():
 
     print("...done!")
 
+    # if classifier is new, give option to save
     if args.predicton is None:
         core.save_clf_dialog(forest)
 
