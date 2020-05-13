@@ -4,12 +4,15 @@ Strictly to be used in concert with the rest of the niclassify package.
 """
 try:
     import os
-    import pandas as pd
     import re
+    import xlrd
+
+    import pandas as pd
     import numpy as np
-    from sklearn import preprocessing
-    import seaborn as sns
     import matplotlib as plt
+    import seaborn as sns
+
+    from sklearn import preprocessing
     from sklearn import metrics
     from sklearn.impute import SimpleImputer
 
@@ -47,28 +50,32 @@ NANS = [
     "Unknown"
 ]
 
+required_folders = [
+    "output",
+    "output/classifiers",
+    "output/classifiers/forests"
+]
+
 
 def assure_path():
     """Assure that all required folders exist.
 
     Creates required folders if they do not.
     """
-    if not os.path.exists("output"):
-        os.makedirs("output")
-    if not os.path.exists("output/classifiers"):
-        os.makedirs("output/classifiers")
-    if not os.path.exists("output/classifiers/forests"):
-        os.makedirs("output/classifiers/forests")
+    for f in required_folders:
+        if not os.path.exists(f):
+            os.makedirs(f)
 
 
-def get_data(parser, filename, excel=None):
+def get_data(parser, filename, excel_sheet=None):
     """Get raw data from a given filename.
 
     Args:
         parser (ArgumentParser): The argument parse for the program. Used for
             raising errors.
         filename (str): The file path/name.
-        excel (str): The sheet name if using an excel sheet. Defaults to None.
+        excel_sheet (str): The sheet name if using an excel_sheet sheet.
+            Defaults to None.
 
     Returns:
         DataFrame: The extracted DataFrame.
@@ -79,29 +86,32 @@ def get_data(parser, filename, excel=None):
         filename), "file {} does not exist.".format(filename)
 
     # get raw data
-    if ".xlsx" in filename[-5:]:  # using excel file
-        if excel is not None:  # sheet given
-            if excel.isdigit():  # sheet number
-                raw_data = pd.read_excel(
+    if ".xlsx" in filename[-5:]:  # using excel_sheet file
+        if excel_sheet is not None:  # sheet given
+            if excel_sheet.isdigit():  # sheet number
+                raw_data = pd.read_excel_sheet(
                     filename,
-                    sheet_name=int(excel) - 1,
+                    sheet_name=int(excel_sheet) - 1,
                     na_values=NANS,
                     keep_default_na=True)
             else:  # sheet name
-                raw_data = pd.read_excel(
+                raw_data = pd.read_excel_sheet(
                     filename,
-                    sheet_name=excel,
+                    sheet_name=excel_sheet,
                     na_values=NANS,
                     keep_default_na=True)
         else:  # sheet not given; use default first sheet
-            raw_data = pd.read_excel(
+            raw_data = pd.read_excel_sheet(
                 filename,
                 sheet_name=0,
                 na_values=NANS,
                 keep_default_na=True)
 
     elif ".csv" in filename[-4:]:  # using csv
-        raw_data = pd.read_csv(filename, na_values=NANS, keep_default_na=True)
+        raw_data = pd.read_csv(
+            filename,
+            na_values=NANS,
+            keep_default_na=True)
     elif ".tsv" in filename[-4:]:  # using tsv
         raw_data = pd.read_csv(
             filename,
@@ -118,7 +128,7 @@ def get_data(parser, filename, excel=None):
         parser.error(
             "data file type is unsupported, or file extension not included")
 
-    # replace unknown values with nan
+    # replace unknown values with nan (should be redundant)
     raw_data.replace({
         "unknown": np.nan,
         "Unknown": np.nan,
@@ -145,12 +155,12 @@ def get_col_range(parser, rangestring):
     if not re.match("[0-9]+:[0-9]+", rangestring):
         parser.error("data column selection range format invalid (see -h).")
     else:
-        dcol = rangestring.split(":")
-        dcol = [int(x) for x in dcol]
-        dcol[0] -= 1 # adjust numbers to be 0-indexed and work for Python slice
-        dcol[1] += 1
+        data_cols = rangestring.split(":")
+        data_cols = [int(x) for x in data_cols]
+        data_cols[0] -= 1  # adjust numbers to be 0-indexed and work for slice
+        data_cols[1] += 1
 
-    return dcol
+    return data_cols
 
 
 def scale_data(data):
@@ -166,11 +176,12 @@ def scale_data(data):
     # scale data
     print("scaling data...")
     # get categorical columns for dummy variable encoding
-    cols_cat = list(data.select_dtypes(exclude=[np.number]).columns.values)
+    category_cols = list(
+        data.select_dtypes(exclude=[np.number]).columns.values)
     data_np = pd.get_dummies(
         data,
-        columns=cols_cat,
-        prefix=cols_cat, drop_first=True)
+        columns=category_cols,
+        prefix=category_cols, drop_first=True)
     data_cols = data_np.columns.values  # save column names
     data_np = data_np.to_numpy()
     scaler = preprocessing.MinMaxScaler()
@@ -180,13 +191,13 @@ def scale_data(data):
     return data_norm
 
 
-def get_known(data, metadata, clabel):
+def get_known(data, metadata, class_column):
     """Get only known data/metadata given the class label.
 
     Args:
         data (DataFrame): All data, preferably normalized.
         metadata (DataFrame): All metadata, including class label.
-        clabel (str): Name of class label column in metadata.
+        class_column (str): Name of class label column in metadata.
 
     Returns:
         tuple: tuple of known data and metadata DataFrames, where class label
@@ -195,8 +206,8 @@ def get_known(data, metadata, clabel):
     """
     # split into known and unknown
     print("splitting data...")
-    data_known = data[metadata[clabel].notnull()]
-    metadata_known = metadata[metadata[clabel].notnull()]
+    data_known = data[metadata[class_column].notnull()]
+    metadata_known = metadata[metadata[class_column].notnull()]
     # reset indices
     data_known.reset_index(drop=True, inplace=True)
     metadata_known.reset_index(drop=True, inplace=True)
@@ -209,7 +220,7 @@ def get_known(data, metadata, clabel):
     metadata_known.reset_index(drop=True, inplace=True)
 
     # debug. prints counts of each existing class label.
-    # v = metadata_known[args.clabel].value_counts()
+    # v = metadata_known[args.class_column].value_counts()
     # print("  {} {}\n  {} {}".format(
     #     v[0],
     #     v.index[0],
@@ -219,21 +230,21 @@ def get_known(data, metadata, clabel):
     return data_known, metadata_known
 
 
-def save_confm(clf, data_known, metadata_known, clabel, out):
+def save_confm(clf, data_known, metadata_known, class_column, out):
     """Save a confusion matrix plot of a trained classifier.
 
     Args:
         clf (Classifier): A classifier.
         data_known (DataFrame): Known Data.
         metadata_known (DataFrame): Known Metadata, including class labels.
-        clabel (str): Name of class label column in metadata.
+        class_column (str): Name of class label column in metadata.
         out (str): file path/name for output image.
     """
     fig, ax = plt.pyplot.subplots(nrows=1, ncols=1)
     metrics.plot_confusion_matrix(
         clf,
         data_known,
-        metadata_known[clabel],
+        metadata_known[class_column],
         ax=ax,
         normalize="true")
     ax.grid(False)
@@ -251,12 +262,12 @@ def impute_data(data):
 
     """
     # get categorical columns for dummy variable encoding
-    cols_cat = list(data.select_dtypes(
+    category_cols = list(data.select_dtypes(
         exclude=[np.number]).columns.values)
     data_np = pd.get_dummies(
         data,
-        columns=cols_cat,
-        prefix=cols_cat, drop_first=True)
+        columns=category_cols,
+        prefix=category_cols, drop_first=True)
     data_cols = data_np.columns.values
     data_np = data_np.to_numpy()
     imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')

@@ -1,7 +1,6 @@
 try:
     # import main libraries
     import argparse
-    import xlrd
 
     import pandas as pd
     import seaborn as sns
@@ -31,43 +30,44 @@ def main():
     core.assure_path()
 
     # get raw data
-    raw_data = core.get_data(parser, args.data, args.excel)
+    raw_data = core.get_data(parser, args.data, args.excel_sheet)
 
     # get column range for data
-    dcol = core.get_col_range(parser, args.dcol)
+    data_cols = core.get_col_range(parser, args.data_cols)
 
     # remove instances of >1 group count
     raw_data = raw_data.loc[raw_data["Group_Count"] <= 1]
     raw_data.reset_index(drop=True, inplace=True)
 
     # split data into feature data and metadata
-    data = raw_data.iloc[:, dcol[0]:dcol[1]]
-    metadata = raw_data.drop(raw_data.columns[dcol[0]:dcol[1]], axis=1)
+    data = raw_data.iloc[:, data_cols[0]:data_cols[1]]
+    metadata = raw_data.drop(
+        raw_data.columns[data_cols[0]:data_cols[1]], axis=1)
 
     # convert class labels to lower
-    metadata.loc[:, args.clabel] = metadata[args.clabel].str.lower()
+    metadata.loc[:, args.class_column] = metadata[args.class_column].str.lower()
 
     # scale data
     data_norm = core.scale_data(data)
 
-    if args.predicton is None:  # no classifier provided; train a new one
+    if args.predict_using is None:  # no classifier provided; train a new one
         # get only known data and metadata
         data_known, metadata_known = core.get_known(
-            data_norm, metadata, args.clabel)
+            data_norm, metadata, args.class_column)
 
-        # get classifier (train it)
+        # train classifier
         print("training random forest...")
         forest = core.train_forest(data_known, metadata_known,
-                                   args.clabel, args.multirun)
+                                   args.class_column, args.multirun)
 
         # save confusion matrix
         print("saving confusion matrix...")
         core.save_confm(forest, data_known,
-                        metadata_known, args.clabel, args.out)
+                        metadata_known, args.class_column, args.out)
 
     else:   # classifier provided; load it in
         from joblib import load
-        forest = load(args.predicton)
+        forest = load(args.predict_using)
 
     # impute data
     print("imputing data...")
@@ -98,7 +98,7 @@ def main():
     print("...done!")
 
     # if classifier is new, give option to save
-    if args.predicton is None:
+    if args.predict_using is None:
         core.save_clf_dialog(forest)
 
 

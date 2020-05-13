@@ -1,13 +1,10 @@
 try:
-    import xlrd
-
     import numpy as np
 
     from copy import deepcopy
 
     from sklearn import metrics
     from sklearn.ensemble import RandomForestClassifier
-    from sklearn.model_selection import GridSearchCV
     from sklearn.model_selection import RandomizedSearchCV
     from sklearn.model_selection import train_test_split
     from sklearn.model_selection import StratifiedKFold
@@ -51,7 +48,6 @@ def train_forest(data_known, metadata_known, c_label="Status", multirun=1):
 
     # hyperparameters to optimize
     parameters = {
-        # 'n_estimators': np.linspace(500, 1000).astype(int),
         'max_depth': list(np.linspace(10, 50).astype(int)),
         'min_samples_split': list(np.arange(0.05, 0.5, 0.05))}
 
@@ -77,8 +73,14 @@ def train_forest(data_known, metadata_known, c_label="Status", multirun=1):
         y_train, best_train_predict)
     best_test_ba = metrics.balanced_accuracy_score(y_test, best_test_predict)
 
+    print("  found best hyperparameters (as follows):")
+    for param, val in rs.best_params_.items():
+        print("    {}: {}".format(param, val))
+
     if multirun > 1:
-        for i in range(multirun):
+        print("  generating {} classifiers using found parameters...".format(
+            multirun))
+        for m in range(multirun):
 
             x_train, x_test, y_train, y_test = train_test_split(
                 data_known, metadata_known[c_label],
@@ -86,7 +88,7 @@ def train_forest(data_known, metadata_known, c_label="Status", multirun=1):
                 test_size=0.2)  # previously .15
 
             print(
-                "    testing forest {} of {}...".format(i + 1, multirun),
+                "    testing forest {} of {}...".format(m + 1, multirun),
                 end="\r")
 
             model = rs.best_estimator_.fit(x_train, y_train)
@@ -129,9 +131,8 @@ def train_forest(data_known, metadata_known, c_label="Status", multirun=1):
                 # deep copy ensures best model is saved, otherwise an alias
                 # would be saved and overwritten on next fit\
 
-    print("  found best hyperparameters (as follows):")
-    for key, val in rs.best_params_.items():
-        print("    {}: {}".format(key, val))
+    if multirun > 1:
+        print("\n")
 
     print("out-of-bag score: {}".format(best_model.oob_score_))
     print("---")

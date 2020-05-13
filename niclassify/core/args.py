@@ -24,15 +24,15 @@ def getargs(parser):
         "data",
         help="path/filename of data to be imported for classification")
     parser.add_argument(
-        "dcol",
+        "data_cols",
         help="column number (1-indexed)\
              range of clustering data in format #:#")
     parser.add_argument(
-        "clabel",
+        "class_column",
         help="column name for classification label to be predicted")
     parser.add_argument(
         "-e",
-        "--excel",
+        "--excel_sheet",
         nargs='?',
         default=1,
         help="sheet number (1-indexed) or name, if importing from excel.\
@@ -59,7 +59,7 @@ def getargs(parser):
             select the best-performing one")
     parser.add_argument(
         "-p",
-        "--predicton",
+        "--predict_using",
         nargs='?',
         default=None,
         help="Use a previously saved random forest to predict on data, \
