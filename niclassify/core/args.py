@@ -4,10 +4,11 @@ Change to add new arguments are required.
 """
 try:
     import argparse
+    import logging
 
 except ModuleNotFoundError:
-    print("Missing required modules. Install requirements by running")
-    print("'python -m pip install -r requirements.txt'")
+    logging.error("Missing required modules. Install requirements by running")
+    logging.error("'python -m pip install -r requirements.txt'")
 
 
 def getargs(parser):

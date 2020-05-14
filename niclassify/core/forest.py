@@ -1,4 +1,10 @@
+"""Module containing forest training function.
+
+In theory could be modified to contain other classifier trainers.
+"""
 try:
+    import logging
+
     import numpy as np
 
     from copy import deepcopy
@@ -11,17 +17,17 @@ try:
 
     # from itertools import chain, combinations
 except ModuleNotFoundError:
-    print("Missing required modules. Install requirements by running")
-    print("'python -m pip install -r requirements.txt'")
+    logging.error("Missing required modules. Install requirements by running")
+    logging.error("'python -m pip install -r requirements.txt'")
 
 
-def train_forest(data_known, metadata_known, c_label="Status", multirun=1):
+def train_forest(data_known, metadata_known, class_col="Status", multirun=1):
     """Train a random forest.
 
     Args:
         data_known (DataFrame): Known Data.
         metadata_known (DataFram): Known Metadata, including class label.
-        c_label (str, optional): Name of metadata column containing class
+        class_col (str, optional): Name of metadata column containing class
             labels. Defaults to "Status".
         multirun (int, optional): Number of times to run. Defaults to 1.
 
@@ -29,11 +35,11 @@ def train_forest(data_known, metadata_known, c_label="Status", multirun=1):
         RandomForest: The Trained Random Forest.
 
     """
-    print("  obtaining best hyperparameters...")
+    logging.info("  obtaining best hyperparameters...")
 
     x_train, x_test, y_train, y_test = train_test_split(
-        data_known, metadata_known[c_label],
-        stratify=metadata_known[c_label],
+        data_known, metadata_known[class_col],
+        stratify=metadata_known[class_col],
         test_size=0.2)  # previously .15
 
     best_train_predict = None
@@ -41,10 +47,8 @@ def train_forest(data_known, metadata_known, c_label="Status", multirun=1):
     best_train_ba = 0
     best_test_ba = 0
     best_model = None
-    train_nerr = 100
-    train_ierr = 100
-    test_nerr = 100
-    test_ierr = 100
+    best_train_cm = None
+    best_test_cm = None
 
     # hyperparameters to optimize
     parameters = {
@@ -73,18 +77,32 @@ def train_forest(data_known, metadata_known, c_label="Status", multirun=1):
         y_train, best_train_predict)
     best_test_ba = metrics.balanced_accuracy_score(y_test, best_test_predict)
 
-    print("  found best hyperparameters (as follows):")
+    logging.info("  found best hyperparameters (as follows):")
     for param, val in rs.best_params_.items():
-        print("    {}: {}".format(param, val))
+        logging.info("    {}: {}".format(param, val))
+
+    best_train_cm = metrics.confusion_matrix(
+        y_train,
+        best_train_predict,
+        labels=metadata_known[class_col].unique(),
+        normalize='all'
+    )
+    best_test_cm = metrics.confusion_matrix(
+        y_test,
+        best_test_predict,
+        labels=metadata_known[class_col].unique(),
+        normalize='all'
+    )
 
     if multirun > 1:
-        print("  generating {} classifiers using found parameters...".format(
-            multirun))
+        logging.info(
+            "  generating {} classifiers using found parameters...".format(
+                multirun))
         for m in range(multirun):
 
             x_train, x_test, y_train, y_test = train_test_split(
-                data_known, metadata_known[c_label],
-                stratify=metadata_known[c_label],
+                data_known, metadata_known[class_col],
+                stratify=metadata_known[class_col],
                 test_size=0.2)  # previously .15
 
             print(
@@ -105,27 +123,18 @@ def train_forest(data_known, metadata_known, c_label="Status", multirun=1):
                 best_train_ba = train_ba
                 best_test_ba = test_ba
 
-                train_nerr = (y_train[
-                    (y_train == "native")
-                    & (train_predict == "introduced")].shape[0]
-                    / y_train[
-                    y_train == "native"].shape[0]) * 100
-                train_ierr = (y_train[
-                    (y_train == "introduced")
-                    & (train_predict == "native")].shape[0]
-                    / y_train[
-                        y_train == "introduced"].shape[0]) * 100
-
-                test_nerr = (y_test[
-                    (y_test == "native")
-                    & (test_predict == "introduced")].shape[0]
-                    / y_test[
-                        y_test == "native"].shape[0]) * 100
-                test_ierr = (y_test[
-                    (y_test == "introduced")
-                    & (test_predict == "native")].shape[0]
-                    / y_test[
-                        y_test == "introduced"].shape[0]) * 100
+                best_train_cm = metrics.confusion_matrix(
+                    y_train,
+                    train_predict,
+                    labels=metadata_known[class_col].unique(),
+                    normalize='all'
+                )
+                best_test_cm = metrics.confusion_matrix(
+                    y_test,
+                    test_predict,
+                    labels=metadata_known[class_col].unique(),
+                    normalize='all'
+                )
 
                 best_model = deepcopy(model)
                 # deep copy ensures best model is saved, otherwise an alias
@@ -134,25 +143,33 @@ def train_forest(data_known, metadata_known, c_label="Status", multirun=1):
     if multirun > 1:
         print("\n")
 
-    print("out-of-bag score: {}".format(best_model.oob_score_))
-    print("---")
+    logging.info("out-of-bag score: {}".format(best_model.oob_score_))
+    logging.info("---")
 
-    # TODO fix these to calculate off best value and not latest
-
-    print("train set BA: {}".format(best_train_ba))
-    print(
-        "train set: Percent of Native mislabled to Introduced: {:.2f}%".format(
-            train_nerr))
-    print(
-        "train set: Percent of Introduced mislabled to Native: {:.2f}%".format(
-            train_ierr))
-    print("---")
-    print("test set BA : {}".format(best_test_ba))
-    print(
-        "test set: Percent of Native mislabled to Introduced: {:.2f}%".format(
-            test_nerr))
-    print(
-        "test set: Percent of Introduced mislabled to Native: {:.2f}%".format(
-            test_ierr))
+    logging.info("train set BA: {}".format(best_train_ba))
+    labels = metadata_known[class_col].unique()
+    # logging.info(best_train_cm)
+    for true, pred in np.ndindex(best_train_cm.shape):
+        if true == pred:
+            continue
+        else:
+            logging.info(
+                "train set: percent of {} mislabeled to {}: {:.2f}%".format(
+                    labels[true],
+                    labels[pred],
+                    (best_train_cm[true, pred] * 100)))
+    logging.info("---")
+    logging.info("test set BA : {}".format(best_test_ba))
+    # logging.info(best_test_cm)
+    for true, pred in np.ndindex(best_test_cm.shape):
+        if true == pred:
+            continue
+        else:
+            logging.info(
+                "test set: percent of {} mislabeled to {}: {:.2f}%".format(
+                    labels[true],
+                    labels[pred],
+                    (best_test_cm[true, pred] * 100)))
+    logging.info("---")
 
     return best_model

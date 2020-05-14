@@ -1,5 +1,14 @@
+"""Automatically generate the best possible Random Forest Classifier.
+
+Uses given paramters - quality is limited by number of multirun.
+Gives user option to save trained classifier, as well as use previously trained
+classifier.
+"""
+
 try:
     # import main libraries
+    import os
+    import logging
     import argparse
 
     import pandas as pd
@@ -9,11 +18,28 @@ try:
     import core
 
 except ModuleNotFoundError:
-    print("Missing required modules. Install requirements by running")
-    print("'python -m pip install -r requirements.txt'")
+    logging.error("Missing required modules. Install requirements by running")
+    logging.error("'python -m pip install -r requirements.txt'")
     exit(-1)
 
+# set seaborn theme/format
 sns.set()
+
+# set log filename
+i = 0
+while os.path.exists("rf-auto{}.log".format(i)):
+    i += 1
+logname = "rf-auto{}.log".format(i)
+
+# set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s",
+    handlers=[
+        logging.FileHandler(logname),
+        logging.StreamHandler()
+    ]
+)
 
 
 def main():
@@ -45,7 +71,8 @@ def main():
         raw_data.columns[data_cols[0]:data_cols[1]], axis=1)
 
     # convert class labels to lower
-    metadata.loc[:, args.class_column] = metadata[args.class_column].str.lower()
+    metadata.loc[:, args.class_column] = \
+        metadata[args.class_column].str.lower()
 
     # scale data
     data_norm = core.scale_data(data)
@@ -56,12 +83,12 @@ def main():
             data_norm, metadata, args.class_column)
 
         # train classifier
-        print("training random forest...")
+        logging.info("training random forest...")
         forest = core.train_forest(data_known, metadata_known,
                                    args.class_column, args.multirun)
 
         # save confusion matrix
-        print("saving confusion matrix...")
+        logging.info("saving confusion matrix...")
         core.save_confm(forest, data_known,
                         metadata_known, args.class_column, args.out)
 
@@ -70,7 +97,7 @@ def main():
         forest = load(args.predict_using)
 
     # impute data
-    print("imputing data...")
+    logging.info("imputing data...")
     data_norm = core.impute_data(data_norm)
 
     # make predictions
@@ -84,7 +111,7 @@ def main():
         columns={predict_prob.columns[0]: "predict prob"}, inplace=True)
 
     # save output
-    print("saving new output...")
+    logging.info("saving new output...")
     df = pd.concat([metadata, predict, predict_prob, data_norm], axis=1)
     try:
         df.to_csv(args.out, index=False)
@@ -92,10 +119,10 @@ def main():
         parser.error("intended output folder does not exist!")
 
     # generate and output graph
-    print("generating final graphs...")
+    logging.info("generating final graphs...")
     core.output_graph(data_norm, predict, args.out)
 
-    print("...done!")
+    logging.info("...done!")
 
     # if classifier is new, give option to save
     if args.predict_using is None:

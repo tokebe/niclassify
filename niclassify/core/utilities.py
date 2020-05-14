@@ -6,6 +6,7 @@ try:
     import os
     import re
     import xlrd
+    import logging
 
     import pandas as pd
     import numpy as np
@@ -17,8 +18,8 @@ try:
     from sklearn.impute import SimpleImputer
 
 except ModuleNotFoundError:
-    print("Missing required modules. Install requirements by running")
-    print("'python -m pip install -r requirements.txt'")
+    logging.error("Missing required modules. Install requirements by running")
+    logging.error("'python -m pip install -r requirements.txt'")
 
 
 sns.set()
@@ -174,7 +175,7 @@ def scale_data(data):
 
     """
     # scale data
-    print("scaling data...")
+    logging.info("scaling data...")
     # get categorical columns for dummy variable encoding
     category_cols = list(
         data.select_dtypes(exclude=[np.number]).columns.values)
@@ -205,7 +206,7 @@ def get_known(data, metadata, class_column):
 
     """
     # split into known and unknown
-    print("splitting data...")
+    logging.info("splitting data...")
     data_known = data[metadata[class_column].notnull()]
     metadata_known = metadata[metadata[class_column].notnull()]
     # reset indices
@@ -213,15 +214,15 @@ def get_known(data, metadata, class_column):
     metadata_known.reset_index(drop=True, inplace=True)
 
     # remove null rows from known data
-    print("extracting fully known data...")
+    logging.info("extracting fully known data...")
     data_known = data_known.dropna()
     metadata_known = metadata_known.iloc[data_known.index]
     data_known.reset_index(drop=True, inplace=True)
     metadata_known.reset_index(drop=True, inplace=True)
 
-    # debug. prints counts of each existing class label.
+    # debug. logging.infos counts of each existing class label.
     # v = metadata_known[args.class_column].value_counts()
-    # print("  {} {}\n  {} {}".format(
+    # logging.info("  {} {}\n  {} {}".format(
     #     v[0],
     #     v.index[0],
     #     v[1],
