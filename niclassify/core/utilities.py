@@ -20,6 +20,7 @@ try:
 except ModuleNotFoundError:
     logging.error("Missing required modules. Install requirements by running")
     logging.error("'python -m pip install -r requirements.txt'")
+    exit(-1)
 
 
 sns.set()
@@ -54,7 +55,8 @@ NANS = [
 required_folders = [
     "output",
     "output/classifiers",
-    "output/classifiers/forests"
+    "output/classifiers/forests",
+    "output/logs"
 ]
 
 
@@ -68,7 +70,7 @@ def assure_path():
             os.makedirs(f)
 
 
-def get_data(parser, filename, excel_sheet=None):
+def get_data(filename, excel_sheet=None):
     """Get raw data from a given filename.
 
     Args:
@@ -124,10 +126,12 @@ def get_data(parser, filename, excel_sheet=None):
             filename,
             na_values=NANS,
             keep_default_na=True,
-            sep=None)
+            sep=None,
+            engine="python")
     else:  # invalid extension
-        parser.error(
+        logging.error(
             "data file type is unsupported, or file extension not included")
+        exit(-1)
 
     # replace unknown values with nan (should be redundant)
     raw_data.replace({
@@ -138,7 +142,7 @@ def get_data(parser, filename, excel_sheet=None):
     return raw_data  # return extracted data
 
 
-def get_col_range(parser, rangestring):
+def get_col_range(rangestring):
     """Get column range from a given string.
 
     Args:
@@ -154,7 +158,8 @@ def get_col_range(parser, rangestring):
 
     # get feature data column range
     if not re.match("[0-9]+:[0-9]+", rangestring):
-        parser.error("data column selection range format invalid (see -h).")
+        logging.error("data column selection range format invalid (see -h).")
+        exit(-1)
     else:
         data_cols = rangestring.split(":")
         data_cols = [int(x) for x in data_cols]

@@ -19,6 +19,7 @@ try:
 except ModuleNotFoundError:
     logging.error("Missing required modules. Install requirements by running")
     logging.error("'python -m pip install -r requirements.txt'")
+    exit(-1)
 
 
 def train_forest(data_known, metadata_known, class_col="Status", multirun=1):
