@@ -143,11 +143,7 @@ def main():
     predict_prob = pd.DataFrame(forest.predict_proba(data_norm))
     # rename column
     predict_prob.rename(
-        columns={
-            predict_prob.columns[0]: "predict prob {}".format(
-                predict_prob.columns[0])},
-            pred
-                inplace=True)
+        columns={predict_prob.columns[0]: "predict prob"}, inplace=True)
 
     # save output
     logging.info("saving new output...")
