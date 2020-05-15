@@ -31,7 +31,8 @@ NANS = [
     "NA",
     '',
     ' # N/A',
-    '#N/A N/A',
+    '#N/A',
+    'N/A',
     '#NA',
     '-1.#IND',
     '-1.#QNAN',
@@ -299,7 +300,8 @@ def output_graph(data, predict, outfname):
     out = sns.pairplot(
         data=df,
         vars=df.columns[0:data.shape[1]],
-        hue="predict"
+        hue="predict",
+        diag_kind='hist'
     )
     out.savefig("{}.png".format(outfname))
 

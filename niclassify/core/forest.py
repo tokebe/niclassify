@@ -59,13 +59,19 @@ def train_forest(data_known, metadata_known, class_col="Status", multirun=1):
     rf = RandomForestClassifier(
         class_weight="balanced", oob_score=True, n_estimators=1000)
 
+    # get number of n splits based on data available
+    n = min(metadata_known[class_col].value_counts())
+    # set n to 10 if the minimum class label count is >= 10, or to the minimum
+    # class label count if it's less
+    n = 10 if n >= 10 else n
+
     # Create the random search
     rs = RandomizedSearchCV(
         rf,
         parameters,
         n_jobs=-1,
         scoring='balanced_accuracy',
-        cv=StratifiedKFold(n_splits=10))
+        cv=StratifiedKFold(n_splits=n))
 
     rs.fit(x_train, y_train)
 

@@ -39,7 +39,7 @@ def main():
 
     # set log filename
     i = 0
-    while os.path.exists("rf-auto{}.log".format(i)):
+    while os.path.exists("output/logs/rf-auto{}.log".format(i)):
         i += 1
     logname = "output/logs/rf-auto{}.log".format(i)
 
@@ -92,11 +92,12 @@ def main():
     raw_data = core.get_data(data_file, excel_sheet)
 
     # replace argument-added nans
-    raw_data.replace({val: np.nan for val in nans})
+    if nans is not None:
+        raw_data.replace({val: np.nan for val in nans})
 
-    # remove instances of >1 group count
-    raw_data = raw_data.loc[raw_data["Group_Count"] <= 1]
-    raw_data.reset_index(drop=True, inplace=True)
+    # # remove instances of >1 group count
+    # raw_data = raw_data.loc[raw_data["Group_Count"] <= 1]
+    # raw_data.reset_index(drop=True, inplace=True)
 
     # split data into feature data and metadata
     data = raw_data[data_cols]
@@ -107,9 +108,9 @@ def main():
 
     if mode == "train":  # no classifier provided; train a new one
 
-        # convert class labels to lower
-        metadata.loc[:, class_column] = \
-            metadata[class_column].str.lower()
+        # convert class labels to lower if classes are in str format
+        if not np.issubdtype(metadata[class_column].dtype, np.number):
+            metadata[class_column] = metadata[class_column].str.lower()
 
         # get only known data and metadata
         data_known, metadata_known = core.get_known(
@@ -142,7 +143,11 @@ def main():
     predict_prob = pd.DataFrame(forest.predict_proba(data_norm))
     # rename column
     predict_prob.rename(
-        columns={predict_prob.columns[0]: "predict prob"}, inplace=True)
+        columns={
+            predict_prob.columns[0]: "predict prob {}".format(
+                predict_prob.columns[0])},
+            pred
+                inplace=True)
 
     # save output
     logging.info("saving new output...")
