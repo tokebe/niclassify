@@ -143,15 +143,22 @@ def main():
     predict_prob = pd.DataFrame(forest.predict_proba(data_norm))
     # rename column
     predict_prob.rename(
-        columns={predict_prob.columns[0]: "predict prob"}, inplace=True)
+        columns={
+            predict_prob.columns[i]: "prob. {}".format(c)
+            for i, c in enumerate(forest.classes_)},
+        inplace=True)
 
     # save output
     logging.info("saving new output...")
     df = pd.concat([metadata, predict, predict_prob, data_norm], axis=1)
     try:
+        output_path = "/".join(output_filename.split("/")[:-1])
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
         df.to_csv(output_filename, index=False)
-    except (KeyError, FileNotFoundError):
-        parser.error("intended output folder does not exist!")
+    except (KeyError, FileNotFoundError, OSError):
+        logging.error("Output folder creation failed.")
+        exit(-1)
 
     # generate and output graph
     logging.info("generating final graphs...")

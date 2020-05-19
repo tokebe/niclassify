@@ -198,7 +198,7 @@ def interactive_mode():
         all_sheets = pd.read_excel(data_file, None)
 
         if len(all_sheets) == 1:
-            print("first (only) sheet automaticall selected.")
+            print("first (only) sheet automatically selected.")
             excel_sheet = 1
         else:
             questions = [{

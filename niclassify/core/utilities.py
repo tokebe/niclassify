@@ -5,6 +5,7 @@ Strictly to be used in concert with the rest of the niclassify package.
 try:
     import os
     import re
+    import json
     import xlrd
     import logging
 
@@ -26,32 +27,8 @@ except ModuleNotFoundError:
 sns.set()
 
 # possible null values to be converted to np.nan
-NANS = [
-    "nan",
-    "NA",
-    '',
-    ' # N/A',
-    '#N/A',
-    'N/A',
-    '#NA',
-    '-1.#IND',
-    '-1.#QNAN',
-    '-NaN',
-    '-nan',
-    '1.#IND',
-    '1.#QNAN',
-    '<NA>',
-    'N/A',
-    'NA',
-    'NULL',
-    'NaN',
-    'n/a',
-    'nan',
-    'null',
-    '#DIV/0!',
-    "unknown",
-    "Unknown"
-]
+with open("core/nans.json", "r") as nansfile:
+    NANS = json.load(nansfile)["nans"]
 
 required_folders = [
     "output",
