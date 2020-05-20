@@ -12,7 +12,7 @@ class TwoColumnSelect(tk.Frame):
         self.desel = tk.StringVar()
         self.sel = tk.StringVar()
 
-        self.desel.set(value=parent.column_names)
+        self.desel.set(value=[])
         self.sel.set(value=[])
 
         # define box for deselected items
@@ -100,6 +100,7 @@ class TwoColumnSelect(tk.Frame):
                      if len(self.sel.get()) > 0 else [])
         if allitems:
             sel_items.extend(desel_items)
+            sel_items.sort(key=lambda x: self.parent.app.column_names[x])
 
             self.desel.set(value=[])
             self.sel.set(value=sel_items)
@@ -108,13 +109,14 @@ class TwoColumnSelect(tk.Frame):
             return
 
         else:
-            # TODO modify to preserve column order, if possible
             sel_items.extend(desel_items[i]
                              for i
                              in self.desel_contents.curselection())
+            sel_items.sort(key=lambda x: self.parent.app.column_names[x])
             desel_items = [x
                            for i, x in enumerate(desel_items)
                            if i not in self.desel_contents.curselection()]
+            desel_items.sort(key=lambda x: self.parent.app.column_names[x])
 
             self.desel.set(value=desel_items)
             self.sel.set(value=sel_items)
@@ -126,6 +128,7 @@ class TwoColumnSelect(tk.Frame):
                      if len(self.sel.get()) > 0 else [])
         if allitems:
             desel_items.extend(sel_items)
+            desel_items.sort(key=lambda x: self.parent.app.column_names[x])
 
             self.desel.set(value=desel_items)
             self.sel.set(value=[])
@@ -134,21 +137,23 @@ class TwoColumnSelect(tk.Frame):
             return
 
         else:
-            # TODO modify to preserve column order, if possible
-            # probably use dict
             desel_items.extend(sel_items[i]
                                for i
                                in self.sel_contents.curselection())
+            desel_items.sort(key=lambda x: self.parent.app.column_names[x])
             sel_items = [x
                          for i, x in enumerate(sel_items)
                          if i not in self.sel_contents.curselection()]
+            sel_items.sort(key=lambda x: self.parent.app.column_names[x])
 
             self.desel.set(value=desel_items)
             self.sel.set(value=sel_items)
 
-    def update_contents(self, values):
-        None
-
+    def update_contents(self):
+        colnames = list(self.parent.app.column_names.keys())
+        colnames.sort(key=lambda x: self.parent.app.column_names[x])
+        self.desel.set(value=colnames)
+        self.sel.set(value=[])
 
 
 if __name__ == "__main__":

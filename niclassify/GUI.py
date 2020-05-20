@@ -12,10 +12,11 @@ class MainRoot(tk.Tk):
     # def get_data(self):
     #     print("welp")
 
+    def assure_path(self):
+        core.assure_path()
+
 
 def main():
-
-    core.assure_path()
 
     root = MainRoot()
     root.style = ttk.Style()

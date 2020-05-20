@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from .twocolumnselect import TwoColumnSelect
+import threading
 
 # TODO make a combobox class which resizes dropdown and validates input
 
@@ -47,9 +48,6 @@ class DataPanel(tk.LabelFrame):
         self.parent = parent
         self.app = app
 
-        self.column_names = "Aute in ea ipsum eu minim Lorem enim adipisicing eiusmod laboris magna dolor deserunt ANOTHERHORRIBLYLONGLINEFORTESTINGPURPOSESBYYOURSTRULYJC".split(
-            " ")
-
         # button to load data
         self.load_data_button = tk.Button(
             self,
@@ -68,11 +66,13 @@ class DataPanel(tk.LabelFrame):
         # depends on having access to list of items
         # see https://stackoverflow.com/questions/39915275/change-width-of-dropdown-listbox-of-a-ttk-combobox
         self.excel_label.pack(anchor=tk.W)
-        # TODO highlight text red if invalid
+        sheet_validate = (self.register(self.sheet_validate), '%P')
         self.excel_sheet_input = ttk.Combobox(
             self,
             height=10,
-            state=tk.DISABLED
+            state=tk.DISABLED,
+            validate="focus",
+            validatecommand=sheet_validate
         )
         self.excel_sheet_input.pack(fill=tk.X)
 
@@ -91,6 +91,11 @@ class DataPanel(tk.LabelFrame):
             self,
             text="Check Recognized NaN values")
         self.nan_check.pack(anchor=tk.NW, padx=1, pady=1)
+
+    def sheet_validate(self, name):
+        return name in self.app.sheets
+    # TODO implement more robust validation, and function for invalidcommand
+    # see https://stackoverflow.com/questions/4140437/interactively-validating-entry-widget-content-in-tkinter
 
 
 class TrainPanel(tk.LabelFrame):
@@ -187,3 +192,25 @@ class PredictPanel(tk.LabelFrame):
             pady=5,
             width=5)
         self.output_save.pack(fill=tk.X, padx=1, pady=1)
+
+
+class StatusBar(tk.Frame):
+    def __init__(self, parent, app, *args, **kwargs):
+        tk.LabelFrame.__init__(self, parent, *args, **kwargs)
+        self.parent = parent
+        self.app = app
+
+        self.label = tk.Label(
+            self,
+            text="Status:"
+        )
+        self.label.pack(side=tk.LEFT)
+
+        self.progress = ttk.Progressbar(
+            self,
+            orient=tk.HORIZONTAL,
+            length=100,
+            mode="determinate",
+            value=0
+        )
+        self.progress.pack(side=tk.RIGHT)
