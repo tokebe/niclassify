@@ -3,9 +3,13 @@ from tkinter import ttk
 import core
 import tkui
 import logging
+import matplotlib.pyplot as plt
 
+# TODO add functions to ensure data is properly prepared, agnostic of step
+# TODO make sure those functions don't re-transform data
 # TODO: add threading to basically everything
 # TODO: add logging to everything
+# TODO add popup notifications for things such as completing training, etc
 
 
 class MainRoot(tk.Tk):
@@ -35,6 +39,13 @@ class MainRoot(tk.Tk):
 def main():
 
     root = MainRoot()
+
+    def graceful_exit():
+        plt.close("all")
+        root.quit()
+        root.destroy()
+
+    root.protocol("WM_DELETE_WINDOW", graceful_exit)
     root.style = ttk.Style()
     root.style.theme_use("winnative")
     # print(root.style.theme_names())

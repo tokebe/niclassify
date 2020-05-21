@@ -116,14 +116,20 @@ class OperationsPanel(tk.LabelFrame):
         self.parent = parent
 
     def enable_outputs(self):
-        self.classifier_save.config(state=tk.ACTIVE)
-        self.report_section.enable_buttons()
-        self.cm_section.enable_buttons()
+        try:
+            self.classifier_save.config(state=tk.ACTIVE)
+            self.report_section.enable_buttons()
+            self.cm_section.enable_buttons()
+        except AttributeError:
+            self.pairplot_section.enable_buttons()
 
     def disable_outputs(self):
-        self.classifier_save.config(state=tk.DISABLED)
-        self.report_section.disable_buttons()
-        self.cm_section.disable_buttons()
+        try:
+            self.classifier_save.config(state=tk.DISABLED)
+            self.report_section.disable_buttons()
+            self.cm_section.disable_buttons()
+        except AttributeError:
+            self.pairplot_section.disable_buttons()
 
 
 class TrainPanel(OperationsPanel):
@@ -190,7 +196,7 @@ class TrainPanel(OperationsPanel):
             self,
             self.app,
             self.app.view_report,
-            self.app.make_report,
+            self.app.save_report,
             text="Report",
             labelanchor=tk.N)
         self.report_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -199,8 +205,8 @@ class TrainPanel(OperationsPanel):
         self.cm_section = VS_Pair(
             self,
             self.app,
-            None,
-            None,
+            lambda: self.app.view_graph("cm"),
+            lambda: self.app.save_cm("cm"),
             text="Conf. Matrix",
             labelanchor=tk.N)
         self.cm_section.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
@@ -225,23 +231,28 @@ class PredictPanel(OperationsPanel):
         self.classifier_load = tk.Button(
             self,
             text="Load Classifier",
-            pady=5)
+            pady=5,
+            command=self.app.load_classifier
+        )
         self.classifier_load.pack(padx=1, pady=1, fill=tk.X, anchor=tk.S)
 
         self.prediction_make = tk.Button(
             self,
             text="Make Predictions",
             pady=5,
-            state=tk.DISABLED)
+            state=tk.DISABLED,
+            command=self.app.make_predictions
+        )
         self.prediction_make.pack(padx=1, pady=1, fill=tk.X)
 
         self.pairplot_section = VS_Pair(
             self,
             self.app,
-            None,
-            None,
+            lambda: self.app.view_graph("pairplot"),
+            lambda: self.app.save_cm("pairplot"),
             text="Pairplot",
-            labelanchor=tk.N)
+            labelanchor=tk.N
+        )
         self.pairplot_section.pack(padx=5, anchor=tk.N, fill=tk.X)
 
         self.output_save = tk.Button(
@@ -249,7 +260,9 @@ class PredictPanel(OperationsPanel):
             text="Save Output",
             pady=5,
             width=5,
-            state=tk.DISABLED)
+            state=tk.DISABLED,
+            command=self.app.save_output
+        )
         self.output_save.pack(fill=tk.X, padx=1, pady=1)
 
 
@@ -262,6 +275,12 @@ class StatusBar(tk.Frame):
         self.label = tk.Label(
             self,
             text="Status:"
+        )
+        self.label.pack(side=tk.LEFT)
+
+        self.status = tk.Label(
+            self,
+            text=""
         )
         self.label.pack(side=tk.LEFT)
 

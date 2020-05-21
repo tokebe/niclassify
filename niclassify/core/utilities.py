@@ -214,6 +214,30 @@ def get_known(data, metadata, class_column):
     return data_known, metadata_known
 
 
+def make_confm(clf, data_known, metadata_known, class_column):
+    """Make a confusion matrix plot of a trained classifier.
+
+    Args:
+        clf (Classifier): A classifier.
+        data_known (DataFrame): Known Data.
+        metadata_known (DataFrame): Known Metadata, including class labels.
+        class_column (str): Name of class label column in metadata.
+
+    Returns:
+        fig (figure): A matplotlib figure containing the graph.
+    """
+    fig, ax = plt.pyplot.subplots(nrows=1, ncols=1)
+    metrics.plot_confusion_matrix(
+        clf,
+        data_known,
+        metadata_known[class_column],
+        ax=ax,
+        normalize="true")
+    ax.grid(False)
+
+    return fig
+
+
 def save_confm(clf, data_known, metadata_known, class_column, out):
     """Save a confusion matrix plot of a trained classifier.
 
@@ -224,14 +248,7 @@ def save_confm(clf, data_known, metadata_known, class_column, out):
         class_column (str): Name of class label column in metadata.
         out (str): file path/name for output image.
     """
-    fig, ax = plt.pyplot.subplots(nrows=1, ncols=1)
-    metrics.plot_confusion_matrix(
-        clf,
-        data_known,
-        metadata_known[class_column],
-        ax=ax,
-        normalize="true")
-    ax.grid(False)
+    fig = make_confm(clf, data_known, metadata_known, class_column)
     fig.savefig("{}.cm.png".format(out))
 
 
