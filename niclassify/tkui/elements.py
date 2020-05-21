@@ -29,6 +29,7 @@ class VS_Pair(tk.LabelFrame):
             self,
             text="View",
             width=5,
+            state=tk.DISABLED,
             # command=view_callback
         )
         self.report_view.pack(padx=1, pady=1)
@@ -37,6 +38,7 @@ class VS_Pair(tk.LabelFrame):
             self,
             text="Save",
             width=5,
+            state=tk.DISABLED,
             # command=save_callback
         )
         self.report_save.pack(padx=1, pady=1)
@@ -53,7 +55,7 @@ class DataPanel(tk.LabelFrame):
             self,
             text="Load Data",
             pady=5,
-            command=self.app.get_data
+            command=self.app.get_data_file
         )
         self.load_data_button.pack(fill=tk.X, padx=1, pady=1)
 
@@ -66,14 +68,14 @@ class DataPanel(tk.LabelFrame):
         # depends on having access to list of items
         # see https://stackoverflow.com/questions/39915275/change-width-of-dropdown-listbox-of-a-ttk-combobox
         self.excel_label.pack(anchor=tk.W)
-        sheet_validate = (self.register(self.sheet_validate), '%P')
         self.excel_sheet_input = ttk.Combobox(
             self,
             height=10,
             state=tk.DISABLED,
-            validate="focus",
-            validatecommand=sheet_validate
+            textvariable=self.app.sheet
         )
+        self.excel_sheet_input.bind(
+            "<<ComboboxSelected>>", self.app.get_sheet_cols)
         self.excel_sheet_input.pack(fill=tk.X)
 
         # column selection section
@@ -90,7 +92,13 @@ class DataPanel(tk.LabelFrame):
         self.nan_check = tk.Button(
             self,
             text="Check Recognized NaN values")
-        self.nan_check.pack(anchor=tk.NW, padx=1, pady=1)
+        self.nan_check.pack(side=tk.LEFT, anchor=tk.NW, padx=1, pady=1)
+
+        # button to open helpfile
+        self.nan_check = tk.Button(
+            self,
+            text="Help")
+        self.nan_check.pack(side=tk.LEFT, anchor=tk.NW, padx=1, pady=1)
 
     def sheet_validate(self, name):
         return name in self.app.sheets
@@ -113,8 +121,12 @@ class TrainPanel(tk.LabelFrame):
         # TODO highlight text red if invalid
         self.known_select = ttk.Combobox(
             self,
-            height=10
+            height=10,
+            state="readonly",
+            textvariable=self.app.known_column
         )
+        self.known_select.bind(
+            "<<ComboboxSelected>>", self.app.enable_train)
         self.known_select.pack(fill=tk.X)
 
         # select N multirun
@@ -123,17 +135,24 @@ class TrainPanel(tk.LabelFrame):
             text="N Classifiers to Compare:")
         self.n_label.pack(anchor=tk.W)
         # combobox (see above todo)
-        self.n_input = ttk.Combobox(
+        validate_input = (self.app.parent.register(
+            self.validate_n_input), '%P')
+        self.n_input = ttk.Spinbox(
             self,
-            values=[1, 10, 50, 100, 500, 1000],
-            height=6)
+            from_=1,
+            to=float('inf'),
+            validate="all",
+            validatecommand=validate_input)
+        self.n_input.set(1000)
         self.n_input.pack(fill=tk.X)
 
         # button to train the classifier
         self.train_button = tk.Button(
             self,
             text="Train Classifier",
-            pady=5)
+            pady=5,
+            state=tk.DISABLED,
+            command=self.app.train_classifier)
         self.train_button.pack(fill=tk.X, expand=True, padx=1, pady=1)
 
         # button to save the classifier
@@ -141,7 +160,9 @@ class TrainPanel(tk.LabelFrame):
             self,
             text="Save Classifier",
             pady=5,
-            width=5)
+            width=5,
+            state=tk.DISABLED,
+            command=self.app.save_classifier)
         self.classifier_save.pack(fill=tk.X, expand=True, padx=1, pady=1)
 
         # buttons for viewing and saving report
@@ -160,6 +181,16 @@ class TrainPanel(tk.LabelFrame):
             labelanchor=tk.N)
         self.cm_section.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
+    def validate_n_input(self, value):
+        if value == "":
+            return True
+        elif not value.isdigit():
+            return False
+        elif int(value) < 1:
+            return False
+        else:
+            return True
+
 
 class PredictPanel(tk.LabelFrame):
     def __init__(self, parent, app, *args, **kwargs):
@@ -176,7 +207,8 @@ class PredictPanel(tk.LabelFrame):
         self.prediction_make = tk.Button(
             self,
             text="Make Predictions",
-            pady=5)
+            pady=5,
+            state=tk.DISABLED)
         self.prediction_make.pack(padx=1, pady=1, fill=tk.X)
 
         self.pairplot_section = VS_Pair(
@@ -190,7 +222,8 @@ class PredictPanel(tk.LabelFrame):
             self,
             text="Save Output",
             pady=5,
-            width=5)
+            width=5,
+            state=tk.DISABLED)
         self.output_save.pack(fill=tk.X, padx=1, pady=1)
 
 

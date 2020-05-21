@@ -1,5 +1,6 @@
 import tkinter as tk
 import pandas as pd
+import numpy as np
 import threading
 from tkinter import ttk
 from tkinter import filedialog
@@ -10,12 +11,19 @@ class MainApp(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
+        self.core = None
 
         # pre-defined variables to store important stuff
         self.data_file = None
         self.sheets = None
+        self.sheet = tk.StringVar()
         self.raw_data = None
+        self.known_column = tk.StringVar()
         self.column_names = None
+        self.data = None
+        self.metadata = None
+        self.data_norm = None
+        self.classifier = None
 
         self.panels = tk.Frame(
             self.parent
@@ -55,39 +63,131 @@ class MainApp(tk.Frame):
         )
         self.status_bar.pack(fill=tk.X)
 
-    def get_data(self):
+    def get_data_file(self):
+        # TODO add status update
         self.status_bar.progress.config(mode="indeterminate")
         self.status_bar.progress.start(10)
-        self.parent.assure_path()
-        data_file = filedialog.askopenfilename(initialdir="data/")
+        # TODO learn how to thread or whatever so the progress bar moves
+        self.core.assure_path()
+        data_file = filedialog.askopenfilename(
+            title="Open Data File",
+            initialdir="data/",
+        )
+        if data_file is None == 0:
+            return
+        self.data_file = data_file
+        self.parent.title("Random Forest Classifier Tool: {}".format(
+            self.data_file.split("/")[-1]
+        ))
+        self.column_names = {}
+        self.data_section.col_select_panel.update_contents()
+        self.train_section.known_select["values"] = []
+        self.known_column.set("")
+        self.train_section.train_button.config(state=tk.DISABLED)
+        self.sheet.set("")
 
-        if len(data_file) > 0:
-            self.data_file = data_file
-            if self.data_file.split("/")[-1][-5:] == ".xlsx":
-                self.data_section.excel_sheet_input.config(state=tk.ACTIVE)
-                self.sheets = list(pd.read_excel(
-                    self.data_file, None).keys())
-                self.data_section.excel_sheet_input["values"] = self.sheets
-                tk.messagebox.showinfo(
-                    title="Excel Sheet Detected",
-                    message="You will have to specify the sheet to proceed."
-                )
-            else:
-                self.data_section.excel_sheet_input.config(
-                    state=tk.DISABLED)
-                column_names = pd.read_csv(
-                    self.data_file,
-                    na_values=self.parent.nans(),
-                    keep_default_na=True,
-                    sep=None,
-                    engine="python"
-                ).columns.values.tolist()
-                self.column_names = {x: i for i,
-                                     x in enumerate(column_names)}
-                self.data_section.col_select_panel.update_contents()
+        if self.data_file.split("/")[-1][-5:] == ".xlsx":
+            self.data_section.excel_sheet_input.config(state="readonly")
+            self.sheets = list(pd.read_excel(
+                self.data_file, None).keys())
+            self.data_section.excel_sheet_input["values"] = self.sheets
+            tk.messagebox.showinfo(
+                title="Excel Sheet Detected",
+                message="You will have to specify the sheet to proceed."
+            )
+            self.data_section.excel_sheet_input.set(self.sheets[0])
+        else:
+            self.data_section.excel_sheet_input.config(
+                state=tk.DISABLED)
+            column_names = pd.read_csv(
+                self.data_file,
+                na_values=self.core.NANS,
+                keep_default_na=True,
+                sep=None,
+                engine="python"
+            ).columns.values.tolist()
+            self.column_names = {x: i for i,
+                                 x in enumerate(column_names)}
+            self.train_section.known_select["values"] = column_names
 
+            self.get_raw_data()
+
+        self.data_section.col_select_panel.update_contents()
         self.status_bar.progress.stop()
         self.status_bar.progress.config(mode="determinate")
+
+    def get_sheet_cols(self, event):
+        # TODO add progress bar animation, status update
+        self.known_column.set("")
+        sheet = self.data_section.excel_sheet_input.get()
+        self.sheet.set(sheet)
+        column_names = pd.read_excel(
+            self.data_file,
+            sheet_name=sheet,
+            na_values=self.parent.nans(),
+            keep_default_na=True
+        ).columns.values.tolist()
+        self.column_names = {x: i for i,
+                             x in enumerate(column_names)}
+        self.train_section.known_select["values"] = column_names
+        self.data_section.col_select_panel.update_contents()
+        self.get_raw_data()
+
+    def get_raw_data(self):
+        # get raw data
+        raw_data = self.core.get_data(self.data_file, self.sheet)
+
+        # replace argument-added nans
+        if self.core.NANS is not None:
+            raw_data.replace({val: np.nan for val in self.core.NANS})
+
+        self.raw_data = raw_data
+
+    def get_split_data(self):
+        # get currently selected columns
+        data_cols = list(self.data_section.col_select_panel.sel_contents.get(
+            0, tk.END))
+
+        # split data into feature data and metadata
+        self.data = self.raw_data[data_cols]
+        self.metadata = self.raw_data.drop(data_cols, axis=1)
+
+        # scale data
+        self.data_norm = self.core.scale_data(self.data)
+
+    def enable_train(self, event):
+        self.train_section.train_button.config(state=tk.ACTIVE)
+
+    def train_classifier(self):
+        self.get_split_data()
+        class_column = self.known_column.get()
+
+        # convert class labels to lower if classes are in str format
+        if not np.issubdtype(
+                self.metadata[class_column].dtype, np.number):
+            self.metadata[class_column] = \
+                self.metadata[class_column].str.lower()
+
+        # get only known data and metadata
+        data_known, metadata_known = self.core.get_known(
+            self.data_norm, self.metadata, class_column)
+
+        # train classifier
+        self.classifier = self.core.train_forest(
+            data_known,
+            metadata_known,
+            class_column,
+            int(self.train_section.n_input.get())
+        )
+        self.train_section.classifier_save.config(state=tk.ACTIVE)
+
+    def save_classifier(self):
+        location = tk.filedialog.asksaveasfile(
+            title="Save Classifier",
+            initialdir="output/classifiers/",
+            mode='w',
+            defaultextension=".joblib"
+        )
 
 
 def main():
