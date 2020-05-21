@@ -3,45 +3,49 @@ from tkinter import ttk
 from .twocolumnselect import TwoColumnSelect
 import threading
 
-# TODO make a combobox class which resizes dropdown and validates input
-
 
 class VS_Pair(tk.LabelFrame):
     def __init__(
             self,
             parent,
             app,
-            # view_callback,
-            # save_callback,
+            view_callback,
+            save_callback,
             *args,
             **kwargs):
         tk.LabelFrame.__init__(
             self,
             parent,
-            # view_callback,
-            # save_callback,
             *args,
             **kwargs)
         self.parent = parent
         self.app = app
 
-        self.report_view = tk.Button(
+        self.button_view = tk.Button(
             self,
             text="View",
             width=5,
             state=tk.DISABLED,
-            # command=view_callback
+            command=view_callback
         )
-        self.report_view.pack(padx=1, pady=1)
+        self.button_view.pack(padx=1, pady=1)
 
-        self.report_save = tk.Button(
+        self.button_save = tk.Button(
             self,
             text="Save",
             width=5,
             state=tk.DISABLED,
-            # command=save_callback
+            command=save_callback
         )
-        self.report_save.pack(padx=1, pady=1)
+        self.button_save.pack(padx=1, pady=1)
+
+    def enable_buttons(self):
+        self.button_view.config(state=tk.ACTIVE)
+        self.button_save.config(state=tk.ACTIVE)
+
+    def disable_buttons(self):
+        self.button_view.config(state=tk.DISABLED)
+        self.button_save.config(state=tk.DISABLED)
 
 
 class DataPanel(tk.LabelFrame):
@@ -106,9 +110,25 @@ class DataPanel(tk.LabelFrame):
     # see https://stackoverflow.com/questions/4140437/interactively-validating-entry-widget-content-in-tkinter
 
 
-class TrainPanel(tk.LabelFrame):
+class OperationsPanel(tk.LabelFrame):
+    def __init__(self, parent,  *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        self.parent = parent
+
+    def enable_outputs(self):
+        self.classifier_save.config(state=tk.ACTIVE)
+        self.report_section.enable_buttons()
+        self.cm_section.enable_buttons()
+
+    def disable_outputs(self):
+        self.classifier_save.config(state=tk.DISABLED)
+        self.report_section.disable_buttons()
+        self.cm_section.disable_buttons()
+
+
+class TrainPanel(OperationsPanel):
     def __init__(self, parent, app, *args, **kwargs):
-        tk.LabelFrame.__init__(self, parent, *args, **kwargs)
+        super().__init__(parent, *args, **kwargs)
         self.parent = parent
         self.app = app
 
@@ -169,6 +189,8 @@ class TrainPanel(tk.LabelFrame):
         self.report_section = VS_Pair(
             self,
             self.app,
+            self.app.view_report,
+            self.app.make_report,
             text="Report",
             labelanchor=tk.N)
         self.report_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -177,6 +199,8 @@ class TrainPanel(tk.LabelFrame):
         self.cm_section = VS_Pair(
             self,
             self.app,
+            None,
+            None,
             text="Conf. Matrix",
             labelanchor=tk.N)
         self.cm_section.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
@@ -192,9 +216,9 @@ class TrainPanel(tk.LabelFrame):
             return True
 
 
-class PredictPanel(tk.LabelFrame):
+class PredictPanel(OperationsPanel):
     def __init__(self, parent, app, *args, **kwargs):
-        tk.LabelFrame.__init__(self, parent, *args, **kwargs)
+        super().__init__(parent, *args, **kwargs)
         self.parent = parent
         self.app = app
 
@@ -214,6 +238,8 @@ class PredictPanel(tk.LabelFrame):
         self.pairplot_section = VS_Pair(
             self,
             self.app,
+            None,
+            None,
             text="Pairplot",
             labelanchor=tk.N)
         self.pairplot_section.pack(padx=5, anchor=tk.N, fill=tk.X)

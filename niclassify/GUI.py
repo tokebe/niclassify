@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import core
 import tkui
+import logging
 
 # TODO: add threading to basically everything
 # TODO: add logging to everything
@@ -14,7 +15,6 @@ class MainRoot(tk.Tk):
     #     print("welp")
 
     # def get_data(self):
-
 
     # def train_classifier(self):
 

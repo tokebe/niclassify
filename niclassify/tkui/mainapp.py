@@ -1,7 +1,12 @@
-import tkinter as tk
-import pandas as pd
-import numpy as np
+import os
+import logging
 import threading
+
+import numpy as np
+import pandas as pd
+import tkinter as tk
+
+from joblib import dump
 from tkinter import ttk
 from tkinter import filedialog
 from .elements import DataPanel, TrainPanel, PredictPanel, StatusBar
@@ -10,6 +15,23 @@ from .elements import DataPanel, TrainPanel, PredictPanel, StatusBar
 class MainApp(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
+
+        # set log filename
+        i = 0
+        while os.path.exists("output/logs/rf-auto{}.log".format(i)):
+            i += 1
+        self.logname = "output/logs/rf-auto{}.log".format(i)
+
+        # set up logging
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(message)s",
+            handlers=[
+                logging.FileHandler(self.logname),
+                logging.StreamHandler()
+            ]
+        )
+
         self.parent = parent
         self.core = None
 
@@ -72,8 +94,17 @@ class MainApp(tk.Frame):
         data_file = filedialog.askopenfilename(
             title="Open Data File",
             initialdir="data/",
+            filetypes=[
+                ("All Files", ".*"),
+                ("Excel file", ".xlsx .xlsm .xlsb .xltx .xltm .xls .xlt .xml"),
+                ("Comma separated values", ".csv .txt"),
+                ("Tab separated values", ".tsv .txt"),
+                ("Standard deliniated text file", ".txt")
+            ]
         )
-        if data_file is None == 0:
+        if data_file is None:
+            self.status_bar.progress.stop()
+            self.status_bar.progress.config(mode="determinate")
             return
         self.data_file = data_file
         self.parent.title("Random Forest Classifier Tool: {}".format(
@@ -180,14 +211,60 @@ class MainApp(tk.Frame):
             int(self.train_section.n_input.get())
         )
         self.train_section.classifier_save.config(state=tk.ACTIVE)
+        self.train_section.enable_outputs()
 
     def save_classifier(self):
-        location = tk.filedialog.asksaveasfile(
+        location = tk.filedialog.asksaveasfilename(
             title="Save Classifier",
             initialdir="output/classifiers/",
-            mode='w',
-            defaultextension=".joblib"
+            defaultextension=".gz",
+            filetypes=[("GNU zipped archive", ".gz")]
         )
+        dump(self.classifier, location)
+
+    def make_report(self):
+        break_counter = 0
+        capture = False
+        captured_lines = []
+        with open(self.logname, "r") as log:
+            loglines = log.readlines()
+
+        for line in reversed(loglines):
+            if line == "---\n":
+                captured_lines.append(line)
+                capture = True
+            elif capture:
+                captured_lines.append(line)
+                if "out-of-bag score:" in line:
+                    break
+
+        return "".join(reversed(captured_lines))
+
+    def view_report(self):
+        viewer = tk.Toplevel(self)
+        viewer.minsize(500, 500)
+        viewer_frame = tk.Frame(viewer)
+        viewer_frame.pack(fill=tk.BOTH, expand=True)
+        textbox = tk.Text(
+            viewer_frame,
+            wrap=tk.WORD
+        )
+        textbox.insert(tk.END, self.make_report())
+        textbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        textscroll = tk.Scrollbar(
+            viewer_frame,
+            orient=tk.VERTICAL,
+            command=textbox.yview()
+        )
+        textscroll.pack(side=tk.RIGHT, fill=tk.Y)
+        textbox.config(yscrollcommand=textscroll.set)
+        confirm = tk.Button(
+            viewer,
+            text="Ok",
+            pady=5,
+            padx=5,
+            command=lambda: viewer.destroy())
+        confirm.pack(anchor=tk.W)
 
 
 def main():

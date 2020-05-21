@@ -1,0 +1,17 @@
+scaling data...
+splitting data...
+extracting fully known data...
+  obtaining best hyperparameters...
+  found best hyperparameters (as follows):
+    min_samples_split: 0.35000000000000003
+    max_depth: 11
+out-of-bag score: 0.7311827956989247
+---
+train set BA: 0.832210242587601
+train set: percent of introduced mislabeled to native: 0.36%
+train set: percent of native mislabeled to introduced: 25.09%
+---
+test set BA : 0.4962121212121212
+test set: percent of introduced mislabeled to native: 4.29%
+test set: percent of native mislabeled to introduced: 24.29%
+---
