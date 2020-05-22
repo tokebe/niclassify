@@ -34,7 +34,8 @@ required_folders = [
     "output",
     "output/classifiers",
     "output/classifiers/forests",
-    "output/logs"
+    "output/logs",
+    "tkui/temp"
 ]
 
 

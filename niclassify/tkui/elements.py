@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from .twocolumnselect import TwoColumnSelect
 import threading
+from PIL import Image, ImageTk
 
 
 class VS_Pair(tk.LabelFrame):
@@ -206,7 +207,7 @@ class TrainPanel(OperationsPanel):
             self,
             self.app,
             lambda: self.app.view_graph("cm"),
-            lambda: self.app.save_cm("cm"),
+            lambda: self.app.save_graph("cm"),
             text="Conf. Matrix",
             labelanchor=tk.N)
         self.cm_section.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
@@ -220,6 +221,11 @@ class TrainPanel(OperationsPanel):
             return False
         else:
             return True
+
+    def reset_enabled(self):
+        self.disable_outputs()
+        self.train_button.config(state=tk.DISABLED)
+        self.classifier_save.config(state=tk.DISABLED)
 
 
 class PredictPanel(OperationsPanel):
@@ -249,7 +255,7 @@ class PredictPanel(OperationsPanel):
             self,
             self.app,
             lambda: self.app.view_graph("pairplot"),
-            lambda: self.app.save_cm("pairplot"),
+            lambda: self.app.save_graph("pairplot"),
             text="Pairplot",
             labelanchor=tk.N
         )
@@ -265,6 +271,10 @@ class PredictPanel(OperationsPanel):
         )
         self.output_save.pack(fill=tk.X, padx=1, pady=1)
 
+    def reset_enabled(self):
+        self.prediction_make.config(state=tk.DISABLED)
+        self.disable_outputs()
+        self.output_save.config(state=tk.DISABLED)
 
 class StatusBar(tk.Frame):
     def __init__(self, parent, app, *args, **kwargs):
@@ -292,3 +302,31 @@ class StatusBar(tk.Frame):
             value=0
         )
         self.progress.pack(side=tk.RIGHT)
+
+    def set_status(text):
+        self.status.config(text="Status: {}".format(text))
+
+
+class ImageFrame(tk.Frame):
+    def __init__(self, parent, img, *args, **kwargs):
+        tk.LabelFrame.__init__(self, parent, *args, **kwargs)
+        self.parent = parent
+
+        self.image = Image.open(img)
+        self.img_copy = self.image.copy()
+
+        self.background_image = ImageTk.PhotoImage(self.image)
+
+        self.background = tk.Label(self, image=self.background_image)
+        self.background.pack(fill=tk.BOTH, expand=tk.YES)
+        self.background.bind('<Configure>', self._resize_image)
+
+    def _resize_image(self, event):
+
+        new_width = event.width
+        new_height = event.height
+
+        self.image = self.img_copy.resize((new_width, new_height))
+
+        self.background_image = ImageTk.PhotoImage(self.image)
+        self.background.configure(image=self.background_image)

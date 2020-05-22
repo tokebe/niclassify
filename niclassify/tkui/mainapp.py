@@ -1,8 +1,3 @@
-from .elements import DataPanel, TrainPanel, PredictPanel, StatusBar
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-from tkinter import filedialog
-from tkinter import ttk
-from joblib import dump, load
 import os
 import logging
 import threading
@@ -10,9 +5,15 @@ import threading
 import numpy as np
 import pandas as pd
 import tkinter as tk
-import matplotlib as plt
 import seaborn as sns
-plt.use("TkAgg")
+
+from tkinter import filedialog
+from tkinter import ttk
+from joblib import dump, load
+from xlrd import XLRDError
+
+
+from .elements import DataPanel, TrainPanel, PredictPanel, StatusBar
 
 
 class MainApp(tk.Frame):
@@ -39,36 +40,39 @@ class MainApp(tk.Frame):
         self.core = None
 
         # pre-defined variables to store important stuff
+        # parameters for locating and operating on data
         self.data_file = None
         self.sheets = None
         self.sheet = tk.StringVar()
         self.raw_data = None
         self.known_column = tk.StringVar()
         self.column_names = None
-
+        # data storage
         self.data = None
         self.metadata = None
         self.data_norm = None
         self.data_imp = None
         self.data_known = None
         self.metadata_known = None
-
+        # classifier & training
         self.classifier = None
         self.report = None
         self.cm = None
-
+        self.cm_img = None
+        # predictions
         self.predict = None
         self.predict_prob = None
         self.pairplot = None
+        self.pairplot_img = None
 
         # set up elements of main window
         parent.title("Random Forest Classifier Tool")
-
+        # panel for most controls, so statusbar stays on bottom
         self.panels = tk.Frame(
             self.parent
         )
         self.panels.pack(fill=tk.BOTH, expand=True)
-
+        # data import/column selection section
         self.data_section = DataPanel(
             self.panels,
             self,
@@ -76,12 +80,12 @@ class MainApp(tk.Frame):
             labelanchor=tk.N
         )
         self.data_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
+        # section holds operational controls
         self.operate_section = tk.Frame(
             self.panels
         )
         self.operate_section.pack(side=tk.RIGHT, anchor=tk.N)
-
+        # training controls
         self.train_section = TrainPanel(
             self.operate_section,
             self,
@@ -89,7 +93,7 @@ class MainApp(tk.Frame):
             labelanchor=tk.N
         )
         self.train_section.pack(fill=tk.X)
-
+        # prediction controls
         self.predict_section = PredictPanel(
             self.operate_section,
             self,
@@ -97,19 +101,28 @@ class MainApp(tk.Frame):
             labelanchor=tk.N
         )
         self.predict_section.pack(fill=tk.X)
-
+        # statusbar
         self.status_bar = StatusBar(
             self.parent,
             self
         )
         self.status_bar.pack(fill=tk.X)
 
+    def reset_controls(self):
+        # reset/disable things before opening new file
+        # reset columns/sheets
+        self.column_names = {}
+        self.data_section.col_select_panel.update_contents()
+        self.train_section.known_select["values"] = []
+        self.known_column.set("")
+        self.sheet.set("")
+        # disable buttons
+        self.train_section.reset_enabled()
+        self.predict_section.reset_enabled()
+
     def get_data_file(self):
-        # TODO add status update
-        self.status_bar.progress.config(mode="indeterminate")
-        self.status_bar.progress.start(10)
-        # TODO learn how to thread or whatever so the progress bar moves
-        self.core.assure_path()
+        # self.status_bar.set_status("Prompting user for data file...")
+        # prompt user for file
         data_file = filedialog.askopenfilename(
             title="Open Data File",
             initialdir="data/",
@@ -121,64 +134,83 @@ class MainApp(tk.Frame):
                 ("Standard deliniated text file", ".txt")
             ]
         )
-        if len(data_file) <= 0:
+        if len(data_file) <= 0:  # if user cancels don't try to open nothing
             self.status_bar.progress.stop()
             self.status_bar.progress.config(mode="determinate")
             return
+        # assuming user chooses a proper file:
         self.data_file = data_file
+        # update window title to reflect chosen file
         self.parent.title("Random Forest Classifier Tool: {}".format(
             self.data_file.split("/")[-1]))
-        self.column_names = {}
-        self.data_section.col_select_panel.update_contents()
-        self.train_section.known_select["values"] = []
-        self.known_column.set("")
-        self.train_section.train_button.config(state=tk.DISABLED)
-        self.sheet.set("")
-        self.predict_section.prediction_make.config(state=tk.DISABLED)
-        self.train_section.classifier_save.config(state=tk.DISABLED)
-        self.train_section.disable_outputs()
-        self.predict_section.disable_outputs()
 
-        if self.data_file.split("/")[-1][-5:] == ".xlsx":
+        self.reset_controls()
+
+        # handle file import given whether file is excel or text
+        if (self.data_file.split("/")[-1].split(".")[-1]
+                in ["xlsx", "xlsm", "xlsb",
+                    "xltx", "xltm", "xls",
+                    "xlt", "xml"]):  # excel; user needs to specify sheet
+            # enable sheet selection and get list of sheets for dropdown
             self.data_section.excel_sheet_input.config(state="readonly")
-            self.sheets = list(pd.read_excel(
-                self.data_file, None).keys())
+            try:
+                self.sheets = list(pd.read_excel(self.data_file, None).keys())
+            except (
+                    OSError, IOError, KeyError,
+                    TypeError, ValueError, XLRDError
+            ):  # in case there's something that goes wrong reading the file
+                tk.messagebox.showwarning(
+                    title="Excel Read Error",
+                    message="Unable to read excel file. The file may be \
+                        corrupted, or otherwise unable to be read."
+                )
+                return
             self.data_section.excel_sheet_input["values"] = self.sheets
             tk.messagebox.showinfo(
                 title="Excel Sheet Detected",
                 message="You will have to specify the sheet to proceed."
             )
+            # auto select the first
+            # both in case there's only one (makes user's life easier)
+            # and to make it more apparent what the user needs to do
             self.data_section.excel_sheet_input.set(self.sheets[0])
-        else:
+        else:  # otherwise it's some sort of text file
             self.data_section.excel_sheet_input.config(
                 state=tk.DISABLED)
-            column_names = pd.read_csv(
-                self.data_file,
-                na_values=self.core.NANS,
-                keep_default_na=True,
-                sep=None,
-                engine="python"
-            ).columns.values.tolist()
+            try:
+                column_names = pd.read_csv(
+                    self.data_file,
+                    na_values=self.core.NANS,
+                    keep_default_na=True,
+                    sep=None,
+                    engine="python"
+                ).columns.values.tolist()
+            except (
+                    OSError, IOError, KeyError,
+                    TypeError, ValueError
+            ):  # in case there's something that goes wrong reading the file
+                tk.messagebox.showwarning(
+                    title="File Read Error",
+                    message="Unable to read specified file. The file may be \
+                        corrupted, invalid or otherwise unable to be read."
+                )
+                return
             self.column_names = {x: i for i,
                                  x in enumerate(column_names)}
             self.train_section.known_select["values"] = column_names
-
+            self.data_section.col_select_panel.update_contents()
+            # get the raw data and conditionally enable predicitons
             self.get_raw_data()
             self.check_enable_predictions()
 
-        self.data_section.col_select_panel.update_contents()
-        self.status_bar.progress.stop()
-        self.status_bar.progress.config(mode="determinate")
-
     def get_sheet_cols(self, event):
-        # TODO add progress bar animation, status update
-        self.known_column.set("")
-        sheet = self.data_section.excel_sheet_input.get()
+        self.reset_controls()
+        sheet = self.sheet.get()
         self.sheet.set(sheet)
         column_names = pd.read_excel(
             self.data_file,
             sheet_name=sheet,
-            na_values=self.parent.nans(),
+            na_values=self.core.NANS,
             keep_default_na=True
         ).columns.values.tolist()
         self.column_names = {x: i for i,
@@ -214,7 +246,14 @@ class MainApp(tk.Frame):
         self.train_section.train_button.config(state=tk.ACTIVE)
 
     def train_classifier(self):
-        logging.info("training random forest...")
+        if len(self.data_section.col_select_panel.sel_contents.get(
+                0, tk.END)) <= 0:
+            tk.messagebox.showwarning(
+                title="No Data Columns Selected",
+                message="Please select at least one data column."
+            )
+            return
+
         self.get_split_data()
         class_column = self.known_column.get()
 
@@ -229,6 +268,7 @@ class MainApp(tk.Frame):
             self.data_norm, self.metadata, class_column)
 
         # train classifier
+        logging.info("training random forest...")
         self.classifier = self.core.train_forest(
             self.data_known,
             self.metadata_known,
@@ -238,6 +278,7 @@ class MainApp(tk.Frame):
         self.train_section.classifier_save.config(state=tk.ACTIVE)
         self.make_report()
         self.make_cm()
+        self.save_temp_graph("cm")
         self.train_section.enable_outputs()
         self.check_enable_predictions()
 
@@ -262,8 +303,8 @@ class MainApp(tk.Frame):
                 capture = True
             elif capture:
                 captured_lines.append(line)
-                # if "out-of-bag score:" in line:
-                #     break
+                if "scaling data..." in line:
+                    break
 
         self.report = "".join(reversed(captured_lines))
 
@@ -301,6 +342,8 @@ class MainApp(tk.Frame):
             defaultextension=".txt",
             filetypes=[("Plain text file", ".txt")]
         )
+        if len(location) == 0:
+            return
         with open(location, "w") as output:
             output.write(self.report)
 
@@ -312,27 +355,35 @@ class MainApp(tk.Frame):
             self.known_column.get()
         )
 
-    def view_graph(self, graph):
-        # TODO fix viewing pairplot, gives:
-        # AttributeError: 'PairGrid' object has no attribute 'set_canvas'
-        # on FigureCanvasTkAgg call
-        viewer = tk.Toplevel(self)
-        viewer.title(
-            "Training Confusion Matrix"
-            if graph == "cm"
-            else "Predictions Pairplot"
-        )
-        viewer.minsize(500, 500)
-        canvas = FigureCanvasTkAgg(
-            self.cm if graph == "cm" else self.pairplot,
-            viewer
-        )
-        canvas.draw()
-        canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+    def save_temp_graph(self, graph):
+        # save temporary image to open in viewer
+        g = self.cm if graph == "cm" else self.pairplot
+        g_img = self.cm_img if graph == "cm" else self.pairplot_img
+        i = 0
+        while os.path.exists("tkui/temp/temp{}.png".format(i)):
+            i += 1
+        if g_img is None:
+            if graph == "cm":
+                self.cm_img = "tkui/temp/temp{}.png".format(i)
+            else:
+                self.pairplot_img = "tkui/temp/temp{}.png".format(i)
+            g.savefig(self.cm_img if graph == "cm" else self.pairplot_img)
+            g_img = self.cm_img if graph == "cm" else self.pairplot_img
 
-        toolbar = NavigationToolbar2Tk(canvas, viewer)
-        toolbar.update()
-        canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+    def view_graph(self, graph):
+        g_img = self.cm_img if graph == "cm" else self.pairplot_img
+        os.system("start " + g_img)
+
+        # canvas = FigureCanvasTkAgg(
+        #     self.cm if graph == "cm" else self.pairplot.fig,
+        #     viewer
+        # )
+        # canvas.draw()
+        # canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+
+        # toolbar = NavigationToolbar2Tk(canvas, viewer)
+        # toolbar.update()
+        # canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
     def save_graph(self, graph):
         location = tk.filedialog.asksaveasfilename(
@@ -342,6 +393,8 @@ class MainApp(tk.Frame):
             defaultextension=".txt",
             filetypes=[("Portable Network Graphics image", ".png")]
         )
+        if len(location) == 0:
+            return
         if graph == "cm":
             self.cm.savefig(location)
         else:
@@ -350,13 +403,15 @@ class MainApp(tk.Frame):
     def check_enable_predictions(self):
         conditions = [
             self.data_file is not None,
-            self.data is not None,
-            self.data_norm is not None,
-            self.classifier is not None,
+            self.raw_data is not None,
+            self.classifier is not None
         ]
         print(conditions)
         if all(conditions):
             self.predict_section.prediction_make.config(state=tk.ACTIVE)
+            return True
+        else:
+            return False
 
     def load_classifier(self):
         # TODO add error checking for all file loading dialogs
@@ -372,6 +427,14 @@ class MainApp(tk.Frame):
             self.check_enable_predictions()
 
     def make_predictions(self):
+        if len(self.data_section.col_select_panel.sel_contents.get(
+                0, tk.END)) <= 0:
+            tk.messagebox.showwarning(
+                title="No Data Columns Selected",
+                message="Please select at least one data column."
+            )
+            return
+        self.get_split_data()
         # impute data
         logging.info("imputing data...")
         self.data_imp = self.core.impute_data(self.data_norm)
@@ -393,7 +456,9 @@ class MainApp(tk.Frame):
         self.predict = predict
         self.predict_prob = predict_prob
         self.make_pairplot()
+        self.save_temp_graph("pairplot")
         self.predict_section.enable_outputs()
+        self.predict_section.output_save.config(state=ACTIVE)
 
     def make_pairplot(self):
         df = pd.concat([self.data_imp, self.predict], axis=1)
@@ -405,18 +470,6 @@ class MainApp(tk.Frame):
         )
 
     def save_output(self):
-        # save output
-        logging.info("saving new output...")
-        df = pd.concat(
-            [
-                self.metadata,
-                self.predict,
-                self.predict_prob,
-                self.data_norm
-            ],
-            axis=1
-        )
-
         location = tk.filedialog.asksaveasfilename(
             title="Save Output Predicitons",
             initialdir="output/",
@@ -427,6 +480,19 @@ class MainApp(tk.Frame):
                 ("Standard deliniated text file", ".txt")
                 ("All Files", ".*"),
             ]
+        )
+        if len(location) == 0:
+            return
+        # save output
+        logging.info("saving new output...")
+        df = pd.concat(
+            [
+                self.metadata,
+                self.predict,
+                self.predict_prob,
+                self.data_norm
+            ],
+            axis=1
         )
 
         df.to_csv(location, index=False)

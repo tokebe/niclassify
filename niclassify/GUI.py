@@ -4,12 +4,23 @@ import core
 import tkui
 import logging
 import matplotlib.pyplot as plt
+import shutil
 
-# TODO enable make predictions on data load and give warning if attempting
-# to train without having selected columns
-# TODO fix pairplot viewer
-# TODO add status updates to everything
+# TODO fix error in sheet selection:
+# non-existent sheet sheet1 listed
+# XLRDError: No sheet names <''> when selecting any sheet
+# likely has to do with the use of a stringvar
+# TODO continue refactoring from get_sheet_cols()
+# TODO add dialogs asking if user wants to lose current classifier/etc
+# triggered when attempting to load new data/change sheet selection
+# TODO refactor and reorganize everything
+# TODO while you're doing that, make sure every function enables/disables all
+# buttons that it should appropriately
+# TODO check for errors while predicting and warn user if they don't have the
+# right columns selected
 # TODO add threading to basically everything
+# TODO add progress bars while doing threading
+# TODO add status updates to everything while doing threading
 # TODO add logging to everything
 # TODO add popup notifications for things such as completing training, etc
 
@@ -39,6 +50,7 @@ class MainRoot(tk.Tk):
 
 
 def main():
+    core.assure_path()
 
     root = MainRoot()
 
@@ -46,6 +58,7 @@ def main():
         plt.close("all")
         root.quit()
         root.destroy()
+        shutil.rmtree('tkui/temp')
 
     root.protocol("WM_DELETE_WINDOW", graceful_exit)
     root.style = ttk.Style()
