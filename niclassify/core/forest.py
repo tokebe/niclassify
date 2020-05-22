@@ -36,6 +36,9 @@ def train_forest(data_known, metadata_known, class_col="Status", multirun=1):
         RandomForest: The Trained Random Forest.
 
     """
+    logging.info("  training using variables:")
+    for i in data_known.columns.values.tolist():
+        logging.info("    {}".format(i))
     logging.info("  obtaining best hyperparameters...")
 
     x_train, x_test, y_train, y_test = train_test_split(

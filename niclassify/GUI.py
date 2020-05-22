@@ -5,10 +5,12 @@ import tkui
 import logging
 import matplotlib.pyplot as plt
 
-# TODO add functions to ensure data is properly prepared, agnostic of step
-# TODO make sure those functions don't re-transform data
-# TODO: add threading to basically everything
-# TODO: add logging to everything
+# TODO enable make predictions on data load and give warning if attempting
+# to train without having selected columns
+# TODO fix pairplot viewer
+# TODO add status updates to everything
+# TODO add threading to basically everything
+# TODO add logging to everything
 # TODO add popup notifications for things such as completing training, etc
 
 

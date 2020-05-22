@@ -45,48 +45,57 @@ class MainApp(tk.Frame):
         self.raw_data = None
         self.known_column = tk.StringVar()
         self.column_names = None
+
         self.data = None
         self.metadata = None
         self.data_norm = None
+        self.data_imp = None
         self.data_known = None
         self.metadata_known = None
+
         self.classifier = None
         self.report = None
         self.cm = None
+
         self.predict = None
         self.predict_prob = None
         self.pairplot = None
+
+        # set up elements of main window
+        parent.title("Random Forest Classifier Tool")
 
         self.panels = tk.Frame(
             self.parent
         )
         self.panels.pack(fill=tk.BOTH, expand=True)
 
-        parent.title("Random Forest Classifier Tool")
-
         self.data_section = DataPanel(
             self.panels,
             self,
             text="Data",
-            labelanchor=tk.N)
+            labelanchor=tk.N
+        )
         self.data_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         self.operate_section = tk.Frame(
-            self.panels)
+            self.panels
+        )
         self.operate_section.pack(side=tk.RIGHT, anchor=tk.N)
 
         self.train_section = TrainPanel(
             self.operate_section,
             self,
             text="Train",
-            labelanchor=tk.N)
+            labelanchor=tk.N
+        )
         self.train_section.pack(fill=tk.X)
 
         self.predict_section = PredictPanel(
             self.operate_section,
             self,
             text="Predict",
-            labelanchor=tk.N)
+            labelanchor=tk.N
+        )
         self.predict_section.pack(fill=tk.X)
 
         self.status_bar = StatusBar(
@@ -118,8 +127,7 @@ class MainApp(tk.Frame):
             return
         self.data_file = data_file
         self.parent.title("Random Forest Classifier Tool: {}".format(
-            self.data_file.split("/")[-1]
-        ))
+            self.data_file.split("/")[-1]))
         self.column_names = {}
         self.data_section.col_select_panel.update_contents()
         self.train_section.known_select["values"] = []
@@ -156,6 +164,7 @@ class MainApp(tk.Frame):
             self.train_section.known_select["values"] = column_names
 
             self.get_raw_data()
+            self.check_enable_predictions()
 
         self.data_section.col_select_panel.update_contents()
         self.status_bar.progress.stop()
@@ -177,6 +186,7 @@ class MainApp(tk.Frame):
         self.train_section.known_select["values"] = column_names
         self.data_section.col_select_panel.update_contents()
         self.get_raw_data()
+        self.check_enable_predictions()
 
     def get_raw_data(self):
         # get raw data
@@ -204,6 +214,7 @@ class MainApp(tk.Frame):
         self.train_section.train_button.config(state=tk.ACTIVE)
 
     def train_classifier(self):
+        logging.info("training random forest...")
         self.get_split_data()
         class_column = self.known_column.get()
 
@@ -228,7 +239,7 @@ class MainApp(tk.Frame):
         self.make_report()
         self.make_cm()
         self.train_section.enable_outputs()
-        self.predict_section.prediction_make.config(state=tk.ACTIVE)
+        self.check_enable_predictions()
 
     def save_classifier(self):
         location = tk.filedialog.asksaveasfilename(
@@ -251,13 +262,14 @@ class MainApp(tk.Frame):
                 capture = True
             elif capture:
                 captured_lines.append(line)
-                if "out-of-bag score:" in line:
-                    break
+                # if "out-of-bag score:" in line:
+                #     break
 
         self.report = "".join(reversed(captured_lines))
 
     def view_report(self):
         viewer = tk.Toplevel(self)
+        viewer.title("Training Report")
         viewer.minsize(500, 500)
         viewer_frame = tk.Frame(viewer)
         viewer_frame.pack(fill=tk.BOTH, expand=True)
@@ -301,7 +313,15 @@ class MainApp(tk.Frame):
         )
 
     def view_graph(self, graph):
+        # TODO fix viewing pairplot, gives:
+        # AttributeError: 'PairGrid' object has no attribute 'set_canvas'
+        # on FigureCanvasTkAgg call
         viewer = tk.Toplevel(self)
+        viewer.title(
+            "Training Confusion Matrix"
+            if graph == "cm"
+            else "Predictions Pairplot"
+        )
         viewer.minsize(500, 500)
         canvas = FigureCanvasTkAgg(
             self.cm if graph == "cm" else self.pairplot,
@@ -329,9 +349,13 @@ class MainApp(tk.Frame):
 
     def check_enable_predictions(self):
         conditions = [
-            self.data_file is not None
+            self.data_file is not None,
+            self.data is not None,
+            self.data_norm is not None,
+            self.classifier is not None,
         ]
-        if False not in conditions:
+        print(conditions)
+        if all(conditions):
             self.predict_section.prediction_make.config(state=tk.ACTIVE)
 
     def load_classifier(self):
@@ -345,22 +369,20 @@ class MainApp(tk.Frame):
         )
         if len(clf_file) > 0:
             self.classifier = load(clf_file)
-            self.check_enable_predictions
+            self.check_enable_predictions()
 
     def make_predictions(self):
-        # TODO  make sure transformations are not done multiple times
-        # Some sort of checking, etc. will need to happen in a few places
         # impute data
         logging.info("imputing data...")
-        self.data_norm = self.core.impute_data(self.data_norm)
+        self.data_imp = self.core.impute_data(self.data_norm)
         # make predictions
         logging.info("predicting unknown class labels...")
-        predict = pd.DataFrame(self.classifier.predict(self.data_norm))
+        predict = pd.DataFrame(self.classifier.predict(self.data_imp))
         # rename predict column
         predict.rename(columns={predict.columns[0]: "predict"}, inplace=True)
         # get predict probabilities
         predict_prob = pd.DataFrame(
-            self.classifier.predict_proba(self.data_norm))
+            self.classifier.predict_proba(self.data_imp))
         # rename column
         predict_prob.rename(
             columns={
@@ -374,7 +396,7 @@ class MainApp(tk.Frame):
         self.predict_section.enable_outputs()
 
     def make_pairplot(self):
-        df = pd.concat([self.data_norm, self.predict], axis=1)
+        df = pd.concat([self.data_imp, self.predict], axis=1)
         self.pairplot = sns.pairplot(
             data=df,
             vars=df.columns[0:self.data.shape[1]],
@@ -401,10 +423,9 @@ class MainApp(tk.Frame):
             defaultextension=".csv",
             filetypes=[
                 ("Comma separated values", ".csv .txt"),
-                ("All Files", ".*"),
-                ("Excel file", ".xlsx .xlsm .xlsb .xltx .xltm .xls .xlt .xml"),
                 ("Tab separated values", ".tsv .txt"),
                 ("Standard deliniated text file", ".txt")
+                ("All Files", ".*"),
             ]
         )
 
