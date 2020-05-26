@@ -6,23 +6,24 @@ import logging
 import matplotlib.pyplot as plt
 import shutil
 
-# TODO fix error in sheet selection:
-# non-existent sheet sheet1 listed
-# XLRDError: No sheet names <''> when selecting any sheet
-# likely has to do with the use of a stringvar
-# TODO continue refactoring from get_sheet_cols()
-# TODO add dialogs asking if user wants to lose current classifier/etc
-# triggered when attempting to load new data/change sheet selection
-# TODO refactor and reorganize everything
-# TODO while you're doing that, make sure every function enables/disables all
-# buttons that it should appropriately
-# TODO check for errors while predicting and warn user if they don't have the
-# right columns selected
+# TODO re-order methods alphabetically
+# TODO replace intial reads for column names to just single readlines to get column names
+# TODO start extensive testing for Things That Shouldn't Happen
+# TODO add error checking for opening files, such as nonexistent files, etc
 # TODO add threading to basically everything
 # TODO add progress bars while doing threading
 # TODO add status updates to everything while doing threading
 # TODO add logging to everything
 # TODO add popup notifications for things such as completing training, etc
+# TODO try to optimize idle RAM usage
+# this will be a huge task and will definitely involve rewriting core
+# you'll have to try and keep as little data stored as possible
+# esp. the actual data files.
+# TODO after you've done that see if there are ways to make this whole thing
+# more professional and easily maintainable:
+# - methods that should be combined/deleted/decombined/made private/properties
+# - things that should be objects/objects that should be re-parented
+# - look at a guide for making a good python application or something I guess
 
 
 class MainRoot(tk.Tk):

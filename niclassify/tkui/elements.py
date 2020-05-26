@@ -77,7 +77,7 @@ class DataPanel(tk.LabelFrame):
             self,
             height=10,
             state=tk.DISABLED,
-            textvariable=self.app.sheet
+            # textvariable=self.app.sheet
         )
         self.excel_sheet_input.bind(
             "<<ComboboxSelected>>", self.app.get_sheet_cols)
@@ -92,18 +92,26 @@ class DataPanel(tk.LabelFrame):
         self.col_select_panel = TwoColumnSelect(self)
         self.col_select_panel.pack(fill=tk.BOTH, expand=True)
 
+        self.output_open = tk.Button(
+            self,
+            text="Open Output Folder",
+            command=self.app.open_output_folder
+        )
+        self.output_open.pack(side=tk.LEFT, anchor=tk.NW, padx=1, pady=1)
+
         # button to open window allowing NaN values to be edited
         # TODO implement the window, make it save to config (edit core, easier)
         self.nan_check = tk.Button(
             self,
-            text="Check Recognized NaN values")
+            text="Check Recognized NaN values"
+        )
         self.nan_check.pack(side=tk.LEFT, anchor=tk.NW, padx=1, pady=1)
 
         # button to open helpfile
-        self.nan_check = tk.Button(
+        self.help_button = tk.Button(
             self,
             text="Help")
-        self.nan_check.pack(side=tk.LEFT, anchor=tk.NW, padx=1, pady=1)
+        self.help_button.pack(side=tk.LEFT, anchor=tk.NW, padx=1, pady=1)
 
     def sheet_validate(self, name):
         return name in self.app.sheets
@@ -275,6 +283,7 @@ class PredictPanel(OperationsPanel):
         self.prediction_make.config(state=tk.DISABLED)
         self.disable_outputs()
         self.output_save.config(state=tk.DISABLED)
+
 
 class StatusBar(tk.Frame):
     def __init__(self, parent, app, *args, **kwargs):

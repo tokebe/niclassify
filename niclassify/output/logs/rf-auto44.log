@@ -1,0 +1,31 @@
+scaling data...
+splitting data...
+extracting fully known data...
+training random forest...
+  training using variables:
+    ML_Distance
+    ML_Similarity
+    dN_Distance
+    dN_Similarity
+    dS_Distance
+    dS_Similarity
+    AA_Distance
+    AA_Similarity
+    Ztest_Distance
+    Ztest_Similarity
+    dN/dS_Distance
+    dN/dS_Similarity
+  obtaining best hyperparameters...
+  found best hyperparameters (as follows):
+    min_samples_split: 0.35000000000000003
+    max_depth: 32
+out-of-bag score: 0.7132616487455197
+---
+train set BA: 0.8227762803234502
+train set: percent of introduced mislabeled to native: 0.36%
+train set: percent of native mislabeled to introduced: 26.88%
+---
+test set BA : 0.6931818181818181
+test set: percent of introduced mislabeled to native: 1.43%
+test set: percent of native mislabeled to introduced: 34.29%
+---

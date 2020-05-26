@@ -71,19 +71,19 @@ def get_data(filename, excel_sheet=None):
     if ".xlsx" in filename[-5:]:  # using excel_sheet file
         if excel_sheet is not None:  # sheet given
             if excel_sheet.isdigit():  # sheet number
-                raw_data = pd.read_excel_sheet(
+                raw_data = pd.read_excel(
                     filename,
                     sheet_name=int(excel_sheet) - 1,
                     na_values=NANS,
                     keep_default_na=True)
             else:  # sheet name
-                raw_data = pd.read_excel_sheet(
+                raw_data = pd.read_excel(
                     filename,
                     sheet_name=excel_sheet,
                     na_values=NANS,
                     keep_default_na=True)
         else:  # sheet not given; use default first sheet
-            raw_data = pd.read_excel_sheet(
+            raw_data = pd.read_excel(
                 filename,
                 sheet_name=0,
                 na_values=NANS,

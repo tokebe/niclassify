@@ -1,6 +1,8 @@
 import os
 import logging
 import threading
+import subprocess
+import sys
 
 import numpy as np
 import pandas as pd
@@ -14,6 +16,15 @@ from xlrd import XLRDError
 
 
 from .elements import DataPanel, TrainPanel, PredictPanel, StatusBar
+
+
+def view_open_file(filename):
+    filename = os.path.realpath(filename)
+    if sys.platform == "win32":
+        os.startfile(filename)
+    else:
+        opener = "open" if sys.platform == "darwin" else "xdg-open"
+        subprocess.call([opener, filename])
 
 
 class MainApp(tk.Frame):
@@ -43,7 +54,7 @@ class MainApp(tk.Frame):
         # parameters for locating and operating on data
         self.data_file = None
         self.sheets = None
-        self.sheet = tk.StringVar()
+        self.sheet = None
         self.raw_data = None
         self.known_column = tk.StringVar()
         self.column_names = None
@@ -115,13 +126,23 @@ class MainApp(tk.Frame):
         self.data_section.col_select_panel.update_contents()
         self.train_section.known_select["values"] = []
         self.known_column.set("")
-        self.sheet.set("")
+        self.sheet = None
         # disable buttons
         self.train_section.reset_enabled()
         self.predict_section.reset_enabled()
 
+    def reset_operations(self):
+        self.known_column.set("")
+        self.train_section.reset_enabled()
+        self.predict_section.reset_enabled()
+
     def get_data_file(self):
-        # self.status_bar.set_status("Prompting user for data file...")
+        if self.classifier is not None and self.raw_data is not None:
+            if (tk.messagebox.askokcancel(
+                title="Existing Classifier",
+                message="Opening a new data file will delete unsaved training and output results."
+            )) is False:
+                return
         # prompt user for file
         data_file = filedialog.askopenfilename(
             title="Open Data File",
@@ -143,8 +164,9 @@ class MainApp(tk.Frame):
         # update window title to reflect chosen file
         self.parent.title("Random Forest Classifier Tool: {}".format(
             self.data_file.split("/")[-1]))
-
+        # reset things
         self.reset_controls()
+        self.raw_data = None
 
         # handle file import given whether file is excel or text
         if (self.data_file.split("/")[-1].split(".")[-1]
@@ -154,7 +176,7 @@ class MainApp(tk.Frame):
             # enable sheet selection and get list of sheets for dropdown
             self.data_section.excel_sheet_input.config(state="readonly")
             try:
-                self.sheets = list(pd.read_excel(self.data_file, None).keys())
+                self.sheets = list(pd.ExcelFile(self.data_file).sheet_names)
             except (
                     OSError, IOError, KeyError,
                     TypeError, ValueError, XLRDError
@@ -174,6 +196,7 @@ class MainApp(tk.Frame):
             # both in case there's only one (makes user's life easier)
             # and to make it more apparent what the user needs to do
             self.data_section.excel_sheet_input.set(self.sheets[0])
+            self.get_sheet_cols(None)
         else:  # otherwise it's some sort of text file
             self.data_section.excel_sheet_input.config(
                 state=tk.DISABLED)
@@ -183,6 +206,7 @@ class MainApp(tk.Frame):
                     na_values=self.core.NANS,
                     keep_default_na=True,
                     sep=None,
+                    nrows=0,
                     engine="python"
                 ).columns.values.tolist()
             except (
@@ -204,19 +228,35 @@ class MainApp(tk.Frame):
             self.check_enable_predictions()
 
     def get_sheet_cols(self, event):
+        if self.classifier is not None and self.raw_data is not None:
+            if (tk.messagebox.askokcancel(
+                title="Existing Classifier",
+                message="Selecting a new sheet will delete unsaved training and output results."
+            )) is False:
+                self.data_section.excel_sheet_input.set(self.sheet)
+                return
+        # reset controls because new data
         self.reset_controls()
-        sheet = self.sheet.get()
-        self.sheet.set(sheet)
+        # get sheet name
+        sheet = self.data_section.excel_sheet_input.get()
+        # skip reloading if it's already selected
+        if sheet == self.sheet:
+            return
+        # get sheet data
+        self.sheet = sheet
         column_names = pd.read_excel(
             self.data_file,
             sheet_name=sheet,
             na_values=self.core.NANS,
+            nrows=0,
             keep_default_na=True
         ).columns.values.tolist()
+        # get column names and update appropriate
         self.column_names = {x: i for i,
                              x in enumerate(column_names)}
         self.train_section.known_select["values"] = column_names
         self.data_section.col_select_panel.update_contents()
+        # prepare raw data and conditionally enable prediction controls
         self.get_raw_data()
         self.check_enable_predictions()
 
@@ -246,6 +286,7 @@ class MainApp(tk.Frame):
         self.train_section.train_button.config(state=tk.ACTIVE)
 
     def train_classifier(self):
+        # make sure that data columns are selected
         if len(self.data_section.col_select_panel.sel_contents.get(
                 0, tk.END)) <= 0:
             tk.messagebox.showwarning(
@@ -254,6 +295,7 @@ class MainApp(tk.Frame):
             )
             return
 
+        # split data into data and metadata
         self.get_split_data()
         class_column = self.known_column.get()
 
@@ -275,6 +317,7 @@ class MainApp(tk.Frame):
             class_column,
             int(self.train_section.n_input.get())
         )
+        # prepare training outputs and enable related buttons
         self.train_section.classifier_save.config(state=tk.ACTIVE)
         self.make_report()
         self.make_cm()
@@ -292,6 +335,7 @@ class MainApp(tk.Frame):
         dump(self.classifier, location)
 
     def make_report(self):
+        # capture log output for report
         capture = False
         captured_lines = []
         with open(self.logname, "r") as log:
@@ -309,6 +353,7 @@ class MainApp(tk.Frame):
         self.report = "".join(reversed(captured_lines))
 
     def view_report(self):
+        # new window with viewer
         viewer = tk.Toplevel(self)
         viewer.title("Training Report")
         viewer.minsize(500, 500)
@@ -332,7 +377,8 @@ class MainApp(tk.Frame):
             text="Ok",
             pady=5,
             padx=5,
-            command=lambda: viewer.destroy())
+            command=lambda: viewer.destroy()
+        )
         confirm.pack(anchor=tk.E)
 
     def save_report(self):
@@ -372,18 +418,7 @@ class MainApp(tk.Frame):
 
     def view_graph(self, graph):
         g_img = self.cm_img if graph == "cm" else self.pairplot_img
-        os.system("start " + g_img)
-
-        # canvas = FigureCanvasTkAgg(
-        #     self.cm if graph == "cm" else self.pairplot.fig,
-        #     viewer
-        # )
-        # canvas.draw()
-        # canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
-
-        # toolbar = NavigationToolbar2Tk(canvas, viewer)
-        # toolbar.update()
-        # canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        view_open_file(g_img)
 
     def save_graph(self, graph):
         location = tk.filedialog.asksaveasfilename(
@@ -414,7 +449,15 @@ class MainApp(tk.Frame):
             return False
 
     def load_classifier(self):
-        # TODO add error checking for all file loading dialogs
+        if self.classifier is not None and self.report is not None:
+            if (tk.messagebox.askokcancel(
+                title="Existing Classifier",
+                message="Loading a saved classifier will overwrite the saved classifier, ensure it is saved if you wish to keep it."
+            )) is False:
+                return
+        # disable train stuff in the event that a trained clf is overwritten
+        self.reset_operations()
+
         clf_file = filedialog.askopenfilename(
             title="Open Saved Classifier",
             initialdir="output/classifiers/",
@@ -440,7 +483,14 @@ class MainApp(tk.Frame):
         self.data_imp = self.core.impute_data(self.data_norm)
         # make predictions
         logging.info("predicting unknown class labels...")
-        predict = pd.DataFrame(self.classifier.predict(self.data_imp))
+        try:  # make sure that the right number of data columns are selected.
+            predict = pd.DataFrame(self.classifier.predict(self.data_imp))
+        except ValueError:
+            tk.messagebox.showerror(
+                title="Prediction Failure",
+                message="The number of features selected does not match the number of features the classifier was trained on."
+            )
+            return
         # rename predict column
         predict.rename(columns={predict.columns[0]: "predict"}, inplace=True)
         # get predict probabilities
@@ -458,7 +508,7 @@ class MainApp(tk.Frame):
         self.make_pairplot()
         self.save_temp_graph("pairplot")
         self.predict_section.enable_outputs()
-        self.predict_section.output_save.config(state=ACTIVE)
+        self.predict_section.output_save.config(state=tk.ACTIVE)
 
     def make_pairplot(self):
         df = pd.concat([self.data_imp, self.predict], axis=1)
@@ -477,7 +527,7 @@ class MainApp(tk.Frame):
             filetypes=[
                 ("Comma separated values", ".csv .txt"),
                 ("Tab separated values", ".tsv .txt"),
-                ("Standard deliniated text file", ".txt")
+                ("Standard deliniated text file", ".txt"),
                 ("All Files", ".*"),
             ]
         )
@@ -496,6 +546,9 @@ class MainApp(tk.Frame):
         )
 
         df.to_csv(location, index=False)
+
+    def open_output_folder(self):
+        view_open_file("output/")
 
 
 def main():
