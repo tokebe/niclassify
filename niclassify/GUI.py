@@ -24,6 +24,7 @@ import shutil
 # - methods that should be combined/deleted/decombined/made private/properties
 # - things that should be objects/objects that should be re-parented
 # - look at a guide for making a good python application or something I guess
+# - prefer to not keep dataframes and do inplace=True when possible
 
 
 class MainRoot(tk.Tk):
