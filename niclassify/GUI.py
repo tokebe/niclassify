@@ -6,9 +6,7 @@ import logging
 import matplotlib.pyplot as plt
 import shutil
 
-# TODO re-order methods alphabetically
-# TODO replace intial reads for column names to just single readlines to get column names
-# TODO start extensive testing for Things That Shouldn't Happen
+# TODO grab your dad to push buttons until something breaks
 # TODO add error checking for opening files, such as nonexistent files, etc
 # TODO add threading to basically everything
 # TODO add progress bars while doing threading
@@ -25,6 +23,9 @@ import shutil
 # - things that should be objects/objects that should be re-parented
 # - look at a guide for making a good python application or something I guess
 # - prefer to not keep dataframes and do inplace=True when possible
+# - try to make everything more object oriented instead of proceedural
+# - change most functions to take arguments and return things rather than
+# relying on class variables
 
 
 class MainRoot(tk.Tk):

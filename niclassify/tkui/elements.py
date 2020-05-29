@@ -86,7 +86,7 @@ class DataPanel(tk.LabelFrame):
         # column selection section
         self.col_select_hint = tk.Label(
             self,
-            text="Select Data Columns:")
+            text="Select Feature Columns:")
         self.col_select_hint.pack(anchor=tk.W)
         # selection panel, depends on twocolumnselect.py
         self.col_select_panel = TwoColumnSelect(self)

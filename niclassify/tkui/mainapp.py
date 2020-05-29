@@ -1,30 +1,18 @@
+from .utilities import view_open_file
+from .elements import DataPanel, TrainPanel, PredictPanel, StatusBar
+from xlrd import XLRDError
+from joblib import dump, load
+from tkinter import ttk
+from tkinter import filedialog
+import seaborn as sns
+import tkinter as tk
+import pandas as pd
+import numpy as np
 import os
 import logging
 import threading
 import subprocess
 import sys
-
-import numpy as np
-import pandas as pd
-import tkinter as tk
-import seaborn as sns
-
-from tkinter import filedialog
-from tkinter import ttk
-from joblib import dump, load
-from xlrd import XLRDError
-
-
-from .elements import DataPanel, TrainPanel, PredictPanel, StatusBar
-
-
-def view_open_file(filename):
-    filename = os.path.realpath(filename)
-    if sys.platform == "win32":
-        os.startfile(filename)
-    else:
-        opener = "open" if sys.platform == "darwin" else "xdg-open"
-        subprocess.call([opener, filename])
 
 
 class MainApp(tk.Frame):
@@ -119,28 +107,27 @@ class MainApp(tk.Frame):
         )
         self.status_bar.pack(fill=tk.X)
 
-    def reset_controls(self):
-        # reset/disable things before opening new file
-        # reset columns/sheets
-        self.column_names = {}
-        self.data_section.col_select_panel.update_contents()
-        self.train_section.known_select["values"] = []
-        self.known_column.set("")
-        self.sheet = None
-        # disable buttons
-        self.train_section.reset_enabled()
-        self.predict_section.reset_enabled()
+    def check_enable_predictions(self):
+        conditions = [
+            self.data_file is not None,
+            self.raw_data is not None,
+            self.classifier is not None
+        ]
+        print(conditions)
+        if all(conditions):
+            self.predict_section.prediction_make.config(state=tk.ACTIVE)
+            return True
+        else:
+            return False
 
-    def reset_operations(self):
-        self.known_column.set("")
-        self.train_section.reset_enabled()
-        self.predict_section.reset_enabled()
+    def enable_train(self, event):
+        self.train_section.train_button.config(state=tk.ACTIVE)
 
     def get_data_file(self):
         if self.classifier is not None and self.raw_data is not None:
             if (tk.messagebox.askokcancel(
                 title="Existing Classifier",
-                message="Opening a new data file will delete unsaved training and output results."
+                message="Opening a new data file will delete unsaved classifier and results."
             )) is False:
                 return
         # prompt user for file
@@ -169,10 +156,9 @@ class MainApp(tk.Frame):
         self.raw_data = None
 
         # handle file import given whether file is excel or text
-        if (self.data_file.split("/")[-1].split(".")[-1]
-                in ["xlsx", "xlsm", "xlsb",
-                    "xltx", "xltm", "xls",
-                    "xlt", "xml"]):  # excel; user needs to specify sheet
+        if (self.data_file.split("/")[-1].split(".")[-1] in [
+                "xlsx", "xlsm", "xlsb", "xltx", "xltm", "xls", "xlt", "xml"
+        ]):
             # enable sheet selection and get list of sheets for dropdown
             self.data_section.excel_sheet_input.config(state="readonly")
             try:
@@ -227,6 +213,20 @@ class MainApp(tk.Frame):
             self.get_raw_data()
             self.check_enable_predictions()
 
+    def get_raw_data(self):
+        # get raw data
+        raw_data = self.core.get_data(self.data_file, self.sheet)
+
+        # replace argument-added nans
+        if self.core.NANS is not None:
+            raw_data.replace({val: np.nan for val in self.core.NANS})
+
+        self.raw_data = raw_data
+
+    def get_selected_cols(self):
+        return list(self.data_section.col_select_panel.sel_contents.get(
+            0, tk.END))
+
     def get_sheet_cols(self, event):
         if self.classifier is not None and self.raw_data is not None:
             if (tk.messagebox.askokcancel(
@@ -260,20 +260,9 @@ class MainApp(tk.Frame):
         self.get_raw_data()
         self.check_enable_predictions()
 
-    def get_raw_data(self):
-        # get raw data
-        raw_data = self.core.get_data(self.data_file, self.sheet)
-
-        # replace argument-added nans
-        if self.core.NANS is not None:
-            raw_data.replace({val: np.nan for val in self.core.NANS})
-
-        self.raw_data = raw_data
-
     def get_split_data(self):
         # get currently selected columns
-        data_cols = list(self.data_section.col_select_panel.sel_contents.get(
-            0, tk.END))
+        data_cols = self.get_selected_cols()
 
         # split data into feature data and metadata
         self.data = self.raw_data[data_cols]
@@ -282,57 +271,37 @@ class MainApp(tk.Frame):
         # scale data
         self.data_norm = self.core.scale_data(self.data)
 
-    def enable_train(self, event):
-        self.train_section.train_button.config(state=tk.ACTIVE)
+    def load_classifier(self):
+        if (self.classifier is not None
+                and (self.report is not None or self.pairplot is not None)):
+            if (tk.messagebox.askokcancel(
+                title="Existing Classifier",
+                message="Loading a saved classifier will overwrite the current classifier and results if they have not been saved."
+            )) is False:
+                return
 
-    def train_classifier(self):
-        # make sure that data columns are selected
-        if len(self.data_section.col_select_panel.sel_contents.get(
-                0, tk.END)) <= 0:
-            tk.messagebox.showwarning(
-                title="No Data Columns Selected",
-                message="Please select at least one data column."
-            )
+        clf_file = filedialog.askopenfilename(
+            title="Open Saved Classifier",
+            initialdir="output/classifiers/",
+            filetypes=[
+                ("Classifier archive file", ".gz .joblib .pickle")
+            ]
+        )
+        if len(clf_file) <= 0:
             return
 
-        # split data into data and metadata
-        self.get_split_data()
-        class_column = self.known_column.get()
-
-        # convert class labels to lower if classes are in str format
-        if not np.issubdtype(
-                self.metadata[class_column].dtype, np.number):
-            self.metadata[class_column] = \
-                self.metadata[class_column].str.lower()
-
-        # get only known data and metadata
-        self.data_known, self.metadata_known = self.core.get_known(
-            self.data_norm, self.metadata, class_column)
-
-        # train classifier
-        logging.info("training random forest...")
-        self.classifier = self.core.train_forest(
-            self.data_known,
-            self.metadata_known,
-            class_column,
-            int(self.train_section.n_input.get())
-        )
-        # prepare training outputs and enable related buttons
-        self.train_section.classifier_save.config(state=tk.ACTIVE)
-        self.make_report()
-        self.make_cm()
-        self.save_temp_graph("cm")
-        self.train_section.enable_outputs()
+        # disable train stuff in the event that a trained clf is overwritten
+        self.reset_operations()
+        self.classifier = load(clf_file)
         self.check_enable_predictions()
 
-    def save_classifier(self):
-        location = tk.filedialog.asksaveasfilename(
-            title="Save Classifier",
-            initialdir="output/classifiers/",
-            defaultextension=".gz",
-            filetypes=[("GNU zipped archive", ".gz")]
+    def make_cm(self):
+        self.cm = self.core.utilities.make_confm(
+            self.classifier,
+            self.data_known,
+            self.metadata_known,
+            self.known_column.get()
         )
-        dump(self.classifier, location)
 
     def make_report(self):
         # capture log output for report
@@ -352,129 +321,21 @@ class MainApp(tk.Frame):
 
         self.report = "".join(reversed(captured_lines))
 
-    def view_report(self):
-        # new window with viewer
-        viewer = tk.Toplevel(self)
-        viewer.title("Training Report")
-        viewer.minsize(500, 500)
-        viewer_frame = tk.Frame(viewer)
-        viewer_frame.pack(fill=tk.BOTH, expand=True)
-        textbox = tk.Text(
-            viewer_frame,
-            wrap=tk.WORD
+    def make_pairplot(self):
+        df = pd.concat([self.data_imp, self.predict], axis=1)
+        self.pairplot = sns.pairplot(
+            data=df,
+            vars=df.columns[0:self.data.shape[1]],
+            hue="predict",
+            diag_kind='hist'
         )
-        textbox.insert(tk.END, self.report)
-        textbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        textscroll = tk.Scrollbar(
-            viewer_frame,
-            orient=tk.VERTICAL,
-            command=textbox.yview()
-        )
-        textscroll.pack(side=tk.RIGHT, fill=tk.Y)
-        textbox.config(yscrollcommand=textscroll.set)
-        confirm = tk.Button(
-            viewer,
-            text="Ok",
-            pady=5,
-            padx=5,
-            command=lambda: viewer.destroy()
-        )
-        confirm.pack(anchor=tk.E)
-
-    def save_report(self):
-        location = tk.filedialog.asksaveasfilename(
-            title="Save Classifier Report",
-            initialdir="output/",
-            defaultextension=".txt",
-            filetypes=[("Plain text file", ".txt")]
-        )
-        if len(location) == 0:
-            return
-        with open(location, "w") as output:
-            output.write(self.report)
-
-    def make_cm(self):
-        self.cm = self.core.utilities.make_confm(
-            self.classifier,
-            self.data_known,
-            self.metadata_known,
-            self.known_column.get()
-        )
-
-    def save_temp_graph(self, graph):
-        # save temporary image to open in viewer
-        g = self.cm if graph == "cm" else self.pairplot
-        g_img = self.cm_img if graph == "cm" else self.pairplot_img
-        i = 0
-        while os.path.exists("tkui/temp/temp{}.png".format(i)):
-            i += 1
-        if g_img is None:
-            if graph == "cm":
-                self.cm_img = "tkui/temp/temp{}.png".format(i)
-            else:
-                self.pairplot_img = "tkui/temp/temp{}.png".format(i)
-            g.savefig(self.cm_img if graph == "cm" else self.pairplot_img)
-            g_img = self.cm_img if graph == "cm" else self.pairplot_img
-
-    def view_graph(self, graph):
-        g_img = self.cm_img if graph == "cm" else self.pairplot_img
-        view_open_file(g_img)
-
-    def save_graph(self, graph):
-        location = tk.filedialog.asksaveasfilename(
-            title="Save {}".format(
-                "Confusion Matrix" if graph == "cm" else "Pairplot"),
-            initialdir="output/",
-            defaultextension=".txt",
-            filetypes=[("Portable Network Graphics image", ".png")]
-        )
-        if len(location) == 0:
-            return
-        if graph == "cm":
-            self.cm.savefig(location)
-        else:
-            self.pairplot.savefig(location)
-
-    def check_enable_predictions(self):
-        conditions = [
-            self.data_file is not None,
-            self.raw_data is not None,
-            self.classifier is not None
-        ]
-        print(conditions)
-        if all(conditions):
-            self.predict_section.prediction_make.config(state=tk.ACTIVE)
-            return True
-        else:
-            return False
-
-    def load_classifier(self):
-        if self.classifier is not None and self.report is not None:
-            if (tk.messagebox.askokcancel(
-                title="Existing Classifier",
-                message="Loading a saved classifier will overwrite the saved classifier, ensure it is saved if you wish to keep it."
-            )) is False:
-                return
-        # disable train stuff in the event that a trained clf is overwritten
-        self.reset_operations()
-
-        clf_file = filedialog.askopenfilename(
-            title="Open Saved Classifier",
-            initialdir="output/classifiers/",
-            filetypes=[
-                ("Classifier archive file", ".gz .joblib .pickle")
-            ]
-        )
-        if len(clf_file) > 0:
-            self.classifier = load(clf_file)
-            self.check_enable_predictions()
 
     def make_predictions(self):
         if len(self.data_section.col_select_panel.sel_contents.get(
                 0, tk.END)) <= 0:
             tk.messagebox.showwarning(
                 title="No Data Columns Selected",
-                message="Please select at least one data column."
+                message="Please select at least one feature column."
             )
             return
         self.get_split_data()
@@ -510,14 +371,85 @@ class MainApp(tk.Frame):
         self.predict_section.enable_outputs()
         self.predict_section.output_save.config(state=tk.ACTIVE)
 
-    def make_pairplot(self):
-        df = pd.concat([self.data_imp, self.predict], axis=1)
-        self.pairplot = sns.pairplot(
-            data=df,
-            vars=df.columns[0:self.data.shape[1]],
-            hue="predict",
-            diag_kind='hist'
+    def open_output_folder(self):
+        view_open_file("output/")
+
+    def reset_controls(self):
+        # reset/disable things before opening new file
+        # reset columns/sheets
+        self.column_names = {}
+        self.data_section.col_select_panel.update_contents()
+        self.train_section.known_select["values"] = []
+        self.known_column.set("")
+        self.sheet = None
+        # disable buttons
+        self.train_section.reset_enabled()
+        self.predict_section.reset_enabled()
+        # reset stored values
+        # parameters for locating and operating on data
+        self.raw_data = None
+        # data storage
+        self.data = None
+        self.metadata = None
+        self.data_norm = None
+        self.data_imp = None
+        self.data_known = None
+        self.metadata_known = None
+        # classifier & training
+        self.report = None
+        self.cm = None
+        self.cm_img = None
+        # predictions
+        self.predict = None
+        self.predict_prob = None
+        self.pairplot = None
+        self.pairplot_img = None
+
+    def reset_operations(self):
+        self.known_column.set("")
+        self.train_section.reset_enabled()
+        self.predict_section.reset_enabled()
+        # reset stored values
+        # data storage
+        self.data = None
+        self.metadata = None
+        self.data_norm = None
+        self.data_imp = None
+        self.data_known = None
+        self.metadata_known = None
+        # classifier & training
+        self.report = None
+        self.cm = None
+        self.cm_img = None
+        # predictions
+        self.predict = None
+        self.predict_prob = None
+        self.pairplot = None
+        self.pairplot_img = None
+
+    def save_classifier(self):
+        location = tk.filedialog.asksaveasfilename(
+            title="Save Classifier",
+            initialdir="output/classifiers/",
+            defaultextension=".gz",
+            filetypes=[("GNU zipped archive", ".gz")]
         )
+        dump(self.classifier, location)
+
+    def save_graph(self, graph):
+        location = tk.filedialog.asksaveasfilename(
+            title="Save {}".format(
+                "Confusion Matrix" if graph == "cm" else "Pairplot"),
+            initialdir="output/",
+            defaultextension=".txt",
+            filetypes=[("Portable Network Graphics image", ".png")]
+        )
+        if len(location) == 0:
+            return
+        if graph == "cm":
+            self.cm.savefig(location)
+        else:
+            self.pairplot.savefig(location)
 
     def save_output(self):
         location = tk.filedialog.asksaveasfilename(
@@ -547,8 +479,111 @@ class MainApp(tk.Frame):
 
         df.to_csv(location, index=False)
 
-    def open_output_folder(self):
-        view_open_file("output/")
+    def save_report(self):
+        location = tk.filedialog.asksaveasfilename(
+            title="Save Classifier Report",
+            initialdir="output/",
+            defaultextension=".txt",
+            filetypes=[("Plain text file", ".txt")]
+        )
+        if len(location) == 0:
+            return
+        with open(location, "w") as output:
+            output.write(self.report)
+
+    def save_temp_graph(self, graph):
+        # save temporary image to open in viewer
+        g = self.cm if graph == "cm" else self.pairplot
+        g_img = self.cm_img if graph == "cm" else self.pairplot_img
+        i = 0
+        while os.path.exists("tkui/temp/temp{}.png".format(i)):
+            i += 1
+        if g_img is None:
+            if graph == "cm":
+                self.cm_img = "tkui/temp/temp{}.png".format(i)
+            else:
+                self.pairplot_img = "tkui/temp/temp{}.png".format(i)
+            g.savefig(self.cm_img if graph == "cm" else self.pairplot_img)
+            g_img = self.cm_img if graph == "cm" else self.pairplot_img
+
+    def train_classifier(self):
+        # make sure that data columns are selected
+        if len(self.data_section.col_select_panel.sel_contents.get(
+                0, tk.END)) <= 0:
+            tk.messagebox.showwarning(
+                title="No Data Columns Selected",
+                message="Please select at least one feature column."
+            )
+            return
+        if self.known_column.get() in self.get_selected_cols():
+            tk.messagebox.showwarning(
+                title="Known Class And Feature Columns Overlap",
+                message="Class column must not be a selected feature column."
+            )
+            return
+
+        # split data into data and metadata
+        self.get_split_data()
+        class_column = self.known_column.get()
+
+        # convert class labels to lower if classes are in str format
+        if not np.issubdtype(
+                self.metadata[class_column].dtype, np.number):
+            self.metadata[class_column] = \
+                self.metadata[class_column].str.lower()
+
+        # get only known data and metadata
+        self.data_known, self.metadata_known = self.core.get_known(
+            self.data_norm, self.metadata, class_column)
+
+        # train classifier
+        logging.info("training random forest...")
+        self.classifier = self.core.train_forest(
+            self.data_known,
+            self.metadata_known,
+            class_column,
+            int(self.train_section.n_input.get())
+        )
+        # prepare training outputs and enable related buttons
+        self.train_section.classifier_save.config(state=tk.ACTIVE)
+        self.make_report()
+        self.make_cm()
+        self.save_temp_graph("cm")
+        self.train_section.enable_outputs()
+        self.check_enable_predictions()
+
+    def view_graph(self, graph):
+        g_img = self.cm_img if graph == "cm" else self.pairplot_img
+        view_open_file(g_img)
+
+    def view_report(self):
+        # new window with viewer
+        viewer = tk.Toplevel(self)
+        viewer.title("Training Report")
+        viewer.minsize(500, 500)
+        viewer_frame = tk.Frame(viewer)
+        viewer_frame.pack(fill=tk.BOTH, expand=True)
+        textbox = tk.Text(
+            viewer_frame,
+            wrap=tk.WORD
+        )
+        textbox.insert(tk.END, self.report)
+        textbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        textscroll = tk.Scrollbar(
+            viewer_frame,
+            orient=tk.VERTICAL,
+            command=textbox.yview()
+        )
+        textscroll.pack(side=tk.RIGHT, fill=tk.Y)
+        textbox.config(yscrollcommand=textscroll.set)
+        confirm = tk.Button(
+            viewer,
+            text="Ok",
+            pady=5,
+            padx=5,
+            command=lambda: viewer.destroy()
+        )
+        confirm.pack(anchor=tk.E)
 
 
 def main():

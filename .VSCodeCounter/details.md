@@ -1,10 +1,10 @@
 # Details
 
-Date : 2020-05-26 14:43:47
+Date : 2020-05-29 14:46:13
 
 Directory c:\Users\J C\Documents\GitHub\niclassify\niclassify
 
-Total : 87 files,  47191 codes, 337 comments, 651 blanks, all 48179 lines
+Total : 90 files,  47195 codes, 337 comments, 654 blanks, all 48186 lines
 
 [summary](results.md)
 
@@ -84,6 +84,8 @@ Total : 87 files,  47191 codes, 337 comments, 651 blanks, all 48179 lines
 | [niclassify/output/logs/rf-auto51.log](/niclassify/output/logs/rf-auto51.log) | log | 0 | 0 | 1 | 1 |
 | [niclassify/output/logs/rf-auto52.log](/niclassify/output/logs/rf-auto52.log) | log | 0 | 0 | 1 | 1 |
 | [niclassify/output/logs/rf-auto53.log](/niclassify/output/logs/rf-auto53.log) | log | 34 | 0 | 1 | 35 |
+| [niclassify/output/logs/rf-auto54.log](/niclassify/output/logs/rf-auto54.log) | log | 0 | 0 | 1 | 1 |
+| [niclassify/output/logs/rf-auto55.log](/niclassify/output/logs/rf-auto55.log) | log | 0 | 0 | 1 | 1 |
 | [niclassify/output/logs/rf-auto6.log](/niclassify/output/logs/rf-auto6.log) | log | 0 | 0 | 1 | 1 |
 | [niclassify/output/logs/rf-auto7.log](/niclassify/output/logs/rf-auto7.log) | log | 0 | 0 | 1 | 1 |
 | [niclassify/output/logs/rf-auto8.log](/niclassify/output/logs/rf-auto8.log) | log | 0 | 0 | 1 | 1 |
@@ -96,7 +98,8 @@ Total : 87 files,  47191 codes, 337 comments, 651 blanks, all 48179 lines
 | [niclassify/rf-auto.py](/niclassify/rf-auto.py) | Python | 103 | 38 | 35 | 176 |
 | [niclassify/tkui/__init__.py](/niclassify/tkui/__init__.py) | Python | 2 | 0 | 1 | 3 |
 | [niclassify/tkui/elements.py](/niclassify/tkui/elements.py) | Python | 267 | 23 | 52 | 342 |
-| [niclassify/tkui/mainapp.py](/niclassify/tkui/mainapp.py) | Python | 459 | 55 | 54 | 568 |
+| [niclassify/tkui/mainapp.py](/niclassify/tkui/mainapp.py) | Python | 453 | 55 | 52 | 560 |
 | [niclassify/tkui/twocolumnselect.py](/niclassify/tkui/twocolumnselect.py) | Python | 141 | 5 | 22 | 168 |
+| [niclassify/tkui/utilities.py](/niclassify/tkui/utilities.py) | Python | 10 | 0 | 3 | 13 |
 
 [summary](results.md)
