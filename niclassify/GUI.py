@@ -7,16 +7,6 @@ import matplotlib.pyplot as plt
 import shutil
 
 # TODO grab your dad to push buttons until something breaks
-# TODO add error checking for opening files, such as nonexistent files, etc
-# TODO add threading to basically everything
-# TODO add progress bars while doing threading
-# TODO add status updates to everything while doing threading
-# TODO add logging to everything
-# TODO add popup notifications for things such as completing training, etc
-# TODO try to optimize idle RAM usage
-# this will be a huge task and will definitely involve rewriting core
-# you'll have to try and keep as little data stored as possible
-# esp. the actual data files.
 # TODO after you've done that see if there are ways to make this whole thing
 # more professional and easily maintainable:
 # - methods that should be combined/deleted/decombined/made private/properties
@@ -26,6 +16,15 @@ import shutil
 # - try to make everything more object oriented instead of proceedural
 # - change most functions to take arguments and return things rather than
 # relying on class variables
+# TODO try to optimize idle RAM usage
+# this will be a huge task and will definitely involve rewriting core
+# you'll have to try and keep as little data stored as possible
+# esp. the actual data files.
+# TODO add threading to basically everything
+# TODO add progress bars while doing threading
+# TODO add status updates to everything while doing threading
+# TODO add logging to everything
+# TODO add popup notifications for things such as completing training, etc
 
 
 class MainRoot(tk.Tk):
