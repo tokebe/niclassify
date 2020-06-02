@@ -176,7 +176,7 @@ def interactive_mode():
     output_filename = None
     nans = None
 
-    data_files = os.listdir("data")
+    data_files = os.listdir("../data")
     data_files.append("OTHER (provide path)")
 
     # get data file path
@@ -198,7 +198,7 @@ def interactive_mode():
         }]
         data_file = prompt(questions)["path"]
     else:
-        data_file = "data/" + data_file
+        data_file = "../data/" + data_file
 
     # handle excel sheets
     if data_file.split(".")[-1] == "xlsx":
@@ -318,7 +318,7 @@ def interactive_mode():
 
     else:
         mode = "predict"
-        classifier_files = os.listdir("output/classifiers/forests")
+        classifier_files = os.listdir("../output/classifiers/forests")
         classifier_files.append("OTHER (provide path)")
 
         # get data file path
@@ -342,14 +342,14 @@ def interactive_mode():
 
             classifier_file = prompt(questions)["path"]
         else:
-            classifier_file = "output/classifiers/forests/" + classifier_file
+            classifier_file = "../output/classifiers/forests/" + classifier_file
 
     questions = [{
         "type": "input",
         "name": "path",
         "message": "please provide a name for output files: (without file extension)"
     }]
-    output_filename = "output/" + prompt(questions)["path"] + ".csv"
+    output_filename = "../output/" + prompt(questions)["path"] + ".csv"
 
     for n in NANS:
         print("'" + n + "'")

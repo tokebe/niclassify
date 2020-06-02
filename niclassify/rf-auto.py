@@ -45,9 +45,9 @@ def main():
 
     # set log filename
     i = 0
-    while os.path.exists("output/logs/rf-auto{}.log".format(i)):
+    while os.path.exists("../output/logs/rf-auto{}.log".format(i)):
         i += 1
-    logname = "output/logs/rf-auto{}.log".format(i)
+    logname = "../output/logs/rf-auto{}.log".format(i)
 
     # set up logging
     logging.basicConfig(

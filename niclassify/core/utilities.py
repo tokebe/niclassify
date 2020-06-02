@@ -31,11 +31,10 @@ with open("core/nans.json", "r") as nansfile:
     NANS = json.load(nansfile)["nans"]
 
 required_folders = [
-    "output",
-    "output/classifiers",
-    "output/classifiers/forests",
-    "output/logs",
-    "tkui/temp"
+    "../output",
+    "../output/classifiers",
+    "../output/classifiers/forests",
+    "../output/logs"
 ]
 
 
