@@ -6,6 +6,8 @@ import logging
 import matplotlib.pyplot as plt
 import shutil
 
+# TODO TOP PRIORITY: RENAME ALL DATA TO FEATURES
+
 # TODO grab your dad to push buttons until something breaks
 # TODO after you've done that see if there are ways to make this whole thing
 # more professional and easily maintainable:

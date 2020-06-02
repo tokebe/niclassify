@@ -58,7 +58,7 @@ def main():
 
     mode = args.mode
 
-    if args.mode == "interactive":
+    if mode == "interactive" or mode is None:
         mode,\
             data_file,\
             excel_sheet,\
@@ -91,6 +91,7 @@ def main():
     # get raw data
     raw_data = core.get_data(data_file, excel_sheet)
 
+    # TODO move this to utilties.get_data() and fix nans support
     # replace argument-added nans
     if nans is not None:
         raw_data.replace({val: np.nan for val in nans})
@@ -100,11 +101,11 @@ def main():
     # raw_data.reset_index(drop=True, inplace=True)
 
     # split data into feature data and metadata
-    data = raw_data[data_cols]
+    features = raw_data[data_cols]
     metadata = raw_data.drop(data_cols, axis=1)
 
     # scale data
-    data_norm = core.scale_data(data)
+    feature_norm = core.scale_data(features)
 
     if mode == "train":  # no classifier provided; train a new one
 
@@ -113,17 +114,17 @@ def main():
             metadata[class_column] = metadata[class_column].str.lower()
 
         # get only known data and metadata
-        data_known, metadata_known = core.get_known(
-            data_norm, metadata, class_column)
+        features_known, metadata_known = core.get_known(
+            feature_norm, metadata, class_column)
 
         # train classifier
         logging.info("training random forest...")
-        forest = core.train_forest(data_known, metadata_known,
-                                   class_column, multirun)
+        forest = core.RandomForestAC().train(
+            features_known, metadata_known[class_column], multirun)
 
         # save confusion matrix
         logging.info("saving confusion matrix...")
-        core.save_confm(forest, data_known,
+        core.save_confm(forest, features_known,
                         metadata_known, class_column, output_filename)
 
     else:   # classifier provided; load it in
@@ -132,15 +133,15 @@ def main():
 
     # impute data
     logging.info("imputing data...")
-    data_norm = core.impute_data(data_norm)
+    feature_norm = core.impute_data(feature_norm)
 
     # make predictions
     logging.info("predicting unknown class labels...")
-    predict = pd.DataFrame(forest.predict(data_norm))
+    predict = pd.DataFrame(forest.predict(feature_norm))
     # rename predict column
     predict.rename(columns={predict.columns[0]: "predict"}, inplace=True)
     # get predict probabilities
-    predict_prob = pd.DataFrame(forest.predict_proba(data_norm))
+    predict_prob = pd.DataFrame(forest.predict_proba(feature_norm))
     # rename column
     predict_prob.rename(
         columns={
@@ -150,7 +151,7 @@ def main():
 
     # save output
     logging.info("saving new output...")
-    df = pd.concat([metadata, predict, predict_prob, data_norm], axis=1)
+    df = pd.concat([metadata, predict, predict_prob, feature_norm], axis=1)
     try:
         output_path = "/".join(output_filename.split("/")[:-1])
         if not os.path.exists(output_path):
@@ -162,7 +163,7 @@ def main():
 
     # generate and output graph
     logging.info("generating final graphs...")
-    core.output_graph(data_norm, predict, output_filename)
+    core.output_graph(feature_norm, predict, output_filename)
 
     logging.info("...done!")
 

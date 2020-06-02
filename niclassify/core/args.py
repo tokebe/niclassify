@@ -89,9 +89,9 @@ def getargs():
         "data",
         help="path/filename of data to be imported for classification")
     predict_parser.add_argument(
-        "data_cols",
+        "feature_cols",
         help="column number (1-indexed)\
-             range of clustering data in format #:#")
+             range of feature data in format #:#")
     predict_parser.add_argument(
         "predict_using",
         help="Use a previously saved random forest to predict on data, \

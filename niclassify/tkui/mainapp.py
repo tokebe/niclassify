@@ -15,6 +15,9 @@ import subprocess
 import sys
 
 
+# TODO replace a lot of "stored" values with properties that get data from file
+# TODO replace any temporary files with tempfile, including read data files
+
 class MainApp(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
