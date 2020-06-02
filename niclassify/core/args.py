@@ -7,7 +7,10 @@ try:
     import logging
     import os
     import re
+    import signal
+
     import pandas as pd
+
     from PyInquirer import prompt, Validator, ValidationError
 
     from .utilities import *
@@ -23,6 +26,10 @@ SUPPORTED_TYPES = [
     ".tsv",
     ".txt"
 ]
+
+
+def keyboardInterruptHandler(signal, frame):
+    exit(0)
 
 
 def getargs():
@@ -157,6 +164,8 @@ def interactive_mode():
         tuple: all required arguments.
 
     """
+    # set up ctrl-c exit
+    signal.signal(signal.SIGINT, keyboardInterruptHandler)
 
     # placeholders and default values
     data_file = None

@@ -27,6 +27,7 @@ import shutil
 # TODO add status updates to everything while doing threading
 # TODO add logging to everything
 # TODO add popup notifications for things such as completing training, etc
+# TODO possible thing to do later: automatic wizard creation
 
 
 class MainRoot(tk.Tk):

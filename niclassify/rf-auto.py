@@ -9,7 +9,7 @@ try:
     # import main libraries
     import os
     import logging
-    import argparse
+    import signal
 
     import numpy as np
     import pandas as pd
@@ -24,12 +24,18 @@ except ModuleNotFoundError:
     exit(-1)
 
 
+def keyboardInterruptHandler(signal, frame):
+    exit(0)
+
+
 def main():
     """Run the program.
 
     Takes in user arguments to select data to run on, and outputs a new csv
     with predictions.
     """
+    # set up ctrl-c exit
+    signal.signal(signal.SIGINT, keyboardInterruptHandler)
 
     # set seaborn theme/format
     sns.set()
@@ -91,7 +97,6 @@ def main():
     # get raw data
     raw_data = core.get_data(data_file, excel_sheet)
 
-    # TODO move this to utilties.get_data() and fix nans support
     # replace argument-added nans
     if nans is not None:
         raw_data.replace({val: np.nan for val in nans})

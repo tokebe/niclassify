@@ -15,7 +15,6 @@ try:
     from sklearn.model_selection import train_test_split
     from sklearn.model_selection import StratifiedKFold
 
-    # from itertools import chain, combinations
 except ModuleNotFoundError:
     logging.error("Missing required modules. Install requirements by running")
     logging.error("'python -m pip install -r requirements.txt'")
@@ -67,14 +66,6 @@ class AutoClassifier:
         self.best_train_cm = None
         self.best_test_cm = None
 
-    # TODO fix logging names for classifier and score
-    # TODO fix  GUI implementation
-    # currently they don't expect to have to make the AC object
-    # additionally they expect to pass in metadata_known and class_col
-    # instead of just classes_known
-    # TODO fix keyboard interrupt error in interactive mode
-    # TODO after this see GUI and rf-auto for next steps
-
     def __get_k(self, classes_known):
         """Get the k number of splits for a stratified k-fold.
 
@@ -115,8 +106,6 @@ class AutoClassifier:
         test_score = self.score_method(
             y_test, test_predict)
 
-        # TODO ensure that changing from test_score to mean_score
-        # was the right decision
         return np.mean((train_score, test_score))
 
     def __get_test_train_splits(self, features_known, classes_known):
@@ -191,7 +180,11 @@ class AutoClassifier:
             "out-of-bag score: {}".format(self.best_model.oob_score_))
         report.append("---")
 
-        report.append("train set BA: {}".format(self.best_train_score))
+        report.append(
+            "train/test scoring method: {}".format(self.score_method.__name__))
+        report.append("---")
+
+        report.append("train set score: {}".format(self.best_train_score))
         labels = self.labels
         # report.append(self.best_train_cm)
         for true, pred in np.ndindex(self.best_train_cm.shape):
@@ -204,7 +197,7 @@ class AutoClassifier:
                         labels[pred],
                         (self.best_train_cm[true, pred] * 100)))
         report.append("---")
-        report.append("test set BA : {}".format(self.best_test_score))
+        report.append("test set score: {}".format(self.best_test_score))
         # report.append(self.best_test_cm)
         for true, pred in np.ndindex(self.best_test_cm.shape):
             if true == pred:
@@ -246,7 +239,8 @@ class AutoClassifier:
 
         """
         # useful logging
-        logging.info("  training using variables:")
+        logging.info("  training {}".format(self.clf.__class__.__name__))
+        logging.info("  using variables:")
         for i in features_known.columns.values.tolist():
             logging.info("    {}".format(i))
         logging.info("  obtaining best hyperparameters...")
@@ -289,7 +283,8 @@ class AutoClassifier:
                     self.__get_test_train_splits(features_known, classes_known)
 
                 print(
-                    "    testing forest {} of {}...".format(m + 1, multirun),
+                    "    testing classifier {} of {}...".format(
+                        m + 1, multirun),
                     end="\r")
 
                 model = search.best_estimator_.fit(x_train, y_train)
