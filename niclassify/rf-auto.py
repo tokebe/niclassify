@@ -37,27 +37,8 @@ def main():
     # set up ctrl-c exit
     signal.signal(signal.SIGINT, keyboardInterruptHandler)
 
-    # set seaborn theme/format
-    sns.set()
-
-    # ensure required folders exist
-    core.assure_path()
-
-    # set log filename
-    i = 0
-    while os.path.exists("../output/logs/rf-auto{}.log".format(i)):
-        i += 1
-    logname = "../output/logs/rf-auto{}.log".format(i)
-
-    # set up logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(message)s",
-        handlers=[
-            logging.FileHandler(logname),
-            logging.StreamHandler()
-        ]
-    )
+    # call some boilerplate functions
+    core.boilerplate()
 
     # get args
     parser, args = core.getargs()

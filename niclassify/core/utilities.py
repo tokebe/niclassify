@@ -18,6 +18,10 @@ try:
     from sklearn import metrics
     from sklearn.impute import SimpleImputer
 
+    import importlib.resources as pkg_resources
+
+    from . import config
+
 except ModuleNotFoundError:
     logging.error("Missing required modules. Install requirements by running")
     logging.error("'python -m pip install -r requirements.txt'")
@@ -27,13 +31,12 @@ except ModuleNotFoundError:
 sns.set()
 
 # possible null values to be converted to np.nan
-with open("core/nans.json", "r") as nansfile:
+with pkg_resources.open_text(config, "nans.json") as nansfile:
     NANS = json.load(nansfile)["nans"]
 
 required_folders = [
     "../output",
     "../output/classifiers",
-    "../output/classifiers/forests",
     "../output/logs"
 ]
 
@@ -46,6 +49,30 @@ def assure_path():
     for f in required_folders:
         if not os.path.exists(f):
             os.makedirs(f)
+
+
+def boilerplate():
+    # set seaborn theme/format
+    sns.set()
+
+    # ensure required folders exist
+    assure_path()
+
+    # set log filename
+    i = 0
+    while os.path.exists("../output/logs/rf-auto{}.log".format(i)):
+        i += 1
+    logname = "../output/logs/rf-auto{}.log".format(i)
+
+    # set up logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(message)s",
+        handlers=[
+            logging.FileHandler(logname),
+            logging.StreamHandler()
+        ]
+    )
 
 
 def get_data(filename, excel_sheet=None):
@@ -314,9 +341,11 @@ def save_clf_dialog(clf):
             from joblib import dump
             i = 0
             while os.path.exists(
-                    "output/classifiers/forests/forest{}.joblib".format(i)):
+                    "../output/classifiers/{}{}.gz".format(
+                        clf.__class__.__name__, i)):
                 i += 1
-            dump(clf, "output/classifiers/forests/forest{}.joblib".format(i))
+            dump(clf, "../output/classifiers/{}{}.gz".format(
+                clf.__class__.__name__, i))
             break
         elif answer in ["n", "no"]:
             break
