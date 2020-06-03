@@ -20,6 +20,8 @@ except ModuleNotFoundError:
 
 from .utilities import *
 
+print("args: {}".format(MAIN_PATH))
+
 SUPPORTED_TYPES = [
     ".csv",
     ".xlsx",
@@ -114,9 +116,10 @@ def getargs():
         "-o",
         "--out",
         nargs='?',
-        default="output/output.csv",
-        help="path/filename of output file, defaults to output/output.csv. \
-            Only export to csv is supported.")
+        default="output.csv",
+        help="path/filename of output file, defaults to output.csv. \
+            Only export to csv is supported. If an absolute path is given \
+            output will be placed there instead of internal output folder.")
     predict_parser.add_argument(
         "-n",
         "--nanval",
@@ -176,7 +179,12 @@ def interactive_mode():
     output_filename = None
     nans = None
 
-    data_files = os.listdir("../data")
+    data_files = os.listdir(
+        os.path.join(
+            MAIN_PATH,
+            "data/"
+        )
+    )
     data_files.append("OTHER (provide path)")
 
     # get data file path
@@ -198,7 +206,7 @@ def interactive_mode():
         }]
         data_file = prompt(questions)["path"]
     else:
-        data_file = "../data/" + data_file
+        data_file = os.path.join(MAIN_PATH, "data/", data_file)
 
     # handle excel sheets
     if data_file.split(".")[-1] == "xlsx":
@@ -318,7 +326,9 @@ def interactive_mode():
 
     else:
         mode = "predict"
-        classifier_files = os.listdir("../output/classifiers/forests")
+        classifier_files = os.listdir(
+            os.path.join(MAIN_PATH, "output/classifiers")
+        )
         classifier_files.append("OTHER (provide path)")
 
         # get data file path
@@ -342,14 +352,19 @@ def interactive_mode():
 
             classifier_file = prompt(questions)["path"]
         else:
-            classifier_file = "../output/classifiers/forests/" + classifier_file
+            classifier_file = os.path.join(
+                MAIN_PATH, "output/classifiers/", classifier_file)
 
     questions = [{
         "type": "input",
         "name": "path",
         "message": "please provide a name for output files: (without file extension)"
     }]
-    output_filename = "../output/" + prompt(questions)["path"] + ".csv"
+    output_filename = (prompt(questions)["path"] + ".csv")
+    print("ARGS: GOT OUTPUT PROMPT RESPONSE: {}".format(output_filename))
+    print("ARGS: MAIN_PATH: {}".format(MAIN_PATH))
+    output_filename = os.path.join(MAIN_PATH, "output/" + output_filename)
+    print("args: passing output filename of {}".format(output_filename))
 
     for n in NANS:
         print("'" + n + "'")

@@ -34,11 +34,18 @@ sns.set()
 with pkg_resources.open_text(config, "nans.json") as nansfile:
     NANS = json.load(nansfile)["nans"]
 
+MAIN_PATH = os.path.join(
+    os.path.dirname(__file__),
+    "../../"
+)
+
 required_folders = [
-    "../output",
-    "../output/classifiers",
-    "../output/logs"
+    os.path.join(MAIN_PATH, "output/"),
+    os.path.join(MAIN_PATH, "output/classifiers/"),
+    os.path.join(MAIN_PATH, "output/logs/"),
 ]
+
+print("utilties: {}".format(MAIN_PATH))
 
 
 def assure_path():
@@ -272,7 +279,8 @@ def save_predictions(metadata, predict, feature_norm, out, predict_prob=None):
     else:
         df = pd.concat([metadata, predict, feature_norm], axis=1)
     try:
-        output_path = "/".join(out.split("/")[:-1])
+        print("ATTEMPTING TO SAVE TO PATH: {}".format(out))
+        output_path = os.path.join("/".join(out.split("/")[:-1]))
         if not os.path.exists(output_path):
             os.makedirs(output_path)
         df.to_csv(out, index=False)
@@ -343,11 +351,21 @@ def save_clf_dialog(clf):
             from joblib import dump
             i = 0
             while os.path.exists(
-                    "../output/classifiers/{}{}.gz".format(
-                        clf.__class__.__name__, i)):
+                os.path.join(
+                    MAIN_PATH,
+                    "output/classifiers/{}{}.gz".format(
+                        clf.__class__.__name__, i)
+                )
+            ):
                 i += 1
-            dump(clf, "../output/classifiers/{}{}.gz".format(
-                clf.__class__.__name__, i))
+            dump(
+                clf,
+                os.path.join(
+                    MAIN_PATH,
+                    "output/classifiers/{}{}.gz".format(
+                        clf.__class__.__name__, i)
+                )
+            )
             break
         elif answer in ["n", "no"]:
             break

@@ -19,15 +19,14 @@ except ModuleNotFoundError:
 from . import utilities
 from . import classifiers
 
-# TODO fix folder references when running through __main__.py and rf_auto.py
-# TODO fix logging not logging anything
-# checked: logs properly when running from rf_auto.py
-# TODO fix classifier save not saving anything
-# saves properly when running from rf_auto.py
+# TODO test all usages to make sure file access is working right
+# interactive: train, predict (both from internal and external sources)
+# noninteractive: train, predict (both from internal and external sources)
 # TODO see what that runtimewarning is about
 # TODO basic bugfixing
 # TODO add documentation
 # TODO add a bunch of user error checking both here and in utilities
+print("StandardProgram: {}".format(utilities.MAIN_PATH))
 
 
 class StandardProgram:
@@ -56,9 +55,17 @@ class StandardProgram:
 
         # set log filename
         i = 0
-        while os.path.exists("../output/logs/rf-auto{}.log".format(i)):
+        while os.path.exists(
+            os.path.join(
+                utilities.MAIN_PATH,
+                "output/logs/rf-auto{}.log".format(i)
+            )
+        ):
             i += 1
-        logname = "../output/logs/rf-auto{}.log".format(i)
+        logname = os.path.join(
+            utilities.MAIN_PATH,
+            "output/logs/rf-auto{}.log".format(i)
+        )
 
         # set up logging
         logging.basicConfig(
