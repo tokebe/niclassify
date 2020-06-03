@@ -20,13 +20,13 @@ try:
 
     import importlib.resources as pkg_resources
 
-    from . import config
 
 except ModuleNotFoundError:
     logging.error("Missing required modules. Install requirements by running")
     logging.error("'python -m pip install -r requirements.txt'")
     exit(-1)
 
+from . import config
 
 sns.set()
 
@@ -49,30 +49,6 @@ def assure_path():
     for f in required_folders:
         if not os.path.exists(f):
             os.makedirs(f)
-
-
-def boilerplate():
-    # set seaborn theme/format
-    sns.set()
-
-    # ensure required folders exist
-    assure_path()
-
-    # set log filename
-    i = 0
-    while os.path.exists("../output/logs/rf-auto{}.log".format(i)):
-        i += 1
-    logname = "../output/logs/rf-auto{}.log".format(i)
-
-    # set up logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(message)s",
-        handlers=[
-            logging.FileHandler(logname),
-            logging.StreamHandler()
-        ]
-    )
 
 
 def get_data(filename, excel_sheet=None):
@@ -277,6 +253,32 @@ def save_confm(clf, data_known, metadata_known, class_column, out):
     """
     fig = make_confm(clf, data_known, metadata_known, class_column)
     fig.savefig("{}.cm.png".format(out))
+
+
+def save_predictions(metadata, predict, feature_norm, out, predict_prob=None):
+    """Save a given set of predictions to the given output filename.
+
+    Args:
+        metadata (DataFrame): The full set of metadata.
+        predict (Series): The predictions given for the feature data.
+        feature_norm (DataFrame): Normalized feature data.
+        out (str): The output filename.
+        predict_prob (DataFrame, optional): The class prediction probabilities.
+            Defaults to None.
+    """
+    logging.info("saving new output...")
+    if predict_prob is not None:
+        df = pd.concat([metadata, predict, predict_prob, feature_norm], axis=1)
+    else:
+        df = pd.concat([metadata, predict, feature_norm], axis=1)
+    try:
+        output_path = "/".join(out.split("/")[:-1])
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
+        df.to_csv(out, index=False)
+    except (KeyError, FileNotFoundError, OSError):
+        logging.error("Output folder creation failed.")
+        exit(-1)
 
 
 def impute_data(data):

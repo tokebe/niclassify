@@ -312,7 +312,7 @@ class AutoClassifier:
 
         return self.best_model
 
-    print()
+        print()
 
 
 class RandomForestAC(AutoClassifier):

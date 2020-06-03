@@ -72,8 +72,9 @@ def main():
         # get column range for data
         col_range = core.get_col_range(selected_cols)
         data_cols = core.get_data(
-            data_file, excel_sheet).columns.values[
-                col_range[0]:col_range[1]].tolist()
+            data_file,
+            excel_sheet
+        ).columns.values[col_range[0]:col_range[1]].tolist()
 
     # get raw data
     raw_data = core.get_data(data_file, excel_sheet)

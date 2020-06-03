@@ -13,12 +13,12 @@ try:
 
     from PyInquirer import prompt, Validator, ValidationError
 
-    from .utilities import *
-
 except ModuleNotFoundError:
     logging.error("Missing required modules. Install requirements by running")
     logging.error("'python -m pip install -r requirements.txt'")
     exit(-1)
+
+from .utilities import *
 
 SUPPORTED_TYPES = [
     ".csv",
