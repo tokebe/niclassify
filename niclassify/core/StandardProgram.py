@@ -19,14 +19,10 @@ except ModuleNotFoundError:
 from . import utilities
 from . import classifiers
 
-# TODO test all usages to make sure file access is working right
-# interactive: train, predict (both from internal and external sources)
-# noninteractive: train, predict (both from internal and external sources)
-# TODO see what that runtimewarning is about
-# TODO basic bugfixing
+
+# TODO go through every file and organize the methods
 # TODO add documentation
 # TODO add a bunch of user error checking both here and in utilities
-print("StandardProgram: {}".format(utilities.MAIN_PATH))
 
 
 class StandardProgram:
@@ -39,7 +35,7 @@ class StandardProgram:
         self.data_file = None
         self.excel_sheet = None
         self.selected_cols = None
-        self.data_cols = None
+        self.feature_cols = None
         self.class_column = None
         self.multirun = None
         self.classifier_file = None
@@ -98,12 +94,12 @@ class StandardProgram:
                 self.classifier_file,\
                 self.output_filename,\
                 self.nans = self.interactive_parser()
-            self.data_cols = self.selected_cols
+            self.feature_cols = self.selected_cols
 
         else:
             self.data_file = args.data
             self.excel_sheet = args.excel_sheet
-            self.selected_cols = args.data_cols
+            self.selected_cols = args.feature_cols
             self.output_filename = args.out
             self.nans = args.nanval
 
@@ -115,7 +111,7 @@ class StandardProgram:
 
             # get column range for data
             self.col_range = utilities.get_col_range(self.selected_cols)
-            self.data_cols = utilities.get_data(
+            self.feature_cols = utilities.get_data(
                 self.data_file,
                 self.excel_sheet
             ).columns.values[self.col_range[0]:self.col_range[1]].tolist()
@@ -129,8 +125,8 @@ class StandardProgram:
             raw_data.replace({val: np.nan for val in self.nans})
 
         # split data into feature data and metadata
-        features = raw_data[self.data_cols]
-        metadata = raw_data.drop(self.data_cols, axis=1)
+        features = raw_data[self.feature_cols]
+        metadata = raw_data.drop(self.feature_cols, axis=1)
 
         # scale data
         feature_norm = utilities.scale_data(features)
@@ -165,17 +161,7 @@ class StandardProgram:
 
         return clf
 
-    def load_classifier(self):
-        from joblib import load
-        classifier = load(self.classifier_file)
-
-        return classifier
-
     def predict_AC(self, clf, feature_norm):
-        # impute data
-        logging.info("imputing data...")
-        feature_norm = utilities.impute_data(feature_norm)
-
         # make predictions
         logging.info("predicting unknown class labels...")
         predict = pd.DataFrame(clf.predict(feature_norm))
@@ -199,6 +185,11 @@ class StandardProgram:
 
         else:
             return (predict)
+
+    def impute_data(self, feature_norm):
+        # impute data
+        logging.info("imputing data...")
+        return utilities.impute_data(feature_norm)
 
     def save_outputs(
             self,
@@ -239,7 +230,9 @@ class StandardProgram:
         if self.mode == "train":
             clf = self.train_AC(feature_norm, metadata)
         else:
-            clf = self.load_classifier()
+            clf = utilities.load_classifier(self.classifier_file)
+
+        feature_norm = self.impute_data(feature_norm)
 
         # By default, predictions are made whether the mode was train or not.
         predict = self.predict_AC(clf, feature_norm)

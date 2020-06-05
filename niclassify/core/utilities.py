@@ -45,8 +45,6 @@ required_folders = [
     os.path.join(MAIN_PATH, "output/logs/"),
 ]
 
-print("utilties: {}".format(MAIN_PATH))
-
 
 def assure_path():
     """Assure that all required folders exist.
@@ -72,9 +70,17 @@ def get_data(filename, excel_sheet=None):
         DataFrame: The extracted DataFrame.
 
     """
-    assert type(filename) is str, "filename must be string"
-    assert os.path.exists(
-        filename), "file {} does not exist.".format(filename)
+    # check if filename is string
+    if type(filename) is not str:
+        raise TypeError("filename is not string")
+
+    # convert filename to proper path
+    if not os.path.isabs(filename):
+        filename = os.path.join(MAIN_PATH, "data/" + filename)
+
+    # check if filename exists
+    if not os.path.exists(filename):
+        raise ValueError("file {} does not exist.".format(filename))
 
     # get raw data
     if ".xlsx" in filename[-5:]:  # using excel_sheet file
@@ -142,19 +148,18 @@ def get_col_range(rangestring):
         list: a list containing the lower and upper values of the range.
 
     """
-    assert type(rangestring) is str, "given range format incompatible"
-
     # get feature data column range
     if not re.match("[0-9]+:[0-9]+", rangestring):
         logging.error("data column selection range format invalid (see -h).")
-        exit(-1)
+        raise ValueError("data column selection range format invalid")
     else:
-        data_cols = rangestring.split(":")
-        data_cols = [int(x) for x in data_cols]
-        data_cols[0] -= 1  # adjust numbers to be 0-indexed and work for slice
-        data_cols[1] += 1
+        feature_cols = rangestring.split(":")
+        feature_cols = [int(x) for x in feature_cols]
+        # adjust numbers to be 0-indexed and work for slice
+        feature_cols[0] -= 1
+        feature_cols[1] += 1
 
-    return data_cols
+    return feature_cols
 
 
 def scale_data(data):
@@ -176,11 +181,11 @@ def scale_data(data):
         data,
         columns=category_cols,
         prefix=category_cols, drop_first=True)
-    data_cols = data_np.columns.values  # save column names
+    feature_cols = data_np.columns.values  # save column names
     data_np = data_np.to_numpy()
     scaler = preprocessing.MinMaxScaler()
     data_norm = pd.DataFrame(scaler.fit_transform(data_np))
-    data_norm.columns = data_cols  # add column names back
+    data_norm.columns = feature_cols  # add column names back
 
     return data_norm
 
@@ -259,6 +264,8 @@ def save_confm(clf, data_known, metadata_known, class_column, out):
         out (str): file path/name for output image.
     """
     fig = make_confm(clf, data_known, metadata_known, class_column)
+    if not os.path.isabs(out):
+        out = os.path.join(MAIN_PATH, "output/" + out)
     fig.savefig("{}.cm.png".format(out))
 
 
@@ -279,13 +286,19 @@ def save_predictions(metadata, predict, feature_norm, out, predict_prob=None):
     else:
         df = pd.concat([metadata, predict, feature_norm], axis=1)
     try:
-        print("ATTEMPTING TO SAVE TO PATH: {}".format(out))
-        output_path = os.path.join("/".join(out.split("/")[:-1]))
+        if not os.path.isabs(out):
+            out = os.path.join(MAIN_PATH, "output/" + out)
+
+        output_path = os.path.join(
+            "/".join(out.replace("\\", "/").split("/")[:-1]))
+
         if not os.path.exists(output_path):
             os.makedirs(output_path)
+        print("  saving files to path: {}".format(
+            os.path.realpath(output_path)))
         df.to_csv(out, index=False)
     except (KeyError, FileNotFoundError, OSError):
-        logging.error("Output folder creation failed.")
+        logging.error("output folder creation failed.")
         exit(-1)
 
 
@@ -306,13 +319,13 @@ def impute_data(data):
         data,
         columns=category_cols,
         prefix=category_cols, drop_first=True)
-    data_cols = data_np.columns.values
+    feature_cols = data_np.columns.values
     data_np = data_np.to_numpy()
     imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')
     data_np = imp_mean.fit_transform(data_np)
     # return to dataframe
     data = pd.DataFrame(data_np)  # removed a scaler fit-transform here
-    data.columns = data_cols
+    data.columns = feature_cols
 
     return data
 
@@ -334,6 +347,8 @@ def output_graph(data, predict, outfname):
         hue="predict",
         diag_kind='hist'
     )
+    if not os.path.isabs(outfname):
+        outfname = os.path.join(MAIN_PATH, "output/" + outfname)
     out.savefig("{}.png".format(outfname))
 
 
@@ -371,3 +386,26 @@ def save_clf_dialog(clf):
             break
         else:
             continue
+
+
+def load_classifier(filename):
+    """Load a saved classifier.
+
+    Args:
+        filename (str): Path/name of classifier.
+
+    Returns:
+        Classifier: The loaded classifier.
+
+    """
+    if not os.path.isabs(filename):
+        filename = os.path.join(MAIN_PATH, "output/classifiers/", filename)
+
+    # check if filename exists
+    if not os.path.exists(filename):
+        raise ValueError("file {} does not exist.".format(filename))
+
+    from joblib import load
+    classifier = load(filename)
+
+    return classifier

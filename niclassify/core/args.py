@@ -20,7 +20,6 @@ except ModuleNotFoundError:
 
 from .utilities import *
 
-print("args: {}".format(MAIN_PATH))
 
 SUPPORTED_TYPES = [
     ".csv",
@@ -55,9 +54,9 @@ def getargs():
         "data",
         help="path/filename of data to be imported for classification")
     train_parser.add_argument(
-        "data_cols",
+        "feature_cols",
         help="column number (1-indexed)\
-             range of clustering data in format #:#")
+             range of feature data in format #:#")
     train_parser.add_argument(
         "class_column",
         help="column name for classification label to be predicted")
@@ -152,12 +151,18 @@ class FileValidator(Validator):
         """
         ok = True
         ok = os.path.exists(document.text)
+        if not ok:
+            raise ValidationError(
+                message="File does not exist.",
+                cursor_position=len(document.text))
+            return False
         extension = "." + document.text.split(".")[-1]
         ok = extension in SUPPORTED_TYPES
         if not ok:
             raise ValidationError(
                 message="File type {} not supported.".format(extension),
                 cursor_position=len(document.text))
+            return False
 
 
 def interactive_mode():
@@ -195,7 +200,12 @@ def interactive_mode():
         "choices": data_files
     }]
 
-    data_file = prompt(questions)["file"]
+    data_file = prompt(questions)
+
+    if not data_file:
+        exit(0)
+
+    data_file = data_file["file"]
 
     if data_file == "OTHER (provide path)":
         questions = [{
@@ -204,15 +214,21 @@ def interactive_mode():
             "message": "please provide the path to the file:",
             "validate": FileValidator
         }]
-        data_file = prompt(questions)["path"]
-    else:
-        data_file = os.path.join(MAIN_PATH, "data/", data_file)
+        data_file = prompt(questions)
+
+        if not data_file:
+            exit(0)
+
+        data_file = data_file["path"]
+
+    if not os.path.isabs(data_file):
+        data_file_path = os.path.join(MAIN_PATH, "data/", data_file)
 
     # handle excel sheets
     if data_file.split(".")[-1] == "xlsx":
         print("excel sheet detected.")
 
-        all_sheets = pd.read_excel(data_file, None)
+        all_sheets = pd.read_excel(data_file_path, None)
 
         if len(all_sheets) == 1:
             print("first (only) sheet automatically selected.")
@@ -225,7 +241,14 @@ def interactive_mode():
                 "choices": ["select from list", "enter name"]
             }]
 
-            if prompt(questions)["selection_mode"] == "select from list":
+            selection_mode = prompt(questions)
+
+            if not selection_mode:
+                exit(0)
+
+            selection_mode = selection_mode["selection_mode"]
+
+            if selection_mode == "select from list":
                 questions = [{
                     "type": "list",
                     "name": "excel_sheet",
@@ -240,7 +263,12 @@ def interactive_mode():
                     "message": "input a sheet name:",
                     "validate": lambda val: val in all_sheets.keys()
                 }]
-            excel_sheet = prompt(questions)[excel_sheet]
+            excel_sheet = prompt(questions)
+
+            if not excel_sheet:
+                exit(0)
+
+            excel_sheet = excel_sheet["excel_sheet"]
     else:
         excel_sheet = None
 
@@ -256,30 +284,49 @@ def interactive_mode():
     columns = get_data(
         data_file, excel_sheet).columns.values.tolist()
 
-    if prompt(questions)["selection_mode"] == "select by name":
+    selection_mode = prompt(questions)
+
+    if not selection_mode:
+        exit(0)
+
+    selection_mode = selection_mode["selection_mode"]
+
+    if selection_mode == "select by name":
         questions = [{
             "type": "checkbox",
             "name": "column_select",
             "message": "please select columns which contain data to train on:",
             "choices": [{'name': col} for col in columns]
         }]
-        selected_cols = prompt(questions)["column_select"]
+        selected_cols = prompt(questions)
+
+        if not selected_cols:
+            exit(0)
+
+        selected_cols = selected_cols["column_select"]
     else:
         questions = [{
             "type": "input",
             "name": "column_select",
             "message": "please select columns which contain data to train on:",
             "validate": (lambda val:
-                         re.match("[0-9]+:[0-9]+", val) and
-                         ([int(x) for x in val.split(":")][0] in
-                          range(1, len(columns) + 1) and
-                          [int(x) for x in val.split(":")][1] in
-                          range(1, len(columns) + 1)))
+                         re.match("[0-9]+:[0-9]+", val)
+                         and([int(x) for x in val.split(":")][0]
+                             in range(1, len(columns) + 1)
+                             and [int(x) for x in val.split(":")][1]
+                             in range(1, len(columns) + 1)))
             # this lambda is hideous and evil and for the time being a simple
             # way to solve the problem. I need access to the value, and to the
             # columns variable.
         }]
-        sel = [int(i) for i in prompt(questions)["column_select"].split(":")]
+        selected_cols = prompt(questions)
+
+        if not selected_cols:
+            exit(0)
+
+        selected_cols = selected_cols["column_select"]
+
+        sel = [int(i) for i in selected_cols.split(":")]
         selected_cols = columns[sel[0]-1:sel[1]+1]
 
     questions = [{
@@ -288,8 +335,14 @@ def interactive_mode():
         "message": "would you like to train a new model or apply a trained model?",
         "choices": ["train new model", "predict using trained model"]
     }]
+    useage_mode = prompt(questions)
 
-    if prompt(questions)["useage_mode"] == "train new model":
+    if not useage_mode:
+        exit(0)
+
+    useage_mode = useage_mode["useage_mode"]
+
+    if useage_mode == "train new model":
         mode = "train"
         questions = [{
             "type": "list",
@@ -297,8 +350,14 @@ def interactive_mode():
             "message": "would you like to select the class label column from a list or enter its name?",
             "choices": ["select from list", "input column name"]
         }]
+        selection_mode = prompt(questions)
 
-        if prompt(questions)["select_mode"] == "select from list":
+        if not selection_mode:
+            exit(0)
+
+        selection_mode = selection_mode["select_mode"]
+
+        if selection_mode == "select from list":
             questions = [{
                 "type": "list",
                 "name": "column_name",
@@ -315,14 +374,24 @@ def interactive_mode():
                                      columns if
                                      col not in selected_cols])
             }]
-        class_column = prompt(questions)["column_name"]
+        class_column = prompt(questions)
+
+        if not class_column:
+            exit(0)
+
+        class_column = class_column["column_name"]
         questions = [{
             "type": "list",
             "name": "multirun",
             "message": "how many classifiers would you like to generate (the best will be chosen)",
             "choices": ["1", "10", "50", "100", "500", "1000"]
         }]
-        multirun = int(prompt(questions)["multirun"])
+        multirun = prompt(questions)
+
+        if not multirun:
+            exit(0)
+
+        multirun = int(multirun["multirun"])
 
     else:
         mode = "predict"
@@ -339,7 +408,12 @@ def interactive_mode():
             "choices": classifier_files
         }]
 
-        classifier_file = prompt(questions)["file"]
+        classifier_file = prompt(questions)
+
+        if not classifier_file:
+            exit(0)
+
+        classifier_file = classifier_file["file"]
 
         if classifier_file == "OTHER (provide path)":
 
@@ -350,21 +424,29 @@ def interactive_mode():
                 "validate": lambda val: os.path.exists(val)
             }]
 
-            classifier_file = prompt(questions)["path"]
+            classifier_file = prompt(questions)
+
+            if not classifier_file:
+                exit(0)
+
+            classifier_file = classifier_file["path"]
+
         else:
-            classifier_file = os.path.join(
-                MAIN_PATH, "output/classifiers/", classifier_file)
+            # classifier_file = os.path.join(
+            #     MAIN_PATH, "output/classifiers/", classifier_file)
+            classifier_file = classifier_file
 
     questions = [{
         "type": "input",
         "name": "path",
         "message": "please provide a name for output files: (without file extension)"
     }]
-    output_filename = (prompt(questions)["path"] + ".csv")
-    print("ARGS: GOT OUTPUT PROMPT RESPONSE: {}".format(output_filename))
-    print("ARGS: MAIN_PATH: {}".format(MAIN_PATH))
-    output_filename = os.path.join(MAIN_PATH, "output/" + output_filename)
-    print("args: passing output filename of {}".format(output_filename))
+    output_filename = prompt(questions)
+
+    if not output_filename:
+        exit(0)
+
+    output_filename = (output_filename["path"] + ".csv")
 
     for n in NANS:
         print("'" + n + "'")
@@ -382,17 +464,24 @@ def interactive_mode():
             "name": "nans",
             "message": "please input any other N/A formats, separated by a space:"
         }]
-        nans = prompt(questions)["nans"].split(" ")
+        nans = prompt(questions)
 
-    return (mode,
-            data_file,
-            excel_sheet,
-            selected_cols,
-            class_column,
-            multirun,
-            classifier_file,
-            output_filename,
-            nans)
+        if not nans:
+            exit(0)
+
+        nans = nans["nans"].split(" ")
+
+    return (
+        mode,
+        data_file,
+        excel_sheet,
+        selected_cols,
+        class_column,
+        multirun,
+        classifier_file,
+        output_filename,
+        nans
+    )
 
 
 if __name__ == "__main__":
