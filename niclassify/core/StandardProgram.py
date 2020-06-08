@@ -56,7 +56,6 @@ class StandardProgram:
         self.mode = None
         self.data_file = None
         self.excel_sheet = None
-        self.selected_cols = None
         self.feature_cols = None
         self.class_column = None
         self.multirun = None
@@ -148,18 +147,17 @@ class StandardProgram:
             self.mode,\
                 self.data_file,\
                 self.excel_sheet,\
-                self.selected_cols,\
+                self.feature_cols,\
                 self.class_column,\
                 self.multirun,\
                 self.classifier_file,\
                 self.output_filename,\
                 self.nans = self.interactive_parser()
-            self.feature_cols = self.selected_cols
 
         else:
             self.data_file = args.data
             self.excel_sheet = args.excel_sheet
-            self.selected_cols = args.feature_cols
+            self.feature_cols = args.feature_cols
             self.output_filename = args.out
             self.nans = args.nanval
 
@@ -169,12 +167,13 @@ class StandardProgram:
             else:
                 self.classifier_file = args.predict_using
 
-            # get column range for data
-            self.col_range = utilities.get_col_range(self.selected_cols)
-            self.feature_cols = utilities.get_data(
-                self.data_file,
-                self.excel_sheet
-            ).columns.values[self.col_range[0]:self.col_range[1]].tolist()
+            # if feature cols is a range str, convert to list of names
+            if type(self.feature_cols) is str:
+                col_range = utilities.get_col_range(self.selected_cols)
+                self.feature_cols = utilities.get_data(
+                    self.data_file,
+                    self.excel_sheet
+                ).columns.values[col_range[0]:col_range[1]].tolist()
 
         # do some error checking
         self.check_file_exists("data/" + self.data_file)
@@ -222,13 +221,18 @@ class StandardProgram:
             raise TypeError("Cannot predict: classifier does not inherit from \
 AutoClassifier")
 
+        # prep for a few tests
+        # feature names are case-insenstive
+        clf_expect = [x.lower() for x in clf.trained_features]
+        ft_given = [x.lower() for x in feature_norm.columns.values.tolist()]
+
         # ensure same number of features between data and classifier
-        if len(clf.trained_features) != len(list(feature_norm)):
+        if len(clf_expect) != len(ft_given):
             raise ValueError(
                 "Classifier expects different number of features than provided"
             )
         # ensure that feature columns match between data and trained classifier
-        elif set(clf.trained_features) != set(feature_norm.columns.values):
+        elif set(clf_expect) != set(ft_given):
             raise KeyError(
                 "Given feature names do not match those expected by classifier"
             )

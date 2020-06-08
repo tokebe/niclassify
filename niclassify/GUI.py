@@ -35,13 +35,8 @@ class MainApp(tk.Frame):
         self.sp = StandardProgram(RandomForestAC())
         self.sp.boilerplate()
 
-        # stored values
-        self.data_file = None  # data filename
-        self.raw_data = None  # temporary file holding data
-        self.clf = None  # trained classifier
-        # note you may have to define more stored variables
-        # keep a preference for not storing things
-        # try to use temp files if you have to store and can do temp files
+        # TODO decide if there are any values you need to store
+        # preferably as temp files
 
         # set up elements of main window
         parent.title("Random Forest Classifier Tool")
@@ -129,12 +124,13 @@ class MainApp(tk.Frame):
             return
 
         # assuming user chooses a proper file:
-        self.data_file = data_file
+
+        self.sp.data_file = data_file
 
         # update window title to reflect chosen file
         self.parent.title(
             "Random Forest Classifier Tool: {}".format(
-                os.path.basename(self.data_file))
+                os.path.basename(data_file))
         )
 
         # reset things
@@ -143,7 +139,7 @@ class MainApp(tk.Frame):
 
         # handle file import given whether file is excel or text
         if (  # some sort of excel file
-            os.path.splitext(self.data_file)[1]
+            os.path.splitext(data_file)[1]
             in ["xlsx", "xlsm", "xlsb", "xltx", "xltm", "xls", "xlt", "xml"]
         ):
             # enable sheet selection and get list of sheets for dropdown
@@ -151,7 +147,7 @@ class MainApp(tk.Frame):
 
             # in case there's something that goes wrong reading the file
             try:
-                self.sheets = list(pd.ExcelFile(self.data_file).sheet_names)
+                sheets = list(pd.ExcelFile(data_file).sheet_names)
             except (
                     OSError, IOError, KeyError,
                     TypeError, ValueError, XLRDError
@@ -164,7 +160,7 @@ class MainApp(tk.Frame):
                 return
 
             # update sheet options for dropdown and prompt user to select one
-            self.data_section.excel_sheet_input["values"] = self.sheets
+            self.data_section.excel_sheet_input["values"] = sheets
             tk.messagebox.showinfo(
                 title="Excel Sheet Detected",
                 message="You will have to specify the sheet to proceed."
@@ -173,7 +169,8 @@ class MainApp(tk.Frame):
             # auto select the first
             # both in case there's only one (makes user's life easier)
             # and to make it more apparent what the user needs to do
-            self.data_section.excel_sheet_input.set(self.sheets[0])
+            self.data_section.excel_sheet_input.set(sheets[0])
+            self.sp.excel_sheet = sheets[0]
             self.get_sheet_cols(None)
 
         else:  # otherwise it's some sort of text file
@@ -184,7 +181,7 @@ class MainApp(tk.Frame):
             # in case there's a read or parse error of some kind
             try:
                 column_names = pd.read_csv(
-                    self.data_file,
+                    data_file,
                     na_values=utilities.NANS,
                     keep_default_na=True,
                     sep=None,
@@ -211,18 +208,22 @@ class MainApp(tk.Frame):
 
             # conditionally enable predicting
             self.check_enable_predictions()
-            # TODO determine if you want to get raw data now or later
-            # (probably later)
 
-        def get_raw_data(self):
-            # get raw data
-            raw_data = utilities.get_data(self.data_file, self.sheet)
+    def get_selected_cols(self):
+        # get selection
+        selected_cols = list(
+            self.data_section.col_select_panel.sel_contents.get(0, tk.END))
 
-            # replace argument-added nans
-            if utilities.NANS is not None:
-                raw_data.replace({val: np.nan for val in utilities.NANS})
+        # put in StandardProgram
+        self.sp.feature_cols = selected_cols
 
-            self.raw_data = raw_data
+        # return to be useful
+        return selected_cols
+
+    # TODO go through existing methods and make sure no unexpected class vars
+    # are being defined
+    # TODO implement getting sheet and columns from sheet
+    # also send sheet selection to self.sp
 
 
 def main():
