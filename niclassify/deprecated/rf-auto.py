@@ -1,4 +1,7 @@
-"""Automatically generate the best possible Random Forest Classifier.
+"""
+WARNING: THIS FILE IS DEPRECATED. USE THE FILE rf_auto.py INSTEAD.
+
+Automatically generate the best possible Random Forest Classifier.
 
 Uses given paramters - quality is limited by number of multirun.
 Gives user option to save trained classifier, as well as use previously trained

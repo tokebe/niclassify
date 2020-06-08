@@ -30,20 +30,15 @@ import shutil
 # TODO possible thing to do later: automatic wizard creation
 
 
-class MainRoot(tk.Tk):
-    None
-
-
 def main():
     core.assure_path()
 
-    root = MainRoot()
+    root = tk.Tk()
 
     def graceful_exit():
         plt.close("all")
         root.quit()
         root.destroy()
-        shutil.rmtree('tkui/temp')
 
     root.protocol("WM_DELETE_WINDOW", graceful_exit)
     root.style = ttk.Style()
