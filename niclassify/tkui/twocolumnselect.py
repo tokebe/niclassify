@@ -149,9 +149,9 @@ class TwoColumnSelect(tk.Frame):
             self.desel.set(value=desel_items)
             self.sel.set(value=sel_items)
 
-    def update_contents(self):
-        colnames = list(self.parent.app.column_names.keys())
-        colnames.sort(key=lambda x: self.parent.app.column_names[x])
+    def update_contents(self, colnames_dict):
+        colnames = list(colnames_dict.keys())
+        colnames.sort(key=lambda x: colnames_dict[x])
         self.desel.set(value=colnames)
         self.sel.set(value=[])
 

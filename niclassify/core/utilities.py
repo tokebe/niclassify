@@ -259,7 +259,7 @@ def load_classifier(filename):
     return classifier
 
 
-def make_confm(clf, data_known, metadata_known, class_column):
+def make_confm(clf, features_known, metadata_known, class_column):
     """
     Make a confusion matrix plot of a trained classifier.
 
@@ -274,18 +274,15 @@ def make_confm(clf, data_known, metadata_known, class_column):
 
     """
     # type error checking
-    if type(data_known) is not pd.DataFrame:
-        raise TypeError("Cannot save: feature_norm is not DataFrame.")
+    if type(features_known) is not pd.DataFrame:
+        raise TypeError("Cannot save: features_known is not DataFrame.")
     if type(metadata_known) is not pd.DataFrame:
-        raise TypeError("Cannot save: feature_norm is not DataFrame.")
-    if (type(class_column) is not pd.DataFrame
-            and type(class_column) is not pd.Series):
-        raise TypeError("Cannot save: feature_norm is not DataFrame.")
+        raise TypeError("Cannot save: metadata_known is not DataFrame.")
 
     fig, ax = plt.pyplot.subplots(nrows=1, ncols=1)
     metrics.plot_confusion_matrix(
         clf,
-        data_known,
+        features_known,
         metadata_known[class_column],
         ax=ax,
         normalize="true")
@@ -304,8 +301,8 @@ def output_graph(data, predict, outfname):
         out (str): Output file path/name
     """
     # type error checking
-    if type(predict) is not pd.DataFrame:
-        raise TypeError("Cannot save: feature_norm is not DataFrame.")
+    if type(predict) is not pd.DataFrame and type(predict) is not pd.Series:
+        raise TypeError("Cannot save: predict is not DataFrame or Series.")
 
     # change data in frame to be useable for graph
     df = pd.concat([data, predict], axis=1)
@@ -321,10 +318,10 @@ def output_graph(data, predict, outfname):
 
 
 def save_clf(clf):
-    """Save a given classifier.
+    """Save a given AutoClassifier.
 
     Args:
-        clf (Classifier): A trained classifier.
+        clf (AutoClassifier): A trained classifier.
     """
     from joblib import dump
     i = 0
@@ -348,10 +345,10 @@ def save_clf(clf):
 
 def save_clf_dialog(clf):
     """
-    Present the user with the option to save the given classifier.
+    Present the user with the option to save the given AutoClassifier.
 
     Args:
-        clf (Classifier): A trained classifier.
+        clf (AutoClassifier): A trained AutoClassifier.
 
     """
     print("would you like to save the trained classifier? (y/n)")
@@ -366,27 +363,24 @@ def save_clf_dialog(clf):
             continue
 
 
-def save_confm(clf, data_known, metadata_known, class_column, out):
+def save_confm(clf, features_known, metadata_known, class_column, out):
     """
     Save a confusion matrix plot of a trained classifier.
 
     Args:
-        clf (Classifier): A classifier.
+        clf (AutoClassifier): An AutoClassifier.
         data_known (DataFrame): Known Data.
         metadata_known (DataFrame): Known Metadata, including class labels.
         class_column (str): Name of class label column in metadata.
         out (str): file path/name for output image.
     """
     # type error checking
-    if type(data_known) is not pd.DataFrame:
-        raise TypeError("Cannot save: feature_norm is not DataFrame.")
+    if type(features_known) is not pd.DataFrame:
+        raise TypeError("Cannot save: features_known is not DataFrame.")
     if type(metadata_known) is not pd.DataFrame:
-        raise TypeError("Cannot save: feature_norm is not DataFrame.")
-    if (type(class_column) is not pd.DataFrame
-            and type(class_column) is not pd.Series):
-        raise TypeError("Cannot save: feature_norm is not DataFrame.")
+        raise TypeError("Cannot save: metadata_known is not DataFrame.")
 
-    fig = make_confm(clf, data_known, metadata_known, class_column)
+    fig = make_confm(clf.clf, features_known, metadata_known, class_column)
     if not os.path.isabs(out):
         out = os.path.join(MAIN_PATH, "output/" + out)
     fig.savefig("{}.cm.png".format(out))
@@ -406,15 +400,16 @@ def save_predictions(metadata, predict, feature_norm, out, predict_prob=None):
     """
     # type error checking
     if type(metadata) is not pd.DataFrame:
-        raise TypeError("Cannot save: feature_norm is not DataFrame.")
+        raise TypeError("Cannot save: metadata is not DataFrame.")
     if type(feature_norm) is not pd.DataFrame:
         raise TypeError("Cannot save: feature_norm is not DataFrame.")
     if (type(predict) is not pd.DataFrame
             and type(predict) is not pd.Series):
-        raise TypeError("Cannot save: feature_norm is not DataFrame.")
+        raise TypeError("Cannot save: predict is not DataFrame or Series.")
     if (type(predict_prob) is not pd.DataFrame
             and type(predict_prob) is not pd.Series):
-        raise TypeError("Cannot save: feature_norm is not DataFrame.")
+        raise TypeError(
+            "Cannot save: predict_prob is not DataFrame or Series.")
 
     logging.info("saving new output...")
     if predict_prob is not None:

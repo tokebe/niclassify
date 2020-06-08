@@ -69,6 +69,8 @@ class AutoClassifier:
         self.best_train_cm = None
         self.best_test_cm = None
 
+        self.trained_features = []
+
     def _get_k(self, classes_known):
         """
         Get the k number of splits for a stratified k-fold.
@@ -244,10 +246,6 @@ class AutoClassifier:
             features_known(DataFrame): Features for known classes.
             classes_known(Series): Known classes for given features.
             multirun(int, optional): Number of times to run. Defaults to 1.
-
-        Returns:
-            Classifier: The trained classifier.
-
         """
         # useful logging
         logging.info("  training {}".format(self.clf.__class__.__name__))
@@ -319,11 +317,10 @@ class AutoClassifier:
         if multirun > 1:
             print("\n")
 
+        self.clf = self.best_model
+        self.trained_features = features_known.columns.values.tolist()
+
         self.log_report()
-
-        return self.best_model
-
-        print()
 
 
 class RandomForestAC(AutoClassifier):

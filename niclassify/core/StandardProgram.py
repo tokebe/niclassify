@@ -24,6 +24,9 @@ from . import utilities
 from . import classifiers
 
 
+# TODO add checking when predicting from classifier that given features match
+# classifier trained features
+
 class StandardProgram:
     """
     A standard template for the classifier program.
@@ -113,7 +116,7 @@ class StandardProgram:
         """
         # convert filename to proper path
         if not os.path.isabs(filename):
-            filename = os.path.join(utilities.MAIN_PATH, "data/" + filename)
+            filename = os.path.join(utilities.MAIN_PATH, filename)
 
         # check if filename exists
         if not os.path.exists(filename):
@@ -174,9 +177,10 @@ class StandardProgram:
             ).columns.values[self.col_range[0]:self.col_range[1]].tolist()
 
         # do some error checking
-        self.check_file_exists(self.data_file)
+        self.check_file_exists("data/" + self.data_file)
         if self.classifier_file is not None:
-            self.check_file_exists(self.classifier_file)
+            self.check_file_exists(
+                "output/classifiers/" + self.classifier_file)
 
     def impute_data(self, feature_norm):
         """
@@ -214,27 +218,41 @@ class StandardProgram:
         # type error checking
         if type(feature_norm) is not pd.DataFrame:
             raise TypeError("Cannot predict: feature_norm is not DataFrame.")
-        if isinstance(clf, classifiers.AutoClassifier):
+        if not isinstance(clf, classifiers.AutoClassifier):
             raise TypeError("Cannot predict: classifier does not inherit from \
 AutoClassifier")
 
+        # ensure same number of features between data and classifier
+        if len(clf.trained_features) != len(list(feature_norm)):
+            raise ValueError(
+                "Classifier expects different number of features than provided"
+            )
+        # ensure that feature columns match between data and trained classifier
+        elif set(clf.trained_features) != set(feature_norm.columns.values):
+            raise KeyError(
+                "Given feature names do not match those expected by classifier"
+            )
+
+        # sort features as classifier expects so vals are considered correctly
+        feature_norm = feature_norm[clf.trained_features]
+
         # make predictions
         logging.info("predicting unknown class labels...")
-        predict = pd.DataFrame(clf.predict(feature_norm))
+        predict = pd.DataFrame(clf.clf.predict(feature_norm))
         # rename predict column
         predict.rename(columns={predict.columns[0]: "predict"}, inplace=True)
 
         # check if classifier supports proba and use it if so
-        proba_method = getattr(clf, "predict_proba", None)
+        proba_method = getattr(clf.clf, "predict_proba", None)
         if proba_method is not None and callable(proba_method):
 
             # get predict probabilities
-            predict_prob = pd.DataFrame(clf.predict_proba(feature_norm))
+            predict_prob = pd.DataFrame(clf.clf.predict_proba(feature_norm))
             # rename column
             predict_prob.rename(
                 columns={
                     predict_prob.columns[i]: "prob. {}".format(c)
-                    for i, c in enumerate(clf.classes_)},
+                    for i, c in enumerate(clf.clf.classes_)},
                 inplace=True)
 
             return predict, predict_prob
@@ -290,17 +308,17 @@ AutoClassifier")
                 supported by AC. Defaults to None.
         """
         # type error checking
-        if isinstance(clf, classifiers.AutoClassifier):
+        if not isinstance(clf, classifiers.AutoClassifier):
             raise TypeError("Cannot save: classifier does not inherit from \
                 AutoClassifier")
         if type(feature_norm) is not pd.DataFrame:
             raise TypeError("Cannot save: feature_norm is not DataFrame.")
         if type(metadata) is not pd.DataFrame:
-            raise TypeError("Cannot save: feature_norm is not DataFrame.")
+            raise TypeError("Cannot save: metadata is not DataFrame.")
         if type(predict) is not pd.DataFrame:
-            raise TypeError("Cannot save: feature_norm is not DataFrame.")
+            raise TypeError("Cannot save: predict is not DataFrame.")
         if predict_prob is not None and type(predict_prob) is not pd.DataFrame:
-            raise TypeError("Cannot save: feature_norm is not DataFrame.")
+            raise TypeError("Cannot save: predict_prob is not DataFrame.")
 
         # save predictions
         utilities.save_predictions(
@@ -342,7 +360,7 @@ AutoClassifier")
         if type(feature_norm) is not pd.DataFrame:
             raise TypeError("Cannot save: feature_norm is not DataFrame.")
         if type(metadata) is not pd.DataFrame:
-            raise TypeError("Cannot save: feature_norm is not DataFrame.")
+            raise TypeError("Cannot save: metadata is not DataFrame.")
 
         # convert class labels to lower if classes are in str format
         if not np.issubdtype(
@@ -356,7 +374,8 @@ AutoClassifier")
 
         # train classifier
         logging.info("training random forest...")
-        clf = classifiers.RandomForestAC().train(
+        clf = classifiers.RandomForestAC()
+        clf.train(
             features_known, metadata_known[self.class_column], self.multirun)
 
         # save confusion matrix
