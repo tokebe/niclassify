@@ -1,4 +1,5 @@
-"""Setup for commend-line arguments on run-time.
+"""
+Setup for commend-line arguments on run-time.
 
 Change to add new arguments are required.
 """
@@ -18,7 +19,7 @@ except ModuleNotFoundError:
     logging.error("'python -m pip install -r requirements.txt'")
     exit(-1)
 
-from .utilities import *
+from .utilities import MAIN_PATH, NANS, keyboardInterruptHandler, get_data
 
 
 SUPPORTED_TYPES = [
@@ -29,12 +30,40 @@ SUPPORTED_TYPES = [
 ]
 
 
-def keyboardInterruptHandler(signal, frame):
-    exit(0)
+class FileValidator(Validator):
+    """Class for validating files."""
+
+    def validate(self, document):
+        """
+        Validate a given file path.
+
+        Args:
+            document (unkown): whatever prompt hands off for validation.
+
+        Raises:
+            ValidationError: In the event that file path doesn not exist or is
+                unsupported type.
+
+        """
+        ok = True
+        ok = os.path.exists(document.text)
+        if not ok:
+            raise ValidationError(
+                message="File does not exist.",
+                cursor_position=len(document.text))
+            return False
+        extension = "." + document.text.split(".")[-1]
+        ok = extension in SUPPORTED_TYPES
+        if not ok:
+            raise ValidationError(
+                message="File type {} not supported.".format(extension),
+                cursor_position=len(document.text))
+            return False
 
 
 def getargs():
-    """Create argument parser and parse arguments.
+    """
+    Create argument parser and parse arguments.
 
     Returns:
         tuple: Argument parser and parsed argument NameSpace.
@@ -135,36 +164,6 @@ def getargs():
     return parser, parser.parse_args()
 
 
-class FileValidator(Validator):
-    """Class for validating files."""
-
-    def validate(self, document):
-        """Validate a given file path.
-
-        Args:
-            document (unkown): whatever prompt hands off for validation.
-
-        Raises:
-            ValidationError: In the event that file path doesn not exist or is
-                unsupported type.
-
-        """
-        ok = True
-        ok = os.path.exists(document.text)
-        if not ok:
-            raise ValidationError(
-                message="File does not exist.",
-                cursor_position=len(document.text))
-            return False
-        extension = "." + document.text.split(".")[-1]
-        ok = extension in SUPPORTED_TYPES
-        if not ok:
-            raise ValidationError(
-                message="File type {} not supported.".format(extension),
-                cursor_position=len(document.text))
-            return False
-
-
 def interactive_mode():
     """Get all required arguments in a (more) user-friendly format.
 
@@ -173,6 +172,7 @@ def interactive_mode():
 
     """
     # set up ctrl-c exit
+    # handler defined in utilities
     signal.signal(signal.SIGINT, keyboardInterruptHandler)
 
     # placeholders and default values
@@ -482,7 +482,3 @@ def interactive_mode():
         output_filename,
         nans
     )
-
-
-if __name__ == "__main__":
-    interactive_mode()

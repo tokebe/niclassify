@@ -1,10 +1,14 @@
+"""
+StandardProgram class and not much else.
 
+StandardProgram may be used as a helper for creating new programs based upon
+it, as seen in the GUI implementation.
+"""
 
 try:
     # import main libraries
     import os
     import logging
-    import signal
 
     import numpy as np
     import pandas as pd
@@ -20,13 +24,28 @@ from . import utilities
 from . import classifiers
 
 
-# TODO go through every file and organize the methods
-# TODO add documentation
-# TODO add a bunch of user error checking both here and in utilities
-
-
 class StandardProgram:
+    """
+    A standard template for the classifier program.
+
+    Contains all methods required to run the program, using either default_run,
+    or a user-made method/override. Most methods handle some basic data
+    manipulation to prepare data for use in utility methods, defined in
+    utilities.
+    """
+
     def __init__(self, clf, arg_parser=None, interactive_parser=None):
+        """
+        Instantiate the program.
+
+        Args:
+            clf (AutoClassifier): An AutoClassifier such as RandomForestAC.
+            arg_parser (function, optional): A function which returns a number
+                of items (see get_args). Defaults to None.
+            interactive_parser (function, optional): A function which returns a
+                number of items (see get_args), preferably getting them
+                interactively. Defaults to None.
+        """
         self.clf = clf
         self.arg_parser = arg_parser
         self.interactive_parser = interactive_parser
@@ -43,6 +62,11 @@ class StandardProgram:
         self.nans = None
 
     def boilerplate(self):
+        """
+        Set up the theme, ensure required folders exist, and set up logging.
+
+        Consider overriding if you need additional preparations for every run.
+        """
         # set seaborn theme/format
         sns.set()
 
@@ -73,7 +97,40 @@ class StandardProgram:
             ]
         )
 
+    def check_file_exists(self, filename):
+        """
+        Check if the given filename exists in the system directory.
+
+        Args:
+            filename (str): A filename.
+
+        Raises:
+            ValueError: If the file does not exist.
+
+        Returns:
+            Bool: True if file exists.
+
+        """
+        # convert filename to proper path
+        if not os.path.isabs(filename):
+            filename = os.path.join(utilities.MAIN_PATH, "data/" + filename)
+
+        # check if filename exists
+        if not os.path.exists(filename):
+            raise ValueError("file {} does not exist.".format(filename))
+            return False  # this line likely unreachable.
+
+        return True
+
     def get_args(self):
+        """
+        Get arguments from either parser and store required values.
+
+        Raises:
+            ValueError: If interactive parser is expected by parser but not
+                provided.
+
+        """
         parser, args = self.arg_parser()
 
         self.mode = args.mode
@@ -116,13 +173,90 @@ class StandardProgram:
                 self.excel_sheet
             ).columns.values[self.col_range[0]:self.col_range[1]].tolist()
 
+        # do some error checking
+        self.check_file_exists(self.data_file)
+        if self.classifier_file is not None:
+            self.check_file_exists(self.classifier_file)
+
+    def impute_data(self, feature_norm):
+        """
+        Impute given data.
+
+        Mostly a wrapper for utilities.impute_data().
+
+        Args:
+            feature_norm (DataFrame): Feature data in DataFrame.
+
+        Returns:
+            DataFrame: The imputed feature data.
+
+        """
+        # type error checking
+        if type(feature_norm) is not pd.DataFrame:
+            raise TypeError("Cannot impute: feature_norm is not DataFrame.")
+        # impute data
+        logging.info("imputing data...")
+        return utilities.impute_data(feature_norm)
+
+    def predict_AC(self, clf, feature_norm):
+        """
+        Predict using a trained AutoClassifier and return predictions.
+
+        Args:
+            clf (AutoClassifier): A Trained AutoClassifier.
+            feature_norm (DataFrame): Normalized, imputed feature data.
+
+        Returns:
+            DataFrame or tuple: Predictions, and probabilities if supported
+                by AC.
+
+        """
+        # type error checking
+        if type(feature_norm) is not pd.DataFrame:
+            raise TypeError("Cannot predict: feature_norm is not DataFrame.")
+        if isinstance(clf, classifiers.AutoClassifier):
+            raise TypeError("Cannot predict: classifier does not inherit from \
+AutoClassifier")
+
+        # make predictions
+        logging.info("predicting unknown class labels...")
+        predict = pd.DataFrame(clf.predict(feature_norm))
+        # rename predict column
+        predict.rename(columns={predict.columns[0]: "predict"}, inplace=True)
+
+        # check if classifier supports proba and use it if so
+        proba_method = getattr(clf, "predict_proba", None)
+        if proba_method is not None and callable(proba_method):
+
+            # get predict probabilities
+            predict_prob = pd.DataFrame(clf.predict_proba(feature_norm))
+            # rename column
+            predict_prob.rename(
+                columns={
+                    predict_prob.columns[i]: "prob. {}".format(c)
+                    for i, c in enumerate(clf.classes_)},
+                inplace=True)
+
+            return predict, predict_prob
+
+        else:
+            return (predict)
+
     def prep_data(self):
+        """
+        Get and prepare data for use.
+
+        Returns:
+            tuple: Of raw data, feature data, normalized feature data, and
+                metadata.
+
+        """
         # get raw data
         raw_data = utilities.get_data(self.data_file, self.excel_sheet)
 
         # replace argument-added nans
         if self.nans is not None:
-            raw_data.replace({val: np.nan for val in self.nans})
+            raw_data.replace({val: np.nan for val in self.nans}, inplace=True)
 
         # split data into feature data and metadata
         features = raw_data[self.feature_cols]
@@ -133,7 +267,83 @@ class StandardProgram:
 
         return raw_data, features, feature_norm, metadata
 
+    def save_outputs(
+            self,
+            clf,
+            feature_norm,
+            metadata,
+            predict,
+            predict_prob=None
+    ):
+        """
+        Save the outputs of a prediction.
+
+        Includes data with new predictions, a pairplot, and the classifier if
+            it is newly trained.
+
+        Args:
+            clf (AutoClassifier): A trained Autoclassifier
+            feature_norm (DataFrame): Normalized, imputed feature data.
+            metadata (DataFrame): Any metadata the original data file contained
+            predict (DataFrame): Predicted class labels.
+            predict_prob (DataFrame, optional): Prediction probabilities, if
+                supported by AC. Defaults to None.
+        """
+        # type error checking
+        if isinstance(clf, classifiers.AutoClassifier):
+            raise TypeError("Cannot save: classifier does not inherit from \
+                AutoClassifier")
+        if type(feature_norm) is not pd.DataFrame:
+            raise TypeError("Cannot save: feature_norm is not DataFrame.")
+        if type(metadata) is not pd.DataFrame:
+            raise TypeError("Cannot save: feature_norm is not DataFrame.")
+        if type(predict) is not pd.DataFrame:
+            raise TypeError("Cannot save: feature_norm is not DataFrame.")
+        if predict_prob is not None and type(predict_prob) is not pd.DataFrame:
+            raise TypeError("Cannot save: feature_norm is not DataFrame.")
+
+        # save predictions
+        utilities.save_predictions(
+            metadata,
+            predict,
+            feature_norm,
+            self.output_filename,
+            predict_prob
+        )
+
+        # generate and output graph
+        logging.info("generating final graphs...")
+        utilities.output_graph(feature_norm, predict, self.output_filename)
+
+        logging.info("...done!")
+
+        # if classifier is new, give option to save
+        if self.mode == "train":
+            utilities.save_clf_dialog(clf)
+
     def train_AC(self, feature_norm, metadata):
+        """
+        Train the AutoClassifier.
+
+        Prepares data for training.
+
+        Args:
+            feature_norm (DataFrame): Normalized feature data, preferably with
+                nan values removed.
+            metadata (DataFrame): Metadata from original data file, including
+                known class column.
+
+        Returns:
+            AutoClassifier: The trained AutoClassifier
+
+        """
+        # type error checking
+
+        if type(feature_norm) is not pd.DataFrame:
+            raise TypeError("Cannot save: feature_norm is not DataFrame.")
+        if type(metadata) is not pd.DataFrame:
+            raise TypeError("Cannot save: feature_norm is not DataFrame.")
+
         # convert class labels to lower if classes are in str format
         if not np.issubdtype(
                 metadata[self.class_column].dtype, np.number):
@@ -161,64 +371,14 @@ class StandardProgram:
 
         return clf
 
-    def predict_AC(self, clf, feature_norm):
-        # make predictions
-        logging.info("predicting unknown class labels...")
-        predict = pd.DataFrame(clf.predict(feature_norm))
-        # rename predict column
-        predict.rename(columns={predict.columns[0]: "predict"}, inplace=True)
-
-        # check if classifier supports proba and use it if so
-        proba_method = getattr(clf, "predict_proba", None)
-        if proba_method is not None and callable(proba_method):
-
-            # get predict probabilities
-            predict_prob = pd.DataFrame(clf.predict_proba(feature_norm))
-            # rename column
-            predict_prob.rename(
-                columns={
-                    predict_prob.columns[i]: "prob. {}".format(c)
-                    for i, c in enumerate(clf.classes_)},
-                inplace=True)
-
-            return predict, predict_prob
-
-        else:
-            return (predict)
-
-    def impute_data(self, feature_norm):
-        # impute data
-        logging.info("imputing data...")
-        return utilities.impute_data(feature_norm)
-
-    def save_outputs(
-            self,
-            clf,
-            feature_norm,
-            metadata,
-            predict,
-            predict_prob=None
-    ):
-        # save predictions
-        utilities.save_predictions(
-            metadata,
-            predict,
-            feature_norm,
-            self.output_filename,
-            predict_prob
-        )
-
-        # generate and output graph
-        logging.info("generating final graphs...")
-        utilities.output_graph(feature_norm, predict, self.output_filename)
-
-        logging.info("...done!")
-
-        # if classifier is new, give option to save
-        if self.mode == "train":
-            utilities.save_clf_dialog(clf)
-
     def default_run(self):
+        """
+        Run the program with default methods and settings.
+
+        Generally, you don't need to override this, but instead want to
+            override other methods in DefaultProgram, unless you have some very
+            specific steps to change.
+        """
         # set up the boilerplate
         self.boilerplate()
         # get required arguments to run the program

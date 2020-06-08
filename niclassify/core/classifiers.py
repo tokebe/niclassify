@@ -1,6 +1,8 @@
-"""Module containing forest training function.
+"""
+Module containing AutoClassifier class and a prefab subclass.
 
-In theory could be modified to contain other classifier trainers.
+AutoClassifier may be used to create new auto-training classifiers with
+relative ease.
 """
 try:
     import logging
@@ -8,12 +10,11 @@ try:
     import numpy as np
 
     from copy import deepcopy
-
     from sklearn import metrics
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.model_selection import RandomizedSearchCV
-    from sklearn.model_selection import train_test_split
     from sklearn.model_selection import StratifiedKFold
+    from sklearn.model_selection import train_test_split
 
 except ModuleNotFoundError:
     logging.error("Missing required modules. Install requirements by running")
@@ -22,7 +23,8 @@ except ModuleNotFoundError:
 
 
 class AutoClassifier:
-    """A basic template class for an automated classifier.
+    """
+    A basic template class for an automated classifier.
 
     See RandomForestAC for an implemented automated classifier.
     """
@@ -34,7 +36,8 @@ class AutoClassifier:
         hp_method=None,
         score_method=None
     ):
-        """Instantiate the AutoClassifier.
+        """
+        Instantiate the AutoClassifier.
 
         Args:
             clf (Classifier, optional): An SKlearn Classifier.
@@ -66,8 +69,9 @@ class AutoClassifier:
         self.best_train_cm = None
         self.best_test_cm = None
 
-    def __get_k(self, classes_known):
-        """Get the k number of splits for a stratified k-fold.
+    def _get_k(self, classes_known):
+        """
+        Get the k number of splits for a stratified k-fold.
 
         Args:
             classes_known (Series): The known classes for training on.
@@ -84,8 +88,9 @@ class AutoClassifier:
 
         return k
 
-    def __get_model_mean_score(self, model, x_train, x_test, y_train, y_test):
-        """Get the mean score of the trained model.
+    def _get_model_mean_score(self, model, x_train, x_test, y_train, y_test):
+        """
+        Get the mean score of the trained model.
 
         Args:
             model (Classifier): The trained classifier model.
@@ -108,8 +113,9 @@ class AutoClassifier:
 
         return np.mean((train_score, test_score))
 
-    def __get_test_train_splits(self, features_known, classes_known):
-        """Split the data into training and testing segments.
+    def _get_test_train_splits(self, features_known, classes_known):
+        """
+        Split the data into training and testing segments.
 
         Args:
             features_known (DataFrame): Feature data for known cases.
@@ -123,7 +129,7 @@ class AutoClassifier:
 
         return x_train, x_test, y_train, y_test
 
-    def __set_bests(
+    def _set_bests(
             self,
             x_train,
             x_test,
@@ -132,7 +138,8 @@ class AutoClassifier:
             classes_known,
 
     ):
-        """Save the relevant data on the best model.
+        """
+        Save the relevant data on the best model.
 
         Args:
             x_train (np.ndarray): Feature data used in training.
@@ -168,7 +175,8 @@ class AutoClassifier:
         )
 
     def get_report(self):
-        """Return a report of the best model's performance as a string.
+        """
+        Return a report of the best model's performance as a string.
 
         Returns:
             str: The report.
@@ -195,7 +203,8 @@ class AutoClassifier:
                     "train set: percent of {} mislabeled to {}: {:.2f}%".format(
                         labels[true],
                         labels[pred],
-                        (self.best_train_cm[true, pred] * 100)))
+                        (self.best_train_cm[true, pred] * 100))
+                )
         report.append("---")
         report.append("test set score: {}".format(self.best_test_score))
         # report.append(self.best_test_cm)
@@ -213,7 +222,8 @@ class AutoClassifier:
         return "\n".join(report)
 
     def log_report(self):
-        """Get the model performance report and log it.
+        """
+        Get the model performance report and log it.
 
         Assumes that appropriate logging has been set up already.
         """
@@ -225,7 +235,8 @@ class AutoClassifier:
             classes_known,
             multirun=1
     ):
-        """Train the classifier.
+        """
+        Train the classifier.
 
         Automatically selects hyperparameters and generates the best model.
 
@@ -247,10 +258,10 @@ class AutoClassifier:
 
         self.labels = classes_known.unique()
 
-        x_train, x_test, y_train, y_test = self.__get_test_train_splits(
+        x_train, x_test, y_train, y_test = self._get_test_train_splits(
             features_known, classes_known)
 
-        k = self.__get_k(classes_known)
+        k = self._get_k(classes_known)
 
         scorer = metrics.make_scorer(self.score_method)
 
@@ -265,7 +276,7 @@ class AutoClassifier:
 
         self.best_model = search.best_estimator_
 
-        self.__set_bests(
+        self._set_bests(
             x_train, x_test, y_train, y_test, classes_known, )
 
         logging.info("  found best hyperparameters (as follows):")
@@ -280,7 +291,7 @@ class AutoClassifier:
             for m in range(multirun):
 
                 x_train, x_test, y_train, y_test = \
-                    self.__get_test_train_splits(features_known, classes_known)
+                    self._get_test_train_splits(features_known, classes_known)
 
                 print(
                     "    testing classifier {} of {}...".format(
@@ -289,14 +300,14 @@ class AutoClassifier:
 
                 model = search.best_estimator_.fit(x_train, y_train)
 
-                mean_score = self.__get_model_mean_score(
+                mean_score = self._get_model_mean_score(
                     model, x_train, x_test, y_train, y_test)
 
                 if mean_score > self.best_test_score:
                     self.best_model = deepcopy(model)
                     # deep copy ensures best model is saved, otherwise an alias
                     # would be saved and overwritten on next fit\
-                    self.__set_bests(
+                    self._set_bests(
                         x_train,
                         x_test,
                         y_train,
@@ -316,7 +327,8 @@ class AutoClassifier:
 
 
 class RandomForestAC(AutoClassifier):
-    """A prefab Random Forest AutoClassifier, no additional setup required.
+    """
+    A prefab Random Forest AutoClassifier, no additional setup required.
 
     New AutoClassifiers should be able to be defined in the same manner without
     needing to overwrite train(), however it shouldn't be too difficult to
@@ -324,7 +336,8 @@ class RandomForestAC(AutoClassifier):
     """
 
     def __init__(self):
-        """Initialize the Random Forest Auto Classifier.
+        """
+        Initialize the Random Forest Auto Classifier.
 
         Technically this could be achieved without making a new subclass,
         however this makes things easier for repeated use.
