@@ -28,6 +28,7 @@ except ModuleNotFoundError:
     exit(-1)
 
 from . import config
+from .classifiers import AutoClassifier
 
 sns.set()
 
@@ -255,6 +256,9 @@ def load_classifier(filename):
 
     from joblib import load
     classifier = load(filename)
+
+    if not isinstance(classifier, AutoClassifier):
+        raise TypeError("loaded file is not compatible (not AutoClassifier)")
 
     return classifier
 

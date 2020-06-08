@@ -12,18 +12,23 @@ import seaborn as sns
 import tkinter as tk
 
 
-from joblib import dump, load
 from tkinter import filedialog
 from tkinter import ttk
 from xlrd import XLRDError
 
-# TODO remove the leading . before testing
+
 from core import utilities
 from core.StandardProgram import StandardProgram
 from core.classifiers import RandomForestAC
 from tkui.elements import DataPanel, TrainPanel, PredictPanel, StatusBar
 from tkui.utilities import view_open_file
 
+
+# TODO replace the raw_data check with something else that makes more sense
+# TODO make sure self.classifier is replaced with self.sp.clf as well
+# TODO along with anything else dumb
+# totally ok if the program is just more sensitive and warns the user more
+# (user is dumb, user should be warned more than they need)
 
 class MainApp(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
@@ -82,6 +87,15 @@ class MainApp(tk.Frame):
         self.status_bar.pack(fill=tk.X)
 
     def check_enable_predictions(self):
+        """
+        Conditionally enable the predict button.
+
+        If we have data and a classifier, enable predictions.
+
+        Returns:
+            Bool: True if the button was enabled else False.
+
+        """
         conditions = [
             self.raw_data is not None,
             self.clf is not None
@@ -94,14 +108,28 @@ class MainApp(tk.Frame):
             return False
 
     def enable_train(self, event):
+        """
+        Enable the train button.
+
+        This function only exists so I (or you) don't have to write this giant
+        statement over and over. event isn't used so it doesn't matter.
+        """
         self.train_section.train_button.config(state=tk.ACTIVE)
 
     def get_data_file(self):
+        """
+        Prompt the user for a file and update contents appropriately.
+
+        Once the data file is selected, it is either recognized as excel or
+        as text. If it's excel the sheet selector is populated and the user is
+        prompted, otherwise the column selection panel is populated.
+        """
         # check if user is overwriting and ask if they're ok with it
         if self.clf is not None and self.raw_data is not None:
             if (tk.messagebox.askokcancel(
                 title="Existing Classifier",
-                message="Opening a new data file will delete unsaved classifier and results."
+                message="Opening a new data file will delete unsaved \
+classifier and results."
             )) is False:
                 return
 
@@ -135,7 +163,6 @@ class MainApp(tk.Frame):
 
         # reset things
         self.reset_controls()
-        self.raw_data = None
 
         # handle file import given whether file is excel or text
         if (  # some sort of excel file
@@ -210,6 +237,13 @@ class MainApp(tk.Frame):
             self.check_enable_predictions()
 
     def get_selected_cols(self):
+        """
+        Get the currently selected feature columns.
+
+        Returns:
+            list: the currently selected feature columns.
+
+        """
         # get selection
         selected_cols = list(
             self.data_section.col_select_panel.sel_contents.get(0, tk.END))
@@ -220,10 +254,84 @@ class MainApp(tk.Frame):
         # return to be useful
         return selected_cols
 
-    # TODO go through existing methods and make sure no unexpected class vars
-    # are being defined
-    # TODO implement getting sheet and columns from sheet
-    # also send sheet selection to self.sp
+    def get_sheet_cols(self, event):
+        """
+        Get the columns for a given excel sheet when it is selected.
+
+        event isn't used so it doesn't really matter.
+        """
+        # check if user is overwriting and make sure they're ok with it
+        if self.classifier is not None and self.raw_data is not None:
+            if (tk.messagebox.askokcancel(
+                title="Existing Classifier",
+                message="Selecting a new sheet will delete unsaved training \
+and output results."
+            )) is False:
+                self.data_section.excel_sheet_input.set(self.sp.excel_sheet)
+                return
+
+        # reset controls because new data
+        self.reset_controls()
+
+        # get sheet name
+        sheet = self.data_section.excel_sheet_input.get()
+
+        # skip reloading if it's already selected
+        if sheet == self.sp.excel_sheet:
+            return
+
+        # get sheet column names
+        self.sp.excel_sheet = sheet
+        column_names = pd.read_excel(
+            self.sp.data_file,
+            sheet_name=sheet,
+            na_values=utilities.NANS,
+            nrows=0,
+            keep_default_na=True
+        ).columns.values.tolist()
+
+        # update known class label dropdown
+        self.train_section.known_select["values"] = column_names
+        # update column selection panel
+        self.data_section.col_select_panel.update_contents(
+            {x: i for i, x in enumerate(column_names)})
+
+        self.check_enable_predictions()
+
+    def load_classifier(self):
+        """
+        Prompt the user to select a saved classifier and load it.
+
+        Ensures that the classifier is at least the right object.
+        """
+        # check if user is overwriting and make sure they're ok with it
+        if (self.sp.clf is not None
+                and (self.report is not None or self.pairplot is not None)):
+            if (tk.messagebox.askokcancel(
+                title="Existing Classifier",
+                message="Loading a saved classifier will overwrite the current\
+ classifier and results if they have not been saved."
+            )) is False:
+                return
+
+        # prompt the user for the classifier file
+        clf_file = filedialog.askopenfilename(
+            title="Open Saved Classifier",
+            initialdir="output/classifiers/",
+            filetypes=[
+                ("Classifier archive file", ".gz .joblib .pickle")
+            ]
+        )
+        # don't do anything if the user selected nothing
+        if len(clf_file) <= 0:
+            return
+
+        # disable train stuff in the event that a trained clf is overwritten
+        self.reset_operations()
+        self.sp.clf = utilities.load_classifier(clf_file)
+        self.check_enable_predictions()
+
+    # TODO next up is probably train or predict, check to make sure
 
 
 def main():
