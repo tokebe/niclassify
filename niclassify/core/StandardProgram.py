@@ -68,6 +68,9 @@ class StandardProgram:
         Set up the theme, ensure required folders exist, and set up logging.
 
         Consider overriding if you need additional preparations for every run.
+
+        Returns:
+            str: the path to the log file to be written to
         """
         # set seaborn theme/format
         sns.set()
@@ -98,6 +101,8 @@ class StandardProgram:
                 logging.StreamHandler()
             ]
         )
+
+        return logname
 
     def check_file_exists(self, filename):
         """
@@ -324,6 +329,20 @@ AutoClassifier")
         if predict_prob is not None and type(predict_prob) is not pd.DataFrame:
             raise TypeError("Cannot save: predict_prob is not DataFrame.")
 
+        # get only known data and metadata
+        features_known, metadata_known = utilities.get_known(
+            feature_norm, metadata, self.class_column)
+
+        # save confusion matrix
+        logging.info("saving confusion matrix...")
+        utilities.save_confm(
+            clf,
+            features_known,
+            metadata_known,
+            self.class_column,
+            self.output_filename
+        )
+
         # save predictions
         utilities.save_predictions(
             metadata,
@@ -382,16 +401,6 @@ AutoClassifier")
         clf.train(
             features_known, metadata_known[self.class_column], self.multirun)
 
-        # save confusion matrix
-        logging.info("saving confusion matrix...")
-        utilities.save_confm(
-            clf,
-            features_known,
-            metadata_known,
-            self.class_column,
-            self.output_filename
-        )
-
         return clf
 
     def default_run(self):
@@ -415,6 +424,7 @@ AutoClassifier")
         else:
             clf = utilities.load_classifier(self.classifier_file)
 
+        # impute the data
         feature_norm = self.impute_data(feature_norm)
 
         # By default, predictions are made whether the mode was train or not.

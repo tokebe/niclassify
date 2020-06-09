@@ -8,6 +8,8 @@ try:
     import logging
     import os
     import re
+    import subprocess
+    import sys
     import xlrd
 
     import matplotlib as plt
@@ -464,3 +466,18 @@ def scale_data(data):
     data_norm.columns = feature_cols  # add column names back
 
     return data_norm
+
+
+def view_open_file(filename):
+    """
+    Open a file or directory with system default.
+
+    Args:
+        filename (str): Path to file, should be absolute.
+    """
+    filename = os.path.realpath(filename)
+    if sys.platform == "win32":
+        os.startfile(filename)
+    else:
+        opener = "open" if sys.platform == "darwin" else "xdg-open"
+        subprocess.call([opener, filename])

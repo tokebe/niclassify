@@ -165,7 +165,8 @@ def getargs():
 
 
 def interactive_mode():
-    """Get all required arguments in a (more) user-friendly format.
+    """
+    Get all required arguments in a (more) user-friendly format.
 
     Returns:
         tuple: all required arguments.

@@ -158,7 +158,7 @@ class TrainPanel(OperationsPanel):
             self,
             height=10,
             state="readonly",
-            textvariable=self.app.known_column
+            # textvariable=self.app.known_column
         )
         self.known_select.bind(
             "<<ComboboxSelected>>", self.app.enable_train)
