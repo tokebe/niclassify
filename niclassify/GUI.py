@@ -25,7 +25,7 @@ from core.StandardProgram import StandardProgram
 from core.classifiers import RandomForestAC
 from tkui.elements import DataPanel, TrainPanel, PredictPanel, StatusBar
 
-
+# TODO add warnings for things like incompatible classifier files
 # TODO start extensive testing to see what isn't working as it should
 # TODO once you have anything that needs fixing fixed, go through and clean
 # TODO then go through everything in tkui and make sure it's docstring'd
@@ -33,7 +33,7 @@ from tkui.elements import DataPanel, TrainPanel, PredictPanel, StatusBar
 # TODO once that's done, and nothing else has come up, I guess it's time to
 # resume testing of new steps
 
-# TODO an extra thing: add feature importances to report, if possible
+# TODO an extra thing: add feature importances to report
 
 
 class MainApp(tk.Frame):
@@ -647,7 +647,8 @@ classfier"
         # a standard and stick to it. Sorry for the rant, love you all <3.
         extension = os.path.splitext(location)[1]
         if item == "output" and extension == ".tsv":
-            with open(tempfiles[item].name) as csvin, open(location) as tsvout:
+            with open(tempfiles[item].name, "r") as csvin, \
+                    open(location, "w") as tsvout:
                 csvin = csv.reader(csvin)
                 tsvout = csv.writer(tsvout, delimiter='\t')
 
