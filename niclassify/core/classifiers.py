@@ -223,6 +223,16 @@ class AutoClassifier:
 
         return "\n".join(report)
 
+    def is_trained(self):
+        """
+        Check if the classifier has been trained.
+
+        Returns:
+            bool: True if the classifier is trained else False.
+
+        """
+        return True if len(self.trained_features) > 0 else False
+
     def log_report(self):
         """
         Get the model performance report and log it.

@@ -289,10 +289,33 @@ AutoClassifier")
         features = raw_data[self.feature_cols]
         metadata = raw_data.drop(self.feature_cols, axis=1)
 
+        # convert class labels to lower if classes are in str format
+        if self.class_column is not None:
+            if not np.issubdtype(
+                    metadata[self.class_column].dtype, np.number):
+                metadata[self.class_column] = \
+                    metadata[self.class_column].str.lower()
+
         # scale data
         feature_norm = utilities.scale_data(features)
 
         return raw_data, features, feature_norm, metadata
+
+    def print_vars(self):
+        """
+        Print all the currently stored vars.
+
+        Basically just here for debugging.
+        """
+        print("mode: {}".format(self.mode))
+        print("data_file: {}".format(self.data_file))
+        print("excel_sheet: {}".format(self.excel_sheet))
+        print("feature_cols: {}".format(self.feature_cols))
+        print("class_column: {}".format(self.class_column))
+        print("multirun: {}".format(self.multirun))
+        print("classifier_file: {}".format(self.classifier_file))
+        print("output_filename: {}".format(self.output_filename))
+        print("nans: {}".format(self.nans))
 
     def save_outputs(
             self,
@@ -354,7 +377,7 @@ AutoClassifier")
 
         # generate and output graph
         logging.info("generating final graphs...")
-        utilities.output_graph(feature_norm, predict, self.output_filename)
+        utilities.save_pairplot(feature_norm, predict, self.output_filename)
 
         logging.info("...done!")
 
@@ -385,23 +408,16 @@ AutoClassifier")
         if type(metadata) is not pd.DataFrame:
             raise TypeError("Cannot save: metadata is not DataFrame.")
 
-        # convert class labels to lower if classes are in str format
-        if not np.issubdtype(
-                metadata[self.class_column].dtype, np.number):
-            metadata[self.class_column] = \
-                metadata[self.class_column].str.lower()
-
         # get only known data and metadata
         features_known, metadata_known = utilities.get_known(
             feature_norm, metadata, self.class_column)
 
         # train classifier
         logging.info("training random forest...")
-        clf = classifiers.RandomForestAC()
-        clf.train(
+        self.clf.train(
             features_known, metadata_known[self.class_column], self.multirun)
 
-        return clf
+        return self.clf
 
     def default_run(self):
         """

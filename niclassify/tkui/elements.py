@@ -204,8 +204,8 @@ class TrainPanel(OperationsPanel):
         self.report_section = VS_Pair(
             self,
             self.app,
-            self.app.view_report,
-            self.app.save_report,
+            lambda: self.app.view_item("report"),
+            lambda: self.app.save_item("report"),
             text="Report",
             labelanchor=tk.N)
         self.report_section.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -214,8 +214,8 @@ class TrainPanel(OperationsPanel):
         self.cm_section = VS_Pair(
             self,
             self.app,
-            lambda: self.app.view_graph("cm"),
-            lambda: self.app.save_graph("cm"),
+            lambda: self.app.view_item("cm"),
+            lambda: self.app.save_item("cm"),
             text="Conf. Matrix",
             labelanchor=tk.N)
         self.cm_section.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
@@ -262,8 +262,8 @@ class PredictPanel(OperationsPanel):
         self.pairplot_section = VS_Pair(
             self,
             self.app,
-            lambda: self.app.view_graph("pairplot"),
-            lambda: self.app.save_graph("pairplot"),
+            lambda: self.app.view_item("pairplot"),
+            lambda: self.app.save_item("pairplot"),
             text="Pairplot",
             labelanchor=tk.N
         )
@@ -275,7 +275,7 @@ class PredictPanel(OperationsPanel):
             pady=5,
             width=5,
             state=tk.DISABLED,
-            command=self.app.save_output
+            command=lambda: self.app.save_item("output")
         )
         self.output_save.pack(fill=tk.X, padx=1, pady=1)
 

@@ -1,3 +1,4 @@
+import csv
 import logging
 import os
 import shutil
@@ -25,11 +26,14 @@ from core.classifiers import RandomForestAC
 from tkui.elements import DataPanel, TrainPanel, PredictPanel, StatusBar
 
 
-# TODO replace the raw_data check with something else that makes more sense
-# TODO make sure self.classifier is replaced with self.sp.clf as well
-# TODO along with anything else dumb
-# totally ok if the program is just more sensitive and warns the user more
-# (user is dumb, user should be warned more than they need)
+# TODO start extensive testing to see what isn't working as it should
+# TODO once you have anything that needs fixing fixed, go through and clean
+# TODO then go through everything in tkui and make sure it's docstring'd
+# TODO then add the extra things, NaN editor and help button
+# TODO once that's done, and nothing else has come up, I guess it's time to
+# resume testing of new steps
+
+# TODO an extra thing: add feature importances to report, if possible
 
 
 class MainApp(tk.Frame):
@@ -105,7 +109,7 @@ class MainApp(tk.Frame):
         """
         conditions = [
             self.sp.data_file is not None,
-            self.sp.clf is not None
+            self.sp.clf.is_trained()
         ]
         print(conditions)
         if all(conditions):
@@ -119,7 +123,8 @@ class MainApp(tk.Frame):
         Check if action would (should) overwrite current data or classifier.
 
         Returns:
-            Bool: True if the action would (should) overwrite.
+            Bool: True if the action won't overwrite, or the result of the
+                dialog if it will.
 
         """
         conditions = [
@@ -131,14 +136,17 @@ class MainApp(tk.Frame):
                 title="Overwrite Warning",
                 message="This will delete unsaved classifier and results."
             )
+        else:
+            return True
 
     def enable_train(self, event):
         """
         Enable the train button.
 
-        This function only exists so I (or you) don't have to write this giant
-        statement over and over. event isn't used so it doesn't matter.
+        Also updates the currently selected known label column.
         """
+        # print(self.train_section.known_select.get())
+        self.sp.class_column = self.train_section.known_select.get()
         self.train_section.train_button.config(state=tk.ACTIVE)
 
     def get_data_file(self):
@@ -150,7 +158,7 @@ class MainApp(tk.Frame):
         prompted, otherwise the column selection panel is populated.
         """
         # check if user is overwriting and ask if they're ok with it
-        if self.check_warn_overwrite():
+        if not self.check_warn_overwrite():
             return
 
         # prompt user for file
@@ -173,7 +181,10 @@ class MainApp(tk.Frame):
             return
 
         # assuming user chooses a proper file:
+        # reset things
+        self.reset_controls()
 
+        print("user chose file {}".format(data_file))
         self.sp.data_file = data_file
 
         # update window title to reflect chosen file
@@ -181,9 +192,6 @@ class MainApp(tk.Frame):
             "Random Forest Classifier Tool: {}".format(
                 os.path.basename(data_file))
         )
-
-        # reset things
-        self.reset_controls()
 
         # handle file import given whether file is excel or text
         if (  # some sort of excel file
@@ -282,7 +290,7 @@ class MainApp(tk.Frame):
         event isn't used so it doesn't really matter.
         """
         # check if user is overwriting and make sure they're ok with it
-        if self.check_warn_overwrite():
+        if not self.check_warn_overwrite():
             # change selected sheet back to what it was
             self.data_section.excel_sheet_input.set(self.sp.excel_sheet)
             return
@@ -322,7 +330,7 @@ class MainApp(tk.Frame):
         Ensures that the classifier is at least the right object.
         """
         # check if user is overwriting and make sure they're ok with it
-        if self.check_warn_overwrite():
+        if not self.check_warn_overwrite():
             return
 
         # prompt the user for the classifier file
@@ -339,7 +347,7 @@ class MainApp(tk.Frame):
             return
 
         # disable train stuff in the event that a trained clf is overwritten
-        self.reset_operations()
+        self.reset_controls(clf=True)
         self.sp.clf = utilities.load_classifier(clf_file)
         self.check_enable_predictions()
 
@@ -365,6 +373,7 @@ class MainApp(tk.Frame):
             dir=self.tempdir.name
         )
         self.cm.close()
+
         # make the plot and save to the tempfile.
         utilities.make_confm(
             self.sp.clf.clf,
@@ -372,8 +381,6 @@ class MainApp(tk.Frame):
             metadata_known,
             class_column
         ).savefig(self.cm.name)
-
-    # TODO continue down the line implementing as you see fit
 
     def make_report(self):
         """
@@ -404,7 +411,7 @@ class MainApp(tk.Frame):
         # create the tempfile
         self.report = tempfile.NamedTemporaryFile(
             mode="w+",
-            suffix=".png",
+            suffix=".txt",
             delete=False,
             dir=self.tempdir.name
         )
@@ -433,11 +440,10 @@ class MainApp(tk.Frame):
         self.pairplot.close()
 
         # make the pairplot and save to the tempfile
-        utilities.output_graph(
+        utilities.make_pairplot(
             data,
-            predict,
-            self.pairplot.name
-        )
+            predict
+        ).savefig(self.pairplot.name)
 
     def make_predictions(self):
         """
@@ -445,9 +451,26 @@ class MainApp(tk.Frame):
 
         Set up to be agnostic of AutoClassifier support for predict_prob.
         """
-        # check if user is overwriting and make sure they're ok with it
-        if self.check_warn_overwrite():
+        if len(
+            self.data_section.col_select_panel.sel_contents.get(0, tk.END)
+        ) <= 0:
+            tk.messagebox.showwarning(
+                title="No Data Columns Selected",
+                message="Please select at least one feature column."
+            )
             return
+
+        # check if user is overwriting and make sure they're ok with it
+        if self.predict_section.output_save["state"] != tk.DISABLED:
+            if not tk.messagebox.askokcancel(
+                title="Overwrite Warning",
+                message="This will delete unsaved prediction results."
+            ):
+                return
+
+        self.get_selected_cols()
+
+        self.sp.print_vars()
 
         # get the data prepared
         raw_data, features, feature_norm, metadata = self.sp.prep_data()
@@ -456,7 +479,23 @@ class MainApp(tk.Frame):
         feature_norm = self.sp.impute_data(feature_norm)
 
         # get predictions
-        predict = self.predict_AC(self.sp.clf, feature_norm)
+        try:
+            predict = self.sp.predict_AC(self.sp.clf, feature_norm)
+        except (ValueError,  KeyError) as err:
+            message = (
+                "The classifier expects different number of features than \
+selected."
+                if isinstance(err, ValueError)
+                else
+                "Given feature names do not match those expected by the \
+classfier"
+            )
+            tk.messagebox.showerror(
+                title="Feature Data Error",
+                message=message
+            )
+            return
+
         # Because predict_AC may return predict_prob we check if it's a tuple
         # and act accordingly
         if type(predict) == tuple:
@@ -472,16 +511,16 @@ class MainApp(tk.Frame):
         # create the tempfile
         self.output = tempfile.NamedTemporaryFile(
             mode="w+",
-            suffix=".png",
+            suffix=".csv",
             delete=False,
             dir=self.tempdir.name
         )
         self.output.close()
         # save to output file
         utilities.save_predictions(
-            predict, feature_norm, self.output.name, predict_prob)
+            metadata, predict, feature_norm, self.output.name, predict_prob)
 
-        self.make_pairplot()
+        self.make_pairplot(feature_norm, predict)
         self.predict_section.enable_outputs()
         self.predict_section.output_save.config(state=tk.ACTIVE)
 
@@ -504,14 +543,15 @@ class MainApp(tk.Frame):
             clf (bool, optional): Only reset for new clf. Defaults to False.
         """
         # reset stored StandardProgram information
-        self.sp.clf = None
+        self.sp.clf = RandomForestAC()
 
-        self.sp.data_file = None
-        self.sp.excel_sheet = None
-        self.sp.feature_cols = None
-        self.sp.class_column = None
-        self.sp.multirun = None
-        self.sp.nans = None
+        if not clf:
+            self.sp.data_file = None
+            self.sp.excel_sheet = None
+            self.sp.feature_cols = None
+            self.sp.class_column = None
+            self.sp.multirun = None
+            self.sp.nans = None
 
         # reset GUI controls
         if not clf:
@@ -539,13 +579,148 @@ class MainApp(tk.Frame):
         location = tk.filedialog.asksaveasfilename(
             title="Save Classifier",
             initialdir=os.path.realpath(
-                os.path.join(utilities.MAIN_PATH, "output/classifiers/")),
+                os.path.join(utilities.MAIN_PATH, "output/")),
             defaultextension=".gz",
             filetypes=[("GNU zipped archive", ".gz")]
         )
 
         # save the classifier
         dump(self.sp.clf, location)
+
+    def save_item(self, item):
+        """
+        Save the chosen item (selected by str) to a user-designated place.
+
+        Args:
+            item (str): A tag identifying the item to be saved.
+        """
+        # set up some maps for easier automation
+        tempfiles = {
+            "cm": self.cm,
+            "pairplot": self.pairplot,
+            "report": self.report,
+            "output": self.output
+        }
+        titles = {
+            "cm": "Confusion Matrix",
+            "pairplot": "Pairplot",
+            "report": "Training Report",
+            "output": "Prediction Output"
+        }
+        graphtypes = [("Portable Network Graphics image", ".png")]
+        reportypes = [("Plain text file", ".txt")]
+        outputtypes = [
+            ("Comma separated values", ".csv"),
+            ("Tab separated values", ".tsv"),
+            ("All Files", ".*"),
+        ]
+
+        types = {
+            "cm": graphtypes,
+            "pairplot": graphtypes,
+            "report": reportypes,
+            "output": outputtypes
+        }
+        default_extensions = {
+            "cm": ".png",
+            "pairplot": ".png",
+            "report": ".txt",
+            "output": ".csv"
+        }
+
+        # prompt user for save location
+        location = tk.filedialog.asksaveasfilename(
+            title="Save {}".format(
+                titles[item]),
+            initialdir=os.path.join(utilities.MAIN_PATH, "output/"),
+            defaultextension=default_extensions[item],
+            filetypes=types[item]
+        )
+        # return if user cancels
+        if len(location) == 0:
+            return
+
+        # if the item's the prediction output we need to convert it to whatever
+        # type the user wants because apparently scientists hate CSV
+        # If you're a bioinformatics person reading through the code to figure
+        # out why the program is slow to save it's because nobody can just pick
+        # a standard and stick to it. Sorry for the rant, love you all <3.
+        extension = os.path.splitext(location)[1]
+        if item == "output" and extension == ".tsv":
+            with open(tempfiles[item].name) as csvin, open(location) as tsvout:
+                csvin = csv.reader(csvin)
+                tsvout = csv.writer(tsvout, delimiter='\t')
+
+                for row in csvin:
+                    tsvout.writerow(row)
+
+        # if user chose some other extension, we're just giving them csv
+        # because I can't be bothered to infer their preference
+
+        # otherwise, copy the appropriate file
+        shutil.copy(tempfiles[item].name, location)
+
+    def train_classifier(self):
+        """
+        Train a classifier with the given data.
+
+        Prepares outputs and enables buttons for next steps.
+        """
+        # make sure that appropriate feature columns are selected
+        if len(
+            self.data_section.col_select_panel.sel_contents.get(0, tk.END)
+        ) <= 0:
+            tk.messagebox.showwarning(
+                title="No Data Columns Selected",
+                message="Please select at least one feature column."
+            )
+            return
+        if self.train_section.known_select.get() in self.get_selected_cols():
+            tk.messagebox.showwarning(
+                title="Known Class And Feature Columns Overlap",
+                message="Class column must not be a selected feature column."
+            )
+            return
+
+        self.sp.multirun = int(self.train_section.n_input.get())
+
+        self.sp.print_vars()
+
+        # check if user is overwriting and make sure they're ok with it
+        if not self.check_warn_overwrite():
+            return
+
+        # get the data prepared
+        raw_data, features, feature_norm, metadata = self.sp.prep_data()
+
+        # get known for making cm
+        features_known, metadata_known = utilities.get_known(
+            feature_norm, metadata, self.sp.class_column)
+
+        # train classifier
+        self.sp.train_AC(feature_norm, metadata)
+
+        # generate outputs and enable related buttons
+        self.make_report()
+        self.make_cm(features_known, metadata_known, self.sp.class_column)
+        self.train_section.classifier_save.config(state=tk.ACTIVE)
+        self.train_section.enable_outputs()
+        self.check_enable_predictions()
+
+    def view_item(self, item):
+        """
+        View an item using the system default.
+
+        Args:
+            item (str): A tag selecting which item to be viewed.
+        """
+        tempfiles = {
+            "cm": self.cm,
+            "pairplot": self.pairplot,
+            "report": self.report,
+            "output": self.output
+        }
+        utilities.view_open_file(tempfiles[item].name)
 
 
 def main():

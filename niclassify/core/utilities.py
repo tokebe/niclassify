@@ -185,20 +185,20 @@ def get_known(data, metadata, class_column):
     """
     # split into known and unknown
     logging.info("splitting data...")
-    data_known = data[metadata[class_column].notnull()]
+    features_known = data[metadata[class_column].notnull()]
     metadata_known = metadata[metadata[class_column].notnull()]
     # reset indices
-    data_known.reset_index(drop=True, inplace=True)
+    features_known.reset_index(drop=True, inplace=True)
     metadata_known.reset_index(drop=True, inplace=True)
 
     # remove null rows from known data
     logging.info("extracting fully known data...")
-    data_known = data_known.dropna()
-    metadata_known = metadata_known.iloc[data_known.index]
-    data_known.reset_index(drop=True, inplace=True)
+    features_known = features_known.dropna()
+    metadata_known = metadata_known.iloc[features_known.index]
+    features_known.reset_index(drop=True, inplace=True)
     metadata_known.reset_index(drop=True, inplace=True)
 
-    return data_known, metadata_known
+    return features_known, metadata_known
 
 
 def impute_data(data):
@@ -276,7 +276,7 @@ def make_confm(clf, features_known, metadata_known, class_column):
         class_column (str): Name of class label column in metadata.
 
     Returns:
-        fig (figure): A matplotlib figure containing the graph.
+        figure: A matplotlib figure containing the graph.
 
     """
     # type error checking
@@ -284,6 +284,8 @@ def make_confm(clf, features_known, metadata_known, class_column):
         raise TypeError("Cannot save: features_known is not DataFrame.")
     if type(metadata_known) is not pd.DataFrame:
         raise TypeError("Cannot save: metadata_known is not DataFrame.")
+
+    print(metadata_known[class_column].unique())
 
     fig, ax = plt.pyplot.subplots(nrows=1, ncols=1)
     metrics.plot_confusion_matrix(
@@ -297,7 +299,37 @@ def make_confm(clf, features_known, metadata_known, class_column):
     return fig
 
 
-def output_graph(data, predict, outfname):
+def make_pairplot(data, predict):
+    """
+    Make a pairplot figure.
+
+    Args:
+        data (DataFrame): Data predicted on. Preferably normalized.
+        predict (DataFrame): Class label predictions.
+
+    Returns:
+        figure: The resulting pairplot.
+
+    """
+    # type error checking
+    if type(predict) is not pd.DataFrame and type(predict) is not pd.Series:
+        raise TypeError("Cannot save: predict is not DataFrame or Series.")
+
+    # change data in frame to be useable for graph
+    df = pd.concat([data, predict], axis=1)
+
+    # make the pairplot
+    pairplot = sns.pairplot(
+        data=df,
+        vars=df.columns[0:data.shape[1]],
+        hue="predict",
+        diag_kind='hist'
+    )
+
+    return pairplot
+
+
+def save_pairplot(data, predict, outfname):
     """
     Output a pairplot of the predicted values.
 
@@ -310,14 +342,9 @@ def output_graph(data, predict, outfname):
     if type(predict) is not pd.DataFrame and type(predict) is not pd.Series:
         raise TypeError("Cannot save: predict is not DataFrame or Series.")
 
-    # change data in frame to be useable for graph
-    df = pd.concat([data, predict], axis=1)
-    out = sns.pairplot(
-        data=df,
-        vars=df.columns[0:data.shape[1]],
-        hue="predict",
-        diag_kind='hist'
-    )
+    # make pairplot
+    out = make_pairplot(data, predict)
+    # save pairplot
     if not os.path.isabs(outfname):
         outfname = os.path.join(MAIN_PATH, "output/" + outfname)
     out.savefig("{}.png".format(outfname))
