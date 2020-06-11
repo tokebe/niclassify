@@ -170,7 +170,7 @@ class StandardProgram:
                 self.class_column = args.class_column
                 self.multirun = args.multirun
             else:
-                self.classifier_file = args.predict_using
+                self.classifier_file = args.pfeaturesct_using
 
             # if feature cols is a range str, convert to list of names
             if type(self.feature_cols) is str:
@@ -361,8 +361,7 @@ AutoClassifier")
         utilities.save_confm(
             clf,
             features_known,
-            metadata_known,
-            self.class_column,
+            metadata_known[self.class_column],
             self.output_filename
         )
 

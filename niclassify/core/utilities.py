@@ -116,7 +116,10 @@ def get_data(filename, excel_sheet=None):
         raise ValueError("file {} does not exist.".format(filename))
 
     # get raw data
-    if ".xlsx" in filename[-5:]:  # using excel_sheet file
+    if (
+        os.path.splitext(filename)[1]
+        in ["xlsx", "xlsm", "xlsb", "xltx", "xltm", "xls", "xlt", "xml"]
+    ):  # using excel_sheet file
         if excel_sheet is not None:  # sheet given
             if excel_sheet.isdigit():  # sheet number
                 raw_data = pd.read_excel(
@@ -137,18 +140,21 @@ def get_data(filename, excel_sheet=None):
                 na_values=NANS,
                 keep_default_na=True)
 
-    elif ".csv" in filename[-4:]:  # using csv
+    elif ".csv" in os.path.splitext(filename)[1]:  # using csv
         raw_data = pd.read_csv(
             filename,
             na_values=NANS,
             keep_default_na=True)
-    elif ".tsv" in filename[-4:]:  # using tsv
+
+    elif ".tsv" in os.path.splitext(filename)[1]:  # using tsv
         raw_data = pd.read_csv(
             filename,
             na_values=NANS,
             keep_default_na=True,
             sep="\t")
-    elif ".txt" in filename[-4:]:  # using txt; must figure out deliniation
+
+    # using txt; must figure out delmiter
+    elif ".txt" in os.path.splitext(filename)[1]:
         raw_data = pd.read_csv(
             filename,
             na_values=NANS,
@@ -160,16 +166,20 @@ def get_data(filename, excel_sheet=None):
             "data file type is unsupported, or file extension not included")
         exit(-1)
 
-    # replace unknown values with nan (should be redundant)
-    raw_data.replace({
-        "unknown": np.nan,
-        "Unknown": np.nan,
-        "0": np.nan})  # replace string zero with nan (shouldn't exist)
+    # # replace unknown values with nan (should be redundant)
+    # raw_data.replace(
+    #     {
+    #         "unknown": np.nan,
+    #         "Unknown": np.nan,
+    #         "0": np.nan  # replace string zero with nan (shouldn't exist)
+    #     },
+    #     inplace=True
+    # )
 
     return raw_data  # return extracted data
 
 
-def get_known(data, metadata, class_column):
+def get_known(features, metadata, class_column):
     """
     Get only known data/metadata given the class label.
 
@@ -185,20 +195,22 @@ def get_known(data, metadata, class_column):
     """
     # split into known and unknown
     logging.info("splitting data...")
-    features_known = data[metadata[class_column].notnull()]
-    metadata_known = metadata[metadata[class_column].notnull()]
+    features = features[metadata[class_column].notnull()]
+    metadata = metadata[metadata[class_column].notnull()]
     # reset indices
-    features_known.reset_index(drop=True, inplace=True)
-    metadata_known.reset_index(drop=True, inplace=True)
+    features.reset_index(drop=True, inplace=True)
+    metadata.reset_index(drop=True, inplace=True)
 
     # remove null rows from known data
     logging.info("extracting fully known data...")
-    features_known = features_known.dropna()
-    metadata_known = metadata_known.iloc[features_known.index]
-    features_known.reset_index(drop=True, inplace=True)
-    metadata_known.reset_index(drop=True, inplace=True)
+    features = features.dropna()
+    metadata = metadata.iloc[features.index]
+    features.reset_index(drop=True, inplace=True)
+    metadata.reset_index(drop=True, inplace=True)
 
-    return features_known, metadata_known
+    # features and metadata now only contain rows with known class labels
+    # as well as only fully known data (no NA feature values)
+    return features, metadata
 
 
 def impute_data(data):
@@ -265,15 +277,14 @@ def load_classifier(filename):
     return classifier
 
 
-def make_confm(clf, features_known, metadata_known, class_column):
+def make_confm(clf, features_known, class_labels):
     """
     Make a confusion matrix plot of a trained classifier.
 
     Args:
-        clf (Classifier): A classifier.
-        data_known (DataFrame): Known Data.
-        metadata_known (DataFrame): Known Metadata, including class labels.
-        class_column (str): Name of class label column in metadata.
+        clf (AutoClassifier): An AutoClassifier.
+        data_known (DataFrame): Data for which class labels are known.
+        class_labels (Series): Known class labels.
 
     Returns:
         figure: A matplotlib figure containing the graph.
@@ -282,16 +293,15 @@ def make_confm(clf, features_known, metadata_known, class_column):
     # type error checking
     if type(features_known) is not pd.DataFrame:
         raise TypeError("Cannot save: features_known is not DataFrame.")
-    if type(metadata_known) is not pd.DataFrame:
+    if (type(class_labels) is not pd.DataFrame
+            and type(class_labels) is not pd.Series):
         raise TypeError("Cannot save: metadata_known is not DataFrame.")
-
-    print(metadata_known[class_column].unique())
 
     fig, ax = plt.pyplot.subplots(nrows=1, ncols=1)
     metrics.plot_confusion_matrix(
         clf,
         features_known,
-        metadata_known[class_column],
+        class_labels,
         ax=ax,
         normalize="true")
     ax.grid(False)
@@ -396,24 +406,24 @@ def save_clf_dialog(clf):
             continue
 
 
-def save_confm(clf, features_known, metadata_known, class_column, out):
+def save_confm(clf, features_known, class_labels, out):
     """
     Save a confusion matrix plot of a trained classifier.
 
     Args:
         clf (AutoClassifier): An AutoClassifier.
-        data_known (DataFrame): Known Data.
-        metadata_known (DataFrame): Known Metadata, including class labels.
-        class_column (str): Name of class label column in metadata.
+        data_known (DataFrame): Data for which class labels are known.
+        class_labels (Series): Known class labels.
         out (str): file path/name for output image.
     """
     # type error checking
     if type(features_known) is not pd.DataFrame:
         raise TypeError("Cannot save: features_known is not DataFrame.")
-    if type(metadata_known) is not pd.DataFrame:
+    if (type(class_labels) is not pd.DataFrame
+            and type(class_labels) is not pd.Series):
         raise TypeError("Cannot save: metadata_known is not DataFrame.")
 
-    fig = make_confm(clf.clf, features_known, metadata_known, class_column)
+    fig = make_confm(clf.clf, features_known, class_labels)
     if not os.path.isabs(out):
         out = os.path.join(MAIN_PATH, "output/" + out)
     fig.savefig("{}.cm.png".format(out))
@@ -464,6 +474,8 @@ def save_predictions(metadata, predict, feature_norm, out, predict_prob=None):
     except (KeyError, FileNotFoundError, OSError):
         logging.error("output folder creation failed.")
         exit(-1)
+
+    # TODO keep trying to find ways to not use pd.concat
 
 
 def scale_data(data):

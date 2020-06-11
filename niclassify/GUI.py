@@ -30,8 +30,11 @@ from tkui.elements import DataPanel, TrainPanel, PredictPanel, StatusBar
 # TODO once you have anything that needs fixing fixed, go through and clean
 # TODO then go through everything in tkui and make sure it's docstring'd
 # TODO then add the extra things, NaN editor and help button
+# TODO then it's finally time to use subprocesses to add progress indicators
 # TODO once that's done, and nothing else has come up, I guess it's time to
 # resume testing of new steps
+# TODO go through and really optimize how everything works to minimize
+# RAM usage, 1gb RAM for ~200kb of data is not acceptable
 
 # TODO an extra thing: add feature importances to report
 
@@ -378,8 +381,7 @@ class MainApp(tk.Frame):
         utilities.make_confm(
             self.sp.clf.clf,
             features_known,
-            metadata_known,
-            class_column
+            metadata_known[class_column]
         ).savefig(self.cm.name)
 
     def make_report(self):
