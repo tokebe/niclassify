@@ -116,10 +116,11 @@ def get_data(filename, excel_sheet=None):
         raise ValueError("file {} does not exist.".format(filename))
 
     # get raw data
-    if (
-        os.path.splitext(filename)[1]
-        in ["xlsx", "xlsm", "xlsb", "xltx", "xltm", "xls", "xlt", "xml"]
-    ):  # using excel_sheet file
+    if (os.path.splitext(filename)[1]
+        in [".xlsx", ".xlsm", ".xlsb",
+            ".xltx", ".xltm", ".xls",
+            ".xlt", ".xml"
+            ]):  # using excel_sheet file
         if excel_sheet is not None:  # sheet given
             if excel_sheet.isdigit():  # sheet number
                 raw_data = pd.read_excel(
@@ -162,9 +163,8 @@ def get_data(filename, excel_sheet=None):
             sep=None,
             engine="python")
     else:  # invalid extension
-        logging.error(
+        raise TypeError(
             "data file type is unsupported, or file extension not included")
-        exit(-1)
 
     # # replace unknown values with nan (should be redundant)
     # raw_data.replace(
@@ -227,16 +227,16 @@ def impute_data(data):
     # get categorical columns for dummy variable encoding
     category_cols = list(data.select_dtypes(
         exclude=[np.number]).columns.values)
-    data_np = pd.get_dummies(
+    data = pd.get_dummies(
         data,
         columns=category_cols,
         prefix=category_cols, drop_first=True)
-    feature_cols = data_np.columns.values
-    data_np = data_np.to_numpy()
+    feature_cols = data.columns.values
+    data = data.to_numpy()
     imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')
-    data_np = imp_mean.fit_transform(data_np)
+    data = imp_mean.fit_transform(data)
     # return to dataframe
-    data = pd.DataFrame(data_np)  # removed a scaler fit-transform here
+    data = pd.DataFrame(data)  # removed a scaler fit-transform here
     data.columns = feature_cols
 
     return data
@@ -494,14 +494,14 @@ def scale_data(data):
     # get categorical columns for dummy variable encoding
     category_cols = list(
         data.select_dtypes(exclude=[np.number]).columns.values)
-    data_np = pd.get_dummies(
+    data = pd.get_dummies(
         data,
         columns=category_cols,
         prefix=category_cols, drop_first=True)
-    feature_cols = data_np.columns.values  # save column names
-    data_np = data_np.to_numpy()
+    feature_cols = data.columns.values  # save column names
+    data = data.to_numpy()
     scaler = preprocessing.MinMaxScaler()
-    data_norm = pd.DataFrame(scaler.fit_transform(data_np))
+    data_norm = pd.DataFrame(scaler.fit_transform(data))
     data_norm.columns = feature_cols  # add column names back
 
     return data_norm

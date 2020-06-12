@@ -1,0 +1,66 @@
+scaling data...
+splitting data...
+extracting fully known data...
+splitting data...
+extracting fully known data...
+training random forest...
+  training RandomForestClassifier
+  using variables:
+    x0
+    x1
+    x2
+    x3
+    x4
+    x5
+    x6
+    x7
+    x8
+    x9
+    x10
+    x11
+  obtaining best hyperparameters...
+  found best hyperparameters (as follows):
+    min_samples_split: 0.1
+    max_depth: 21
+  generating 100 classifiers using found parameters...
+out-of-bag score: 0.95875
+---
+train/test scoring method: balanced_accuracy_score
+---
+train set score: 0.9613341333383334
+train set: percent of 1 mislabeled to 0: 3.62%
+train set: percent of 0 mislabeled to 1: 0.25%
+---
+test set score: 0.975
+test set: percent of 1 mislabeled to 0: 2.50%
+test set: percent of 0 mislabeled to 1: 0.00%
+---
+scaling data...
+imputing data...
+predicting unknown class labels...
+saving new output...
+scaling data...
+splitting data...
+extracting fully known data...
+splitting data...
+extracting fully known data...
+training random forest...
+  training RandomForestClassifier
+  using variables:
+    x0
+    x1
+    x2
+    x3
+    x4
+    x5
+    x6
+    x7
+    x8
+    x9
+    x10
+    x11
+  obtaining best hyperparameters...
+  found best hyperparameters (as follows):
+    min_samples_split: 0.1
+    max_depth: 32
+  generating 100 classifiers using found parameters...

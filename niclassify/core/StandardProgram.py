@@ -24,9 +24,6 @@ from . import utilities
 from . import classifiers
 
 
-# TODO add checking when predicting from classifier that given features match
-# classifier trained features
-
 class StandardProgram:
     """
     A standard template for the classifier program.
@@ -174,6 +171,7 @@ class StandardProgram:
 
             # if feature cols is a range str, convert to list of names
             if type(self.feature_cols) is str:
+                self.check_file_exists("data/" + self.data_file)
                 col_range = utilities.get_col_range(self.selected_cols)
                 self.feature_cols = utilities.get_data(
                     self.data_file,
@@ -261,7 +259,8 @@ AutoClassifier")
             predict_prob.rename(
                 columns={
                     predict_prob.columns[i]: "prob. {}".format(c)
-                    for i, c in enumerate(clf.clf.classes_)},
+                    for i, c in enumerate(clf.clf.classes_)
+                },
                 inplace=True)
 
             return predict, predict_prob
@@ -279,15 +278,15 @@ AutoClassifier")
 
         """
         # get raw data
-        raw_data = utilities.get_data(self.data_file, self.excel_sheet)
+        metadata = utilities.get_data(self.data_file, self.excel_sheet)
 
         # replace argument-added nans
         if self.nans is not None:
-            raw_data.replace({val: np.nan for val in self.nans}, inplace=True)
+            metadata.replace({val: np.nan for val in self.nans}, inplace=True)
 
         # split data into feature data and metadata
-        features = raw_data[self.feature_cols]
-        metadata = raw_data.drop(self.feature_cols, axis=1)
+        features = metadata[self.feature_cols]
+        metadata = metadata.drop(self.feature_cols, axis=1)
 
         # convert class labels to lower if classes are in str format
         if self.class_column is not None:
@@ -296,10 +295,10 @@ AutoClassifier")
                 metadata[self.class_column] = \
                     metadata[self.class_column].str.lower()
 
-        # scale data
-        feature_norm = utilities.scale_data(features)
+        # scale (normalize) data
+        features = utilities.scale_data(features)
 
-        return raw_data, features, feature_norm, metadata
+        return features, metadata
 
     def print_vars(self):
         """
@@ -320,7 +319,7 @@ AutoClassifier")
     def save_outputs(
             self,
             clf,
-            feature_norm,
+            features,
             metadata,
             predict,
             predict_prob=None
@@ -333,7 +332,7 @@ AutoClassifier")
 
         Args:
             clf (AutoClassifier): A trained Autoclassifier
-            feature_norm (DataFrame): Normalized, imputed feature data.
+            features (DataFrame): Normalized, imputed feature data.
             metadata (DataFrame): Any metadata the original data file contained
             predict (DataFrame): Predicted class labels.
             predict_prob (DataFrame, optional): Prediction probabilities, if
@@ -343,8 +342,8 @@ AutoClassifier")
         if not isinstance(clf, classifiers.AutoClassifier):
             raise TypeError("Cannot save: classifier does not inherit from \
                 AutoClassifier")
-        if type(feature_norm) is not pd.DataFrame:
-            raise TypeError("Cannot save: feature_norm is not DataFrame.")
+        if type(features) is not pd.DataFrame:
+            raise TypeError("Cannot save: features is not DataFrame.")
         if type(metadata) is not pd.DataFrame:
             raise TypeError("Cannot save: metadata is not DataFrame.")
         if type(predict) is not pd.DataFrame:
@@ -354,7 +353,7 @@ AutoClassifier")
 
         # get only known data and metadata
         features_known, metadata_known = utilities.get_known(
-            feature_norm, metadata, self.class_column)
+            features, metadata, self.class_column)
 
         # save confusion matrix
         logging.info("saving confusion matrix...")
@@ -369,14 +368,14 @@ AutoClassifier")
         utilities.save_predictions(
             metadata,
             predict,
-            feature_norm,
+            features,
             self.output_filename,
             predict_prob
         )
 
         # generate and output graph
         logging.info("generating final graphs...")
-        utilities.save_pairplot(feature_norm, predict, self.output_filename)
+        utilities.save_pairplot(features, predict, self.output_filename)
 
         logging.info("...done!")
 
@@ -384,14 +383,14 @@ AutoClassifier")
         if self.mode == "train":
             utilities.save_clf_dialog(clf)
 
-    def train_AC(self, feature_norm, metadata):
+    def train_AC(self, features, metadata):
         """
         Train the AutoClassifier.
 
         Prepares data for training.
 
         Args:
-            feature_norm (DataFrame): Normalized feature data, preferably with
+            features (DataFrame): Normalized feature data, preferably with
                 nan values removed.
             metadata (DataFrame): Metadata from original data file, including
                 known class column.
@@ -402,19 +401,19 @@ AutoClassifier")
         """
         # type error checking
 
-        if type(feature_norm) is not pd.DataFrame:
-            raise TypeError("Cannot save: feature_norm is not DataFrame.")
+        if type(features) is not pd.DataFrame:
+            raise TypeError("Cannot save: features is not DataFrame.")
         if type(metadata) is not pd.DataFrame:
             raise TypeError("Cannot save: metadata is not DataFrame.")
 
         # get only known data and metadata
-        features_known, metadata_known = utilities.get_known(
-            feature_norm, metadata, self.class_column)
+        features, metadata = utilities.get_known(
+            features, metadata, self.class_column)
 
         # train classifier
         logging.info("training random forest...")
         self.clf.train(
-            features_known, metadata_known[self.class_column], self.multirun)
+            features, metadata[self.class_column], self.multirun)
 
         return self.clf
 
@@ -431,19 +430,19 @@ AutoClassifier")
         # get required arguments to run the program
         self.get_args()
         # process the data for use
-        raw_data, features, feature_norm, metadata = self.prep_data()
+        features, metadata = self.prep_data()
 
         # if the mode is train, train the classifier
         if self.mode == "train":
-            clf = self.train_AC(feature_norm, metadata)
+            clf = self.train_AC(features, metadata)
         else:
             clf = utilities.load_classifier(self.classifier_file)
 
         # impute the data
-        feature_norm = self.impute_data(feature_norm)
+        features = self.impute_data(features)
 
         # By default, predictions are made whether the mode was train or not.
-        predict = self.predict_AC(clf, feature_norm)
+        predict = self.predict_AC(clf, features)
         # Because predict_AC may return predict_prob we check if it's a tuple
         # and act accordingly
         if type(predict) == tuple:
@@ -451,4 +450,4 @@ AutoClassifier")
         else:
             predict_prob = None
 
-        self.save_outputs(clf, feature_norm, metadata, predict, predict_prob)
+        self.save_outputs(clf, features, metadata, predict, predict_prob)

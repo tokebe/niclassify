@@ -25,16 +25,11 @@ from core.StandardProgram import StandardProgram
 from core.classifiers import RandomForestAC
 from tkui.elements import DataPanel, TrainPanel, PredictPanel, StatusBar
 
-# TODO add warnings for things like incompatible classifier files
-# TODO start extensive testing to see what isn't working as it should
-# TODO once you have anything that needs fixing fixed, go through and clean
 # TODO then go through everything in tkui and make sure it's docstring'd
 # TODO then add the extra things, NaN editor and help button
 # TODO then it's finally time to use subprocesses to add progress indicators
 # TODO once that's done, and nothing else has come up, I guess it's time to
 # resume testing of new steps
-# TODO go through and really optimize how everything works to minimize
-# RAM usage, 1gb RAM for ~200kb of data is not acceptable
 
 # TODO an extra thing: add feature importances to report
 
@@ -197,10 +192,12 @@ class MainApp(tk.Frame):
         )
 
         # handle file import given whether file is excel or text
-        if (  # some sort of excel file
-            os.path.splitext(data_file)[1]
-            in ["xlsx", "xlsm", "xlsb", "xltx", "xltm", "xls", "xlt", "xml"]
-        ):
+        if (os.path.splitext(data_file)[1]  # some sort of excel file
+                in [
+                    ".xlsx", ".xlsm", ".xlsb",
+                    ".xltx", ".xltm", ".xls",
+                    ".xlt", ".xml"
+        ]):
             # enable sheet selection and get list of sheets for dropdown
             self.data_section.excel_sheet_input.config(state="readonly")
 
@@ -220,10 +217,6 @@ class MainApp(tk.Frame):
 
             # update sheet options for dropdown and prompt user to select one
             self.data_section.excel_sheet_input["values"] = sheets
-            tk.messagebox.showinfo(
-                title="Excel Sheet Detected",
-                message="You will have to specify the sheet to proceed."
-            )
 
             # auto select the first
             # both in case there's only one (makes user's life easier)
@@ -231,6 +224,11 @@ class MainApp(tk.Frame):
             self.data_section.excel_sheet_input.set(sheets[0])
             self.sp.excel_sheet = sheets[0]
             self.get_sheet_cols(None)
+
+            tk.messagebox.showinfo(
+                title="Excel Sheet Detected",
+                message="You will have to specify the sheet to proceed."
+            )
 
         else:  # otherwise it's some sort of text file
             # disable sheet selection dropdown
@@ -249,7 +247,7 @@ class MainApp(tk.Frame):
                 ).columns.values.tolist()
             except (
                     OSError, IOError, KeyError,
-                    TypeError, ValueError
+                    TypeError, ValueError, csv.Error
             ):
                 tk.messagebox.showwarning(
                     title="File Read Error",
@@ -350,11 +348,18 @@ class MainApp(tk.Frame):
             return
 
         # disable train stuff in the event that a trained clf is overwritten
+        try:
+            self.sp.clf = utilities.load_classifier(clf_file)
+        except TypeError:
+            tk.messagebox.showwarning(
+                title="Incompatible File",
+                message="The chosen file is not a compatible AutoClassifier."
+            )
+            return
         self.reset_controls(clf=True)
-        self.sp.clf = utilities.load_classifier(clf_file)
         self.check_enable_predictions()
 
-    def make_cm(self, features_known, metadata_known, class_column):
+    def make_cm(self, features_known, class_labels):
         """
         Generate a confusion matrix graph and save to tempfile.
 
@@ -381,7 +386,7 @@ class MainApp(tk.Frame):
         utilities.make_confm(
             self.sp.clf.clf,
             features_known,
-            metadata_known[class_column]
+            class_labels
         ).savefig(self.cm.name)
 
     def make_report(self):
@@ -422,11 +427,11 @@ class MainApp(tk.Frame):
         # close the file so it's ready for open/copy
         self.report.close()
 
-    def make_pairplot(self, data, predict):
+    def make_pairplot(self, features, predict):
         """Generate a pairplot and save to a tempfile.
 
         Args:
-            data (DataFrame): The feature data predicted on.
+            features (DataFrame): The feature data predicted on.
             predict (DataFrame/Series): The class label predictions.
         """
         # check if pairplot exists and make sure it's closed if it does
@@ -443,7 +448,7 @@ class MainApp(tk.Frame):
 
         # make the pairplot and save to the tempfile
         utilities.make_pairplot(
-            data,
+            features,
             predict
         ).savefig(self.pairplot.name)
 
@@ -475,14 +480,14 @@ class MainApp(tk.Frame):
         self.sp.print_vars()
 
         # get the data prepared
-        raw_data, features, feature_norm, metadata = self.sp.prep_data()
+        features, metadata = self.sp.prep_data()
 
         # impute the data
-        feature_norm = self.sp.impute_data(feature_norm)
+        features = self.sp.impute_data(features)
 
         # get predictions
         try:
-            predict = self.sp.predict_AC(self.sp.clf, feature_norm)
+            predict = self.sp.predict_AC(self.sp.clf, features)
         except (ValueError,  KeyError) as err:
             message = (
                 "The classifier expects different number of features than \
@@ -520,9 +525,9 @@ classfier"
         self.output.close()
         # save to output file
         utilities.save_predictions(
-            metadata, predict, feature_norm, self.output.name, predict_prob)
+            metadata, predict, features, self.output.name, predict_prob)
 
-        self.make_pairplot(feature_norm, predict)
+        self.make_pairplot(features, predict)
         self.predict_section.enable_outputs()
         self.predict_section.output_save.config(state=tk.ACTIVE)
 
@@ -544,11 +549,8 @@ classfier"
         Args:
             clf (bool, optional): Only reset for new clf. Defaults to False.
         """
-        # reset stored StandardProgram information
-        self.sp.clf = RandomForestAC()
-
         if not clf:
-            self.sp.data_file = None
+            # self.sp.data_file = None
             self.sp.excel_sheet = None
             self.sp.feature_cols = None
             self.sp.class_column = None
@@ -563,7 +565,8 @@ classfier"
                 "")  # TODO this probably breaks it
 
         # disable buttons
-        self.train_section.reset_enabled()
+        if not clf or self.train_section.known_select.get() == "":
+            self.train_section.reset_enabled()
         if not clf:
             self.predict_section.reset_enabled()
 
@@ -685,27 +688,33 @@ classfier"
             )
             return
 
+        # get multirun setting
         self.sp.multirun = int(self.train_section.n_input.get())
 
+        # for debug
         self.sp.print_vars()
 
         # check if user is overwriting and make sure they're ok with it
         if not self.check_warn_overwrite():
             return
 
+        # disable save output and pairplot buttons
+        self.predict_section.output_save.config(state=tk.DISABLED)
+        self.predict_section.pairplot_section.disable_buttons()
+
         # get the data prepared
-        raw_data, features, feature_norm, metadata = self.sp.prep_data()
+        features, metadata = self.sp.prep_data()
 
         # get known for making cm
         features_known, metadata_known = utilities.get_known(
-            feature_norm, metadata, self.sp.class_column)
+            features, metadata, self.sp.class_column)
 
         # train classifier
-        self.sp.train_AC(feature_norm, metadata)
+        self.sp.train_AC(features, metadata)
 
         # generate outputs and enable related buttons
         self.make_report()
-        self.make_cm(features_known, metadata_known, self.sp.class_column)
+        self.make_cm(features_known, metadata_known[self.sp.class_column])
         self.train_section.classifier_save.config(state=tk.ACTIVE)
         self.train_section.enable_outputs()
         self.check_enable_predictions()
