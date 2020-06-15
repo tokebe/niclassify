@@ -1,11 +1,16 @@
+import ast
 import tkinter as tk
 from tkinter import ttk
 from .twocolumnselect import TwoColumnSelect
 import threading
-from PIL import Image, ImageTk
 
 
 class VS_Pair(tk.LabelFrame):
+    """A pair of buttons for viewing and saving a file.
+
+    Contains a couple of useful methods, not much else.
+    """
+
     def __init__(
             self,
             parent,
@@ -14,6 +19,15 @@ class VS_Pair(tk.LabelFrame):
             save_callback,
             *args,
             **kwargs):
+        """
+        Instantiate the VS_pair.
+
+        Args:
+            parent (Frame): Whatever tk object holds this pair.
+            app (MainApp): Generally the MainApp for easy method access.
+            view_callback (func): A function to call when view is pressed.
+            save_callback (func): A function to call when save is pressed.
+        """
         tk.LabelFrame.__init__(
             self,
             parent,
@@ -41,16 +55,31 @@ class VS_Pair(tk.LabelFrame):
         self.button_save.pack(padx=1, pady=1)
 
     def enable_buttons(self):
+        """Enable the buttons."""
         self.button_view.config(state=tk.ACTIVE)
         self.button_save.config(state=tk.ACTIVE)
 
     def disable_buttons(self):
+        """Disable the buttons."""
         self.button_view.config(state=tk.DISABLED)
         self.button_save.config(state=tk.DISABLED)
 
 
 class DataPanel(tk.LabelFrame):
+    """
+    One of the panels in MainApp, for opening and interacting with data.
+
+    Mostly just pre-defined GUI objects.
+    """
+
     def __init__(self, parent, app, *args, **kwargs):
+        """
+        Instantiate the DataPanel.
+
+        Args:
+            parent (Frame): Whatever's holding the DataPanel.
+            app (MainApp): Generally the MainApp for easy method access.
+        """
         tk.LabelFrame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.app = app
@@ -69,9 +98,6 @@ class DataPanel(tk.LabelFrame):
         self.excel_label = tk.Label(
             self,
             text="Specify Excel Sheet:")
-        # self.excel_label.bind('<Configure>') # write a function to set size
-        # depends on having access to list of items
-        # see https://stackoverflow.com/questions/39915275/change-width-of-dropdown-listbox-of-a-ttk-combobox
         self.excel_label.pack(anchor=tk.W)
         self.excel_sheet_input = ttk.Combobox(
             self,
@@ -103,7 +129,8 @@ class DataPanel(tk.LabelFrame):
         # TODO implement the window, make it save to config (edit core, easier)
         self.nan_check = tk.Button(
             self,
-            text="Check Recognized NaN values"
+            text="Check Recognized NaN values",
+            command=self.app.open_nans
         )
         self.nan_check.pack(side=tk.LEFT, anchor=tk.NW, padx=1, pady=1)
 
@@ -113,18 +140,26 @@ class DataPanel(tk.LabelFrame):
             text="Help")
         self.help_button.pack(side=tk.LEFT, anchor=tk.NW, padx=1, pady=1)
 
-    def sheet_validate(self, name):
-        return name in self.app.sheets
-    # TODO implement more robust validation, and function for invalidcommand
-    # see https://stackoverflow.com/questions/4140437/interactively-validating-entry-widget-content-in-tkinter
-
 
 class OperationsPanel(tk.LabelFrame):
+    """
+    The panel holding train and predict panels.
+
+    Has useful methods for controlling both.
+    """
+
     def __init__(self, parent,  *args, **kwargs):
+        """
+        Instantiate the panel.
+
+        Args:
+            parent (Frame): Whatever's holding the panel.
+        """
         super().__init__(parent, *args, **kwargs)
         self.parent = parent
 
     def enable_outputs(self):
+        """Enable output control buttons for viewing and saving."""
         try:
             self.classifier_save.config(state=tk.ACTIVE)
             self.report_section.enable_buttons()
@@ -133,6 +168,7 @@ class OperationsPanel(tk.LabelFrame):
             self.pairplot_section.enable_buttons()
 
     def disable_outputs(self):
+        """Disable output control buttons for viewing and saving."""
         try:
             self.classifier_save.config(state=tk.DISABLED)
             self.report_section.disable_buttons()
@@ -142,7 +178,19 @@ class OperationsPanel(tk.LabelFrame):
 
 
 class TrainPanel(OperationsPanel):
+    """
+    The training controls panel.
+
+    Basically just the predefined GUI parts.
+    """
+
     def __init__(self, parent, app, *args, **kwargs):
+        """Instantiate the panel.
+
+        Args:
+            parent (Frame): Whatever's holding the panel.
+            app (MainApp): Generally the MainApp for easy method access.
+        """
         super().__init__(parent, *args, **kwargs)
         self.parent = parent
         self.app = app
@@ -221,6 +269,16 @@ class TrainPanel(OperationsPanel):
         self.cm_section.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
     def validate_n_input(self, value):
+        """
+        Validate that the given input is a number.
+
+        Args:
+            value (str): Input value.
+
+        Returns:
+            bool: True if value is number or blank else False.
+
+        """
         if value == "":
             return True
         elif not value.isdigit():
@@ -231,13 +289,27 @@ class TrainPanel(OperationsPanel):
             return True
 
     def reset_enabled(self):
+        """Disable certain buttons for resetting between data/clf/etc."""
         self.disable_outputs()
         self.train_button.config(state=tk.DISABLED)
         self.classifier_save.config(state=tk.DISABLED)
 
 
 class PredictPanel(OperationsPanel):
+    """
+    Panel holding controls for predicting on a dataset with a classifier.
+
+    Mostly prefab GUI and not much else.
+    """
+
     def __init__(self, parent, app, *args, **kwargs):
+        """
+        Instantiate the Panel.
+
+        Args:
+            parent (Frame): Whatever's holding the Panel.
+            app (MainApp): Generally the MainApp for easy method access.
+        """
         super().__init__(parent, *args, **kwargs)
         self.parent = parent
         self.app = app
@@ -280,13 +352,26 @@ class PredictPanel(OperationsPanel):
         self.output_save.pack(fill=tk.X, padx=1, pady=1)
 
     def reset_enabled(self):
+        """Disable certain buttons for resetting between data/clf/etc."""
         self.prediction_make.config(state=tk.DISABLED)
         self.disable_outputs()
         self.output_save.config(state=tk.DISABLED)
 
 
 class StatusBar(tk.Frame):
+    """A statusbar to show the user that something is currently happening.
+
+    Progress bars should also be used in their own windows when doing something
+    intensive such as training or predicting.
+    """
+
     def __init__(self, parent, app, *args, **kwargs):
+        """Instantiate the statusbar.
+
+        Args:
+            parent (Frame): Whatever's holding the statusbar.
+            app (MainApp): Generally the MainApp for easy method access.
+        """
         tk.LabelFrame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.app = app
@@ -312,30 +397,93 @@ class StatusBar(tk.Frame):
         )
         self.progress.pack(side=tk.RIGHT)
 
-    def set_status(text):
+    def set_status(self, text):
+        """
+        Set the current status.
+
+        Args:
+            text (str): A new status.
+        """
         self.status.config(text="Status: {}".format(text))
 
 
-class ImageFrame(tk.Frame):
-    def __init__(self, parent, img, *args, **kwargs):
-        tk.LabelFrame.__init__(self, parent, *args, **kwargs)
+class NaNEditor(tk.Toplevel):
+    def __init__(self, parent, app, *args, **kwargs):
+        """Instantiate the editor window.
+
+        Args:
+            parent (Frame): Whatever's holding the panel.
+            app (MainApp): Generally the MainApp for easy method access.
+        """
+        super().__init__(parent, *args, **kwargs)
         self.parent = parent
+        self.app = app
 
-        self.image = Image.open(img)
-        self.img_copy = self.image.copy()
+        self.protocol("WM_DELETE_WINDOW", self.wm_exit)
 
-        self.background_image = ImageTk.PhotoImage(self.image)
+        self.title("NaN Value Editor")
+        self.minsize(width=300, height=400)
 
-        self.background = tk.Label(self, image=self.background_image)
-        self.background.pack(fill=tk.BOTH, expand=tk.YES)
-        self.background.bind('<Configure>', self._resize_image)
+        self.item_var = tk.StringVar()
+        self.item_var.set(value=[])
 
-    def _resize_image(self, event):
+        self.itemframe = tk.Frame(self)
+        self.itemframe.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
 
-        new_width = event.width
-        new_height = event.height
+        self.items = tk.Listbox(
+            self.itemframe,
+            selectmode=tk.EXTENDED,
+            listvariable=self.item_var
+        )
+        self.items.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
 
-        self.image = self.img_copy.resize((new_width, new_height))
+        self.item_scroll = tk.Scrollbar(
+            self.itemframe,
+            orient=tk.VERTICAL)
+        self.item_scroll.config(command=self.items.yview)
+        self.item_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self.items.config(yscrollcommand=self.item_scroll.set)
 
-        self.background_image = ImageTk.PhotoImage(self.image)
-        self.background.configure(image=self.background_image)
+        self.buttonframe = tk.Frame(self)
+        self.buttonframe.pack(side=tk.RIGHT, fill=tk.Y)
+
+        self.addbutton = tk.Button(
+            self.buttonframe,
+            text="Add",
+            command=self.additem
+        )
+        self.addbutton.pack(fill=tk.X)
+
+        self.removebutton = tk.Button(
+            self.buttonframe,
+            text="Remove",
+            command=self.removeitem
+        )
+        self.removebutton.pack(fill=tk.X)
+
+        self.item_var.set(value=self.app.sp.nans)
+
+    def additem(self):
+        val = tk.simpledialog.askstring(
+            parent=self,
+            title="New NaN value",
+            prompt="Please input a string to be recognized as NaN",
+        )
+        self.items.insert(tk.END, val)
+
+    def removeitem(self):
+        items = [
+            j
+            for i, j
+            in enumerate(list(
+                ast.literal_eval(self.item_var.get()))
+                if len(self.item_var.get()) > 0
+                else [])
+            if i not in self.items.curselection()
+        ]
+        self.item_var.set(value=items)
+
+    def wm_exit(self):
+        self.app.sp.nans = self.items.get(0, tk.END)
+        self.app.save_nans()
+        self.destroy()

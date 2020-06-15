@@ -1,5 +1,10 @@
+"""The main GUI script controlling the GUI version of niclassify.
+
+Technically extensible by subclassing and copying the main() function.
+If you have to do that, I'm sorry. It probably won't be fun.
+"""
 import csv
-import logging
+import json
 import os
 import shutil
 import subprocess
@@ -8,26 +13,22 @@ import threading
 import tempfile
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
-import seaborn as sns
 import tkinter as tk
 
-
 from tkinter import filedialog
-from joblib import dump, load
 from tkinter import ttk
 from xlrd import XLRDError
-
 
 from core import utilities
 from core.StandardProgram import StandardProgram
 from core.classifiers import RandomForestAC
-from tkui.elements import DataPanel, TrainPanel, PredictPanel, StatusBar
+from tkui.elements import DataPanel, TrainPanel
+from tkui.elements import PredictPanel, StatusBar, NaNEditor
 
-# TODO then go through everything in tkui and make sure it's docstring'd
-# TODO then add the extra things, NaN editor and help button
-# TODO then it's finally time to use subprocesses to add progress indicators
+
+# TODO docstring the nans window
+# TODO then it's finally time to use subprocesses and add progress indicators
 # TODO once that's done, and nothing else has come up, I guess it's time to
 # resume testing of new steps
 
@@ -35,7 +36,20 @@ from tkui.elements import DataPanel, TrainPanel, PredictPanel, StatusBar
 
 
 class MainApp(tk.Frame):
+    """
+    The gui application class.
+
+    Defines most of the buttons and functions to be used, with the rest in
+    tkui.
+    """
+
     def __init__(self, parent, *args, **kwargs):
+        """
+        Instantiate the program.
+
+        Args:
+            parent (tk.Root): The root window.
+        """
         tk.Frame.__init__(self, parent, *args, **kwargs)
 
         self.parent = parent
@@ -43,6 +57,9 @@ class MainApp(tk.Frame):
         # set up program utilities
         self.sp = StandardProgram(RandomForestAC())
         self.logname = self.sp.boilerplate()
+
+        # set nans in sp
+        self.sp.nans = utilities.NANS
 
         # stored files saved in a temporary directory, cleaned on exit
         self.tempdir = tempfile.TemporaryDirectory()
@@ -308,13 +325,25 @@ class MainApp(tk.Frame):
 
         # get sheet column names
         self.sp.excel_sheet = sheet
-        column_names = pd.read_excel(
-            self.sp.data_file,
-            sheet_name=sheet,
-            na_values=utilities.NANS,
-            nrows=0,
-            keep_default_na=True
-        ).columns.values.tolist()
+
+        try:
+            column_names = pd.read_excel(
+                self.sp.data_file,
+                sheet_name=sheet,
+                na_values=utilities.NANS,
+                nrows=0,
+                keep_default_na=True
+            ).columns.values.tolist()
+        except (
+                OSError, IOError, KeyError,
+                TypeError, ValueError, XLRDError
+        ):
+            tk.messagebox.showwarning(
+                title="File Read Error",
+                message="Unable to read file. The file may have been \
+corrupted, deleted, or renamed since being selected."
+            )
+            return
 
         # update known class label dropdown
         self.train_section.known_select["values"] = column_names
@@ -398,8 +427,14 @@ class MainApp(tk.Frame):
         # capture log output for report
         capture = False
         captured_lines = []
-        with open(self.logname, "r") as log:
-            loglines = log.readlines()
+        try:
+            with open(self.logname, "r") as log:
+                loglines = log.readlines()
+        except IOError:
+            tk.messagebox.showerror(
+                title="Report Log Error",
+                message="Unable to generate report: logfile inaccessible."
+            )
 
         for line in reversed(loglines):
             if line == "---\n":
@@ -434,6 +469,23 @@ class MainApp(tk.Frame):
             features (DataFrame): The feature data predicted on.
             predict (DataFrame/Series): The class label predictions.
         """
+        # check if pairplot can/should be generated
+        # pairplot generation fails beyond 92 variables
+        if len(features.columns) > 25:
+            if len(features.columns) > 92:
+                tk.messagebox.showwarning(
+                    title="Pairplot Overload",
+                    message="Due to software limitations, a pairplot will not \
+be generated."
+                )
+            else:
+                tk.messagebox.showwarning(
+                    title="Pairplot Size",
+                    message="Due to the number of variables, a pairplot will \
+not be generated."
+                )
+            self.predict_section.pairplot_section.disable_buttons()
+            return
         # check if pairplot exists and make sure it's closed if it does
         if self.pairplot is not None:
             self.pairplot.close()
@@ -474,6 +526,15 @@ class MainApp(tk.Frame):
                 message="This will delete unsaved prediction results."
             ):
                 return
+
+        # check if file still exists
+        if not os.path.exists(self.sp.data_file):
+            tk.messagebox.showwarning(
+                title="File Read Error",
+                message="Unable to read file. The file may have been \
+corrupted, deleted, or renamed since being selected."
+            )
+            return
 
         self.get_selected_cols()
 
@@ -527,9 +588,13 @@ classfier"
         utilities.save_predictions(
             metadata, predict, features, self.output.name, predict_prob)
 
-        self.make_pairplot(features, predict)
         self.predict_section.enable_outputs()
         self.predict_section.output_save.config(state=tk.ACTIVE)
+        self.make_pairplot(features, predict)
+
+    def open_nans(self):
+        # test = tk.Toplevel(self.parent)
+        thing = NaNEditor(self, self)
 
     def open_output_folder(self):
         """
@@ -666,6 +731,16 @@ classfier"
         # otherwise, copy the appropriate file
         shutil.copy(tempfiles[item].name, location)
 
+    def save_nans(self):
+        nans = {"nans": self.sp.nans}
+        with open(
+            os.path.join(
+                utilities.MAIN_PATH, "niclassify/core/config/nans.json"),
+            "w"
+        ) as nansfile:
+            json.dump(nans, nansfile)
+        # print("saving nans but not actually")
+
     def train_classifier(self):
         """
         Train a classifier with the given data.
@@ -685,6 +760,15 @@ classfier"
             tk.messagebox.showwarning(
                 title="Known Class And Feature Columns Overlap",
                 message="Class column must not be a selected feature column."
+            )
+            return
+
+        # check if file still exists
+        if not os.path.exists(self.sp.data_file):
+            tk.messagebox.showwarning(
+                title="File Read Error",
+                message="Unable to read file. The file may have been \
+corrupted, deleted, or renamed since being selected."
             )
             return
 
@@ -749,6 +833,11 @@ def main():
     root.minsize(root.winfo_width(), root.winfo_height())
 
     def graceful_exit():
+        """
+        Exit the program gracefully.
+
+        This includes cleaning tempfiles and closing any processes.
+        """
         plt.close("all")
         root.quit()
         root.destroy()

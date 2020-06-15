@@ -328,7 +328,8 @@ def make_pairplot(data, predict):
     # change data in frame to be useable for graph
     df = pd.concat([data, predict], axis=1)
 
-    # make the pairplot
+    print("attempting to generate plot")
+    # make the pairplot using seaborn
     pairplot = sns.pairplot(
         data=df,
         vars=df.columns[0:data.shape[1]],

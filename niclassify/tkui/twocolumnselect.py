@@ -4,7 +4,22 @@ import ast
 
 
 class TwoColumnSelect(tk.Frame):
+    """
+    A two column selection interface.
+
+    Allows users to swap items between the selected and deselected columns.
+    Hopefully not hard for the user to follow.
+
+    Also maintains order of items because I thought that'd be important.
+    """
+
     def __init__(self, parent, *args, **kwargs):
+        """
+        Instantiate the interface.
+
+        Args:
+            parent (Frame): Whatever's holding this interface.
+        """
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
 
@@ -96,6 +111,12 @@ class TwoColumnSelect(tk.Frame):
         self.sel_contents.config(yscrollcommand=self.sel_cont_sb.set)
 
     def to_right(self, allitems=False):
+        """
+        Move selected (or all) items from the left to the right.
+
+        Args:
+            allitems (bool, optional): Move all items. Defaults to False.
+        """
         desel_items = (list(ast.literal_eval(self.desel.get()))
                        if len(self.desel.get()) > 0 else [])
         sel_items = (list(ast.literal_eval(self.sel.get()))
@@ -124,6 +145,12 @@ class TwoColumnSelect(tk.Frame):
             self.sel.set(value=sel_items)
 
     def to_left(self, allitems=False):
+        """
+        Move selected (or all) items from the right to the left.
+
+        Args:
+            allitems (bool, optional): Move all items. Defaults to False.
+        """
         desel_items = (list(ast.literal_eval(self.desel.get()))
                        if len(self.desel.get()) > 0 else [])
         sel_items = (list(ast.literal_eval(self.sel.get()))
@@ -152,19 +179,16 @@ class TwoColumnSelect(tk.Frame):
             self.sel.set(value=sel_items)
 
     def update_contents(self, colnames_dict):
+        """
+        Replace the contents with a new set of contents.
+
+        Uses a dictionary so order may be maintained when moving contents.
+
+        Args:
+            colnames_dict (dict): a dictionary of item: index.
+        """
         self.column_names = colnames_dict
         colnames = list(colnames_dict.keys())
         colnames.sort(key=lambda x: colnames_dict[x])
         self.desel.set(value=colnames)
         self.sel.set(value=[])
-
-
-if __name__ == "__main__":
-    root = tk.Tk()
-    root.style = ttk.Style()
-    root.style.theme_use("winnative")
-    # print(root.style.theme_names())
-    TwoColumnSelect(root)
-    root.update()
-    root.minsize(root.winfo_width(), root.winfo_height())
-    root.mainloop()

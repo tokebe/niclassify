@@ -3,8 +3,8 @@ from sklearn.datasets import make_classification
 
 
 x, y = make_classification(
-    n_samples=1000,
-    n_features=100,
+    n_samples=10000,
+    n_features=92,
     n_classes=2
 )
 
@@ -21,4 +21,4 @@ print(y.head())
 
 x = pd.concat([x, y], axis=1)
 
-x.to_csv("test_data_1k_f100.csv", index=False)
+x.to_csv("test_data_10k_f100.csv", index=False)
