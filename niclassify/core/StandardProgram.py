@@ -204,13 +204,15 @@ class StandardProgram:
         logging.info("imputing data...")
         return utilities.impute_data(feature_norm)
 
-    def predict_AC(self, clf, feature_norm):
+    def predict_AC(self, clf, feature_norm, status_cb=None):
         """
         Predict using a trained AutoClassifier and return predictions.
 
         Args:
             clf (AutoClassifier): A Trained AutoClassifier.
             feature_norm (DataFrame): Normalized, imputed feature data.
+            status_cb(func, optional): Callback function to update status.
+                Defaults to None.
 
         Returns:
             DataFrame or tuple: Predictions, and probabilities if supported
@@ -240,8 +242,12 @@ AutoClassifier")
                 "Given feature names do not match those expected by classifier"
             )
 
+        status_cb("Normalizing features...")
+
         # sort features as classifier expects so vals are considered correctly
         feature_norm = feature_norm[clf.trained_features]
+
+        status_cb("Making predictions...")
 
         # make predictions
         logging.info("predicting unknown class labels...")
@@ -252,6 +258,8 @@ AutoClassifier")
         # check if classifier supports proba and use it if so
         proba_method = getattr(clf.clf, "predict_proba", None)
         if proba_method is not None and callable(proba_method):
+
+            status_cb("Getting predicition probabilities...")
 
             # get predict probabilities
             predict_prob = pd.DataFrame(clf.clf.predict_proba(feature_norm))
@@ -383,7 +391,7 @@ AutoClassifier")
         if self.mode == "train":
             utilities.save_clf_dialog(clf)
 
-    def train_AC(self, features, metadata):
+    def train_AC(self, features, metadata, status_cb=None):
         """
         Train the AutoClassifier.
 
@@ -394,6 +402,8 @@ AutoClassifier")
                 nan values removed.
             metadata (DataFrame): Metadata from original data file, including
                 known class column.
+            status_cb(func, optional): Callback function to update status.
+                Defaults to None.
 
         Returns:
             AutoClassifier: The trained AutoClassifier
@@ -406,14 +416,21 @@ AutoClassifier")
         if type(metadata) is not pd.DataFrame:
             raise TypeError("Cannot save: metadata is not DataFrame.")
 
+        if status_cb is not None:
+            status_cb("Getting data...")
+
         # get only known data and metadata
         features, metadata = utilities.get_known(
             features, metadata, self.class_column)
 
         # train classifier
         logging.info("training random forest...")
+
+        if status_cb is not None:
+            status_cb("Training random forest...")
+
         self.clf.train(
-            features, metadata[self.class_column], self.multirun)
+            features, metadata[self.class_column], self.multirun, status_cb)
 
         return self.clf
 

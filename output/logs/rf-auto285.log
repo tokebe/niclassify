@@ -1,0 +1,53 @@
+scaling data...
+splitting data...
+extracting fully known data...
+splitting data...
+extracting fully known data...
+training random forest...
+  training RandomForestClassifier
+  using variables:
+    ML_Distance
+    ML_Similarity
+    dN_Distance
+    dN_Similarity
+    dS_Distance
+    dS_Similarity
+    AA_Distance
+    AA_Similarity
+    Ztest_Distance
+    Ztest_Similarity
+    dN/dS_Distance
+    dN/dS_Similarity
+  obtaining best hyperparameters...
+  found best hyperparameters (as follows):
+    min_samples_split: 0.45
+    max_depth: 22
+
+final trained classifier report
+---
+out-of-bag score: 0.7311827956989247
+---
+train/test scoring method: balanced_accuracy_score
+---
+train set score: 0.8622641509433961
+train set: percent of introduced mislabeled to native: 0.00%
+train set: percent of native mislabeled to introduced: 26.16%
+---
+test set score: 0.6136363636363636
+test set: percent of introduced mislabeled to native: 2.86%
+test set: percent of native mislabeled to introduced: 25.71%
+---
+feature permuation importances:
+  ML_Distance      : 0.054 +/- 0.054
+  dS_Distance      : 0.048 +/- 0.048
+  dN_Distance      : 0.022 +/- 0.022
+  Ztest_Similarity : 0.017 +/- 0.017
+  AA_Distance      : 0.011 +/- 0.011
+  dN_Similarity    : 0.006 +/- 0.006
+  dN/dS_Distance   : 0.006 +/- 0.006
+  dN/dS_Similarity : 0.000 +/- 0.000
+  AA_Similarity    : 0.000 +/- 0.000
+  ML_Similarity    : -0.002 +/- -0.002
+  Ztest_Distance   : -0.002 +/- -0.002
+  dS_Similarity    : -0.002 +/- -0.002
+---

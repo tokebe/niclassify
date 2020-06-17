@@ -15,6 +15,7 @@ try:
     from sklearn.model_selection import RandomizedSearchCV
     from sklearn.model_selection import StratifiedKFold
     from sklearn.model_selection import train_test_split
+    from sklearn.inspection import permutation_importance
 
 except ModuleNotFoundError:
     logging.error("Missing required modules. Install requirements by running")
@@ -186,6 +187,12 @@ class AutoClassifier:
         """
         report = []
 
+        report.append("")
+
+        report.append("final trained classifier report")
+
+        report.append("---")
+
         report.append(
             "out-of-bag score: {}".format(self.best_model.oob_score_))
         report.append("---")
@@ -221,6 +228,27 @@ class AutoClassifier:
                         (self.best_test_cm[true, pred] * 100)))
         report.append("---")
 
+        importance = permutation_importance(
+            self.best_model,
+            self.best_x_train,
+            self.best_y_train,
+            metrics.make_scorer(self.score_method),
+            n_jobs=-1
+        )
+
+        report.append("feature permuation importances:")
+
+        mlen = max((len(x) for x in self.trained_features))
+        for i in importance.importances_mean.argsort()[::-1]:
+            report.append("  {:{w}s} : {:.3f} +/- {:.3f}".format(
+                self.trained_features[i],
+                importance.importances_mean[i],
+                importance.importances_mean[i],
+                w=mlen
+            ))
+
+        report.append("---")
+
         return "\n".join(report)
 
     def is_trained(self):
@@ -245,7 +273,8 @@ class AutoClassifier:
             self,
             features_known,
             classes_known,
-            multirun=1
+            multirun=1,
+            status_cb=None
     ):
         """
         Train the classifier.
@@ -256,6 +285,8 @@ class AutoClassifier:
             features_known(DataFrame): Features for known classes.
             classes_known(Series): Known classes for given features.
             multirun(int, optional): Number of times to run. Defaults to 1.
+            status_cb(func, optional): Callback function to update status.
+                Defaults to None.
         """
         # useful logging
         logging.info("  training {}".format(self.clf.__class__.__name__))
@@ -263,6 +294,9 @@ class AutoClassifier:
         for i in features_known.columns.values.tolist():
             logging.info("    {}".format(i))
         logging.info("  obtaining best hyperparameters...")
+
+        if status_cb is not None:
+            status_cb("Obtaining best hyperparameters...")
 
         self.labels = classes_known.unique()
 
@@ -278,7 +312,8 @@ class AutoClassifier:
             self.hyperparams,
             n_jobs=-1,
             scoring=scorer,
-            cv=StratifiedKFold(n_splits=k))
+            cv=StratifiedKFold(n_splits=k)
+        )
 
         search.fit(x_train, y_train)
 
@@ -296,15 +331,20 @@ class AutoClassifier:
                 "  generating {} classifiers using found parameters...".format(
                     multirun)
             )
+
             for m in range(multirun):
 
-                x_train, x_test, y_train, y_test = \
-                    self._get_test_train_splits(features_known, classes_known)
+                x_train, x_test, y_train, y_test = self._get_test_train_splits(
+                    features_known, classes_known)
 
                 print(
                     "    testing classifier {} of {}...".format(
                         m + 1, multirun),
                     end="\r")
+
+                if status_cb is not None:
+                    status_cb("Testing classifier {} of {}...".format(
+                        m + 1, multirun))
 
                 model = search.best_estimator_.fit(x_train, y_train)
 

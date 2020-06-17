@@ -5,17 +5,18 @@ If you have to do that, I'm sorry. It probably won't be fun.
 """
 import csv
 import json
+import matplotlib
 import os
 import shutil
-import subprocess
-import sys
 import threading
 import tempfile
+import time
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import tkinter as tk
 
+from joblib import dump
 from tkinter import filedialog
 from tkinter import ttk
 from xlrd import XLRDError
@@ -23,16 +24,23 @@ from xlrd import XLRDError
 from core import utilities
 from core.StandardProgram import StandardProgram
 from core.classifiers import RandomForestAC
-from tkui.elements import DataPanel, TrainPanel
+from tkui.elements import DataPanel, TrainPanel, ProgressPopup
 from tkui.elements import PredictPanel, StatusBar, NaNEditor
 
+matplotlib.use('Agg')  # this makes threading not break
 
-# TODO docstring the nans window
-# TODO then it's finally time to use subprocesses and add progress indicators
+# TODO ensure all new threaded functions are adequately documented (docstrings)
+# TODO one MORE extensive test
 # TODO once that's done, and nothing else has come up, I guess it's time to
 # resume testing of new steps
 
-# TODO an extra thing: add feature importances to report
+
+def threaded(func):
+    def wrapper(*args, **kwargs):
+        thread = threading.Thread(target=func, args=args, kwargs=kwargs)
+        thread.start()
+        return thread
+    return wrapper
 
 
 class MainApp(tk.Frame):
@@ -112,6 +120,300 @@ class MainApp(tk.Frame):
         )
         self.status_bar.pack(fill=tk.X)
 
+    @threaded
+    def _get_data_file(self, data_file):
+
+        self.status_bar.set_status("Reading file...")
+        self.status_bar.progress["mode"] = "indeterminate"
+        self.status_bar.progress.start()
+
+        # handle file import given whether file is excel or text
+        if (os.path.splitext(data_file)[1]  # some sort of excel file
+                in [
+                    ".xlsx", ".xlsm", ".xlsb",
+                    ".xltx", ".xltm", ".xls",
+                    ".xlt", ".xml"
+        ]):
+            # enable sheet selection and get list of sheets for dropdown
+            self.data_section.excel_sheet_input.config(state="readonly")
+
+            # in case there's something that goes wrong reading the file
+            try:
+                sheets = list(pd.ExcelFile(data_file).sheet_names)
+            except (
+                    OSError, IOError, KeyError,
+                    TypeError, ValueError, XLRDError
+            ):
+                tk.messagebox.showwarning(
+                    title="Excel Read Error",
+                    message="Unable to read excel file. The file may be \
+                        corrupted, or otherwise unable to be read."
+                )
+                return
+
+            # update sheet options for dropdown and prompt user to select one
+            self.data_section.excel_sheet_input["values"] = sheets
+
+            # auto select the first
+            # both in case there's only one (makes user's life easier)
+            # and to make it more apparent what the user needs to do
+            self.data_section.excel_sheet_input.set(sheets[0])
+            self.sp.excel_sheet = sheets[0]
+            self.get_sheet_cols(None)
+
+            # re-enable loading data
+            self.data_section.load_data_button["state"] = tk.ACTIVE
+
+            # stop status
+            self.status_bar.set_status("Awaiting user input.")
+            self.status_bar.progress.stop()
+            self.status_bar.progress["mode"] = "determinate"
+
+            tk.messagebox.showinfo(
+                title="Excel Sheet Detected",
+                message="You will have to specify the sheet to proceed."
+            )
+
+        else:  # otherwise it's some sort of text file
+            # disable sheet selection dropdown
+            self.data_section.excel_sheet_input.config(
+                state=tk.DISABLED)
+
+            # in case there's a read or parse error of some kind
+            try:
+                column_names = pd.read_csv(
+                    data_file,
+                    na_values=utilities.NANS,
+                    keep_default_na=True,
+                    sep=None,
+                    nrows=0,
+                    engine="python"
+                ).columns.values.tolist()
+            except (
+                    OSError, IOError, KeyError,
+                    TypeError, ValueError, csv.Error
+            ):
+                tk.messagebox.showwarning(
+                    title="File Read Error",
+                    message="Unable to read specified file. The file may be \
+                        corrupted, invalid or otherwise unable to be read."
+                )
+                return
+
+            # update column selections for known class labels
+            self.train_section.known_select["values"] = column_names
+
+            # update the column select panel
+            colnames_dict = {x: i for i, x in enumerate(column_names)}
+            self.data_section.col_select_panel.update_contents(colnames_dict)
+
+            # conditionally enable predicting
+            self.check_enable_predictions()
+
+            # re-enable loading data
+            self.data_section.load_data_button["state"] = tk.ACTIVE
+
+            # stop status
+            self.status_bar.set_status("Awaiting user input.")
+            self.status_bar.progress.stop()
+            self.status_bar.progress["mode"] = "determinate"
+
+    @threaded
+    def _load_classifier(self, clf_file):
+        # disable train stuff in the event that a trained clf is overwritten
+        try:
+            self.sp.clf = utilities.load_classifier(clf_file)
+        except (TypeError, KeyError):
+            tk.messagebox.showwarning(
+                title="Incompatible File",
+                message="The chosen file is not a compatible AutoClassifier."
+            )
+            self.status_bar.set_status("Awaiting user input.")
+            self.predict_section.classifier_load["state"] = tk.ACTIVE
+            return
+        self.reset_controls(clf=True)
+        self.check_enable_predictions()
+        self.status_bar.set_status("Awaiting user input.")
+        self.predict_section.classifier_load["state"] = tk.ACTIVE
+
+    @threaded
+    def _make_predictions(self, on_finish, status_cb):
+
+        self.status_bar.progress["value"] = 0
+        self.status_bar.progress.step(16.5)
+        self.status_bar.set_status("Preparing data...")
+
+        # get the data prepared
+        features, metadata = self.sp.prep_data()
+
+        self.status_bar.progress.step(16.5)
+        self.status_bar.set_status("Splitting known data...")
+
+        self.status_bar.progress.step(16.5)
+        self.status_bar.set_status("Imputing data...")
+
+        # impute the data
+        features = self.sp.impute_data(features)
+
+        self.status_bar.progress.step(16.5)
+        self.status_bar.set_status("Making predictions...")
+
+        # get predictions
+        try:
+            predict = self.sp.predict_AC(self.sp.clf, features, status_cb)
+        except (ValueError,  KeyError) as err:
+            message = (
+                "The classifier expects different number of features than \
+    selected."
+                if isinstance(err, ValueError)
+                else
+                "Given feature names do not match those expected by the \
+    classfier"
+            )
+            tk.messagebox.showerror(
+                title="Feature Data Error",
+                message=message
+            )
+            return
+
+        # Because predict_AC may return predict_prob we check if it's a tuple
+        # and act accordingly
+        if type(predict) == tuple:
+            predict, predict_prob = predict
+        else:
+            predict_prob = None
+
+        self.status_bar.progress.step(16.5)
+        self.status_bar.set_status("Generating reports...")
+        status_cb("Generating reports...")
+
+        # check if output exists and make sure it's closed if it does
+        if self.output is not None:
+            self.output.close()
+        # create the tempfile
+        self.output = tempfile.NamedTemporaryFile(
+            mode="w+",
+            suffix=".csv",
+            delete=False,
+            dir=self.tempdir.name
+        )
+        self.output.close()
+        # save to output file
+        utilities.save_predictions(
+            metadata, predict, features, self.output.name, predict_prob)
+
+        self.predict_section.enable_outputs()
+        self.predict_section.output_save.config(state=tk.ACTIVE)
+        self.make_pairplot(features, predict)
+
+        self.status_bar.progress["value"] = 100
+        time.sleep(0.2)
+        self.status_bar.progress["value"] = 0
+        self.status_bar.set_status("Awaiting user input.")
+
+        on_finish()
+
+    @threaded
+    def _save_classifier(self, location):
+        # save the classifier
+        dump(self.sp.clf, location)
+        self.train_section.classifier_save["state"] = tk.ACTIVE
+        self.status_bar.progress["mode"] = "determinate"
+        self.status_bar.progress.stop()
+
+    @threaded
+    def _save_item(self, item, location):
+        tempfiles = {
+            "cm": self.cm,
+            "pairplot": self.pairplot,
+            "report": self.report,
+            "output": self.output
+        }
+        buttons = {
+            "cm": self.train_section.cm_section.button_save,
+            "pairplot": self.predict_section.pairplot_section.button_save,
+            "report": self.train_section.report_section.button_save,
+            "output": self.predict_section.output_save
+        }
+        # if the item's the prediction output we need to convert it to whatever
+        # type the user wants because apparently scientists hate CSV
+        # If you're a bioinformatics person reading through the code to figure
+        # out why the program is slow to save it's because nobody can just pick
+        # a standard and stick to it. Sorry for the rant, love you all <3.
+        extension = os.path.splitext(location)[1]
+        if item == "output" and extension == ".tsv":
+            with open(tempfiles[item].name, "r") as csvin, \
+                    open(location, "w") as tsvout:
+                csvin = csv.reader(csvin)
+                tsvout = csv.writer(tsvout, delimiter='\t')
+
+                for row in csvin:
+                    tsvout.writerow(row)
+
+        # if user chose some other extension, we're just giving them csv
+        # because I can't be bothered to infer their preference
+
+        # otherwise, copy the appropriate file
+        shutil.copy(tempfiles[item].name, location)
+
+        buttons[item]["state"] = tk.ACTIVE
+        self.status_bar.set_status("Awaiting user input.")
+
+    @threaded
+    def _save_nans(self):
+        nans = {"nans": self.sp.nans}
+        with open(
+            os.path.join(
+                utilities.MAIN_PATH, "niclassify/core/config/nans.json"),
+            "w"
+        ) as nansfile:
+            json.dump(nans, nansfile)
+
+        self.status_bar.set_status("Awaiting user input.")
+        self.data_section.nan_check["state"] = tk.ACTIVE
+
+    @threaded
+    def _train_classifier(self, on_finish, status_cb):
+
+        self.status_bar.progress["value"] = 0
+        self.status_bar.progress.step(20)
+        self.status_bar.set_status("Preparing data...")
+
+        # get the data prepared
+        features, metadata = self.sp.prep_data()
+
+        self.status_bar.progress.step(20)
+        self.status_bar.set_status("Splitting known data...")
+
+        # get known for making cm
+        features_known, metadata_known = utilities.get_known(
+            features, metadata, self.sp.class_column)
+
+        self.status_bar.progress.step(20)
+        self.status_bar.set_status("Training classifier...")
+
+        # train classifier
+        self.sp.train_AC(features, metadata, status_cb)
+
+        self.status_bar.progress.step(20)
+        self.status_bar.set_status("Generating reports...")
+
+        # generate outputs
+        self.make_report()
+        self.make_cm(features_known, metadata_known[self.sp.class_column])
+
+        self.status_bar.progress.step(20)
+        time.sleep(0.2)
+        self.status_bar.progress["value"] = 0
+        self.status_bar.set_status("Awaiting user input.")
+
+        # enable related output
+        self.train_section.classifier_save.config(state=tk.ACTIVE)
+        self.train_section.enable_outputs()
+        self.check_enable_predictions()
+
+        on_finish()
+
     def check_enable_predictions(self):
         """
         Conditionally enable the predict button.
@@ -176,6 +478,8 @@ class MainApp(tk.Frame):
         if not self.check_warn_overwrite():
             return
 
+        self.status_bar.set_status("Awaiting user file selection...")
+
         # prompt user for file
         data_file = filedialog.askopenfilename(
             title="Open Data File",
@@ -191,8 +495,9 @@ class MainApp(tk.Frame):
         )
         # if user cancels don't try to open nothing
         if len(data_file) <= 0:
-            self.status_bar.progress.stop()
-            self.status_bar.progress.config(mode="determinate")
+            # self.status_bar.progress.stop()
+            # self.status_bar.progress.config(mode="determinate")
+            self.status_bar.set_status("Awaiting user input.")
             return
 
         # assuming user chooses a proper file:
@@ -208,80 +513,11 @@ class MainApp(tk.Frame):
                 os.path.basename(data_file))
         )
 
-        # handle file import given whether file is excel or text
-        if (os.path.splitext(data_file)[1]  # some sort of excel file
-                in [
-                    ".xlsx", ".xlsm", ".xlsb",
-                    ".xltx", ".xltm", ".xls",
-                    ".xlt", ".xml"
-        ]):
-            # enable sheet selection and get list of sheets for dropdown
-            self.data_section.excel_sheet_input.config(state="readonly")
+        # disable load data button so we don't get multiple
+        self.data_section.load_data_button["state"] = tk.DISABLED
 
-            # in case there's something that goes wrong reading the file
-            try:
-                sheets = list(pd.ExcelFile(data_file).sheet_names)
-            except (
-                    OSError, IOError, KeyError,
-                    TypeError, ValueError, XLRDError
-            ):
-                tk.messagebox.showwarning(
-                    title="Excel Read Error",
-                    message="Unable to read excel file. The file may be \
-                        corrupted, or otherwise unable to be read."
-                )
-                return
-
-            # update sheet options for dropdown and prompt user to select one
-            self.data_section.excel_sheet_input["values"] = sheets
-
-            # auto select the first
-            # both in case there's only one (makes user's life easier)
-            # and to make it more apparent what the user needs to do
-            self.data_section.excel_sheet_input.set(sheets[0])
-            self.sp.excel_sheet = sheets[0]
-            self.get_sheet_cols(None)
-
-            tk.messagebox.showinfo(
-                title="Excel Sheet Detected",
-                message="You will have to specify the sheet to proceed."
-            )
-
-        else:  # otherwise it's some sort of text file
-            # disable sheet selection dropdown
-            self.data_section.excel_sheet_input.config(
-                state=tk.DISABLED)
-
-            # in case there's a read or parse error of some kind
-            try:
-                column_names = pd.read_csv(
-                    data_file,
-                    na_values=utilities.NANS,
-                    keep_default_na=True,
-                    sep=None,
-                    nrows=0,
-                    engine="python"
-                ).columns.values.tolist()
-            except (
-                    OSError, IOError, KeyError,
-                    TypeError, ValueError, csv.Error
-            ):
-                tk.messagebox.showwarning(
-                    title="File Read Error",
-                    message="Unable to read specified file. The file may be \
-                        corrupted, invalid or otherwise unable to be read."
-                )
-                return
-
-            # update column selections for known class labels
-            self.train_section.known_select["values"] = column_names
-
-            # update the column select panel
-            colnames_dict = {x: i for i, x in enumerate(column_names)}
-            self.data_section.col_select_panel.update_contents(colnames_dict)
-
-            # conditionally enable predicting
-            self.check_enable_predictions()
+        # threaded portion of function
+        self._get_data_file(data_file)
 
     def get_selected_cols(self):
         """
@@ -359,8 +595,11 @@ corrupted, deleted, or renamed since being selected."
 
         Ensures that the classifier is at least the right object.
         """
+        self.status_bar.set_status("Awaiting user file selection...")
+
         # check if user is overwriting and make sure they're ok with it
         if not self.check_warn_overwrite():
+            self.status_bar.set_status("Awaiting user input.")
             return
 
         # prompt the user for the classifier file
@@ -374,19 +613,11 @@ corrupted, deleted, or renamed since being selected."
         )
         # don't do anything if the user selected nothing
         if len(clf_file) <= 0:
+            self.status_bar.set_status("Awaiting user input.")
             return
 
-        # disable train stuff in the event that a trained clf is overwritten
-        try:
-            self.sp.clf = utilities.load_classifier(clf_file)
-        except TypeError:
-            tk.messagebox.showwarning(
-                title="Incompatible File",
-                message="The chosen file is not a compatible AutoClassifier."
-            )
-            return
-        self.reset_controls(clf=True)
-        self.check_enable_predictions()
+        self.predict_section.classifier_load["state"] = tk.DISABLED
+        self._load_classifier(clf_file)
 
     def make_cm(self, features_known, class_labels):
         """
@@ -540,61 +771,22 @@ corrupted, deleted, or renamed since being selected."
 
         self.sp.print_vars()
 
-        # get the data prepared
-        features, metadata = self.sp.prep_data()
-
-        # impute the data
-        features = self.sp.impute_data(features)
-
-        # get predictions
-        try:
-            predict = self.sp.predict_AC(self.sp.clf, features)
-        except (ValueError,  KeyError) as err:
-            message = (
-                "The classifier expects different number of features than \
-selected."
-                if isinstance(err, ValueError)
-                else
-                "Given feature names do not match those expected by the \
-classfier"
-            )
-            tk.messagebox.showerror(
-                title="Feature Data Error",
-                message=message
-            )
-            return
-
-        # Because predict_AC may return predict_prob we check if it's a tuple
-        # and act accordingly
-        if type(predict) == tuple:
-            predict, predict_prob = predict
-        else:
-            predict_prob = None
-
-        # TODO decide if keeping a tempfile is better or if it should be
-        # kept in RAM
-        # check if output exists and make sure it's closed if it does
-        if self.output is not None:
-            self.output.close()
-        # create the tempfile
-        self.output = tempfile.NamedTemporaryFile(
-            mode="w+",
-            suffix=".csv",
-            delete=False,
-            dir=self.tempdir.name
+        progress_popup = ProgressPopup(
+            self,
+            "Making Predictions",
+            ""
         )
-        self.output.close()
-        # save to output file
-        utilities.save_predictions(
-            metadata, predict, features, self.output.name, predict_prob)
 
-        self.predict_section.enable_outputs()
-        self.predict_section.output_save.config(state=tk.ACTIVE)
-        self.make_pairplot(features, predict)
+        self._make_predictions(
+            progress_popup.complete,
+            progress_popup.set_status
+        )
 
     def open_nans(self):
+        """Open a window to view and edit NaN values."""
         # test = tk.Toplevel(self.parent)
-        thing = NaNEditor(self, self)
+        self.data_section.nan_check["state"] = tk.DISABLED
+        NaNEditor(self, self)
 
     def open_output_folder(self):
         """
@@ -635,16 +827,13 @@ classfier"
         if not clf:
             self.predict_section.reset_enabled()
 
-        # don't have to handle stored tempfiles as their respective methods
-        # handle that
-        # TODO this whole method probably needs a refit
-
     def save_classifier(self):
         """
         Save the current classifier to a location the user chooses.
 
         Like all others, initialdir is calculated using utilities MAIN_PATH
         """
+        self.status_bar.set_status("Awaiting user save location...")
         # prompt user for location to save to
         location = tk.filedialog.asksaveasfilename(
             title="Save Classifier",
@@ -654,8 +843,12 @@ classfier"
             filetypes=[("GNU zipped archive", ".gz")]
         )
 
-        # save the classifier
-        dump(self.sp.clf, location)
+        self.status_bar.set_status("Saving classifier...")
+        self.status_bar.progress["mode"] = "indeterminate"
+        self.status_bar.progress.start()
+
+        self.train_section.classifier_save["state"] = tk.DISABLED
+        self._save_classifier(location)
 
     def save_item(self, item):
         """
@@ -665,12 +858,6 @@ classfier"
             item (str): A tag identifying the item to be saved.
         """
         # set up some maps for easier automation
-        tempfiles = {
-            "cm": self.cm,
-            "pairplot": self.pairplot,
-            "report": self.report,
-            "output": self.output
-        }
         titles = {
             "cm": "Confusion Matrix",
             "pairplot": "Pairplot",
@@ -697,6 +884,14 @@ classfier"
             "report": ".txt",
             "output": ".csv"
         }
+        buttons = {
+            "cm": self.train_section.cm_section.button_save,
+            "pairplot": self.predict_section.pairplot_section.button_save,
+            "report": self.train_section.report_section.button_save,
+            "output": self.predict_section.output_save
+        }
+
+        self.status_bar.set_status("Awaiting user save location...")
 
         # prompt user for save location
         location = tk.filedialog.asksaveasfilename(
@@ -708,38 +903,19 @@ classfier"
         )
         # return if user cancels
         if len(location) == 0:
+            self.status_bar.set_status("Awaiting user input.")
             return
 
-        # if the item's the prediction output we need to convert it to whatever
-        # type the user wants because apparently scientists hate CSV
-        # If you're a bioinformatics person reading through the code to figure
-        # out why the program is slow to save it's because nobody can just pick
-        # a standard and stick to it. Sorry for the rant, love you all <3.
-        extension = os.path.splitext(location)[1]
-        if item == "output" and extension == ".tsv":
-            with open(tempfiles[item].name, "r") as csvin, \
-                    open(location, "w") as tsvout:
-                csvin = csv.reader(csvin)
-                tsvout = csv.writer(tsvout, delimiter='\t')
+        self.status_bar.set_status("Saving {}...".format(item))
+        buttons[item]["state"] = tk.DISABLED
 
-                for row in csvin:
-                    tsvout.writerow(row)
-
-        # if user chose some other extension, we're just giving them csv
-        # because I can't be bothered to infer their preference
-
-        # otherwise, copy the appropriate file
-        shutil.copy(tempfiles[item].name, location)
+        self._save_item(item, location)
 
     def save_nans(self):
-        nans = {"nans": self.sp.nans}
-        with open(
-            os.path.join(
-                utilities.MAIN_PATH, "niclassify/core/config/nans.json"),
-            "w"
-        ) as nansfile:
-            json.dump(nans, nansfile)
-        # print("saving nans but not actually")
+        """Save nans value list to nans.json."""
+        self.status_bar.set_status("Saving NaN values...")
+        self.data_section.nan_check["state"] = tk.DISABLED
+        self._save_nans()
 
     def train_classifier(self):
         """
@@ -786,22 +962,18 @@ corrupted, deleted, or renamed since being selected."
         self.predict_section.output_save.config(state=tk.DISABLED)
         self.predict_section.pairplot_section.disable_buttons()
 
-        # get the data prepared
-        features, metadata = self.sp.prep_data()
+        # progress indicator so user doesn't think we're frozen
+        progress_popup = ProgressPopup(
+            self,
+            "Training Classifier",
+            ""
+        )
 
-        # get known for making cm
-        features_known, metadata_known = utilities.get_known(
-            features, metadata, self.sp.class_column)
-
-        # train classifier
-        self.sp.train_AC(features, metadata)
-
-        # generate outputs and enable related buttons
-        self.make_report()
-        self.make_cm(features_known, metadata_known[self.sp.class_column])
-        self.train_section.classifier_save.config(state=tk.ACTIVE)
-        self.train_section.enable_outputs()
-        self.check_enable_predictions()
+        # start threaded portion
+        self._train_classifier(
+            progress_popup.complete,
+            progress_popup.set_status
+        )
 
     def view_item(self, item):
         """
@@ -826,8 +998,6 @@ def main():
     root = tk.Tk()
 
     root.style = ttk.Style()
-    root.style.theme_use("winnative")
-    # print(root.style.theme_names())
     app = MainApp(root)
     root.update()
     root.minsize(root.winfo_width(), root.winfo_height())
@@ -838,6 +1008,7 @@ def main():
 
         This includes cleaning tempfiles and closing any processes.
         """
+        print(threading.active_count())
         plt.close("all")
         root.quit()
         root.destroy()

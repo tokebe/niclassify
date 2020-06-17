@@ -376,17 +376,11 @@ class StatusBar(tk.Frame):
         self.parent = parent
         self.app = app
 
-        self.label = tk.Label(
-            self,
-            text="Status:"
-        )
-        self.label.pack(side=tk.LEFT)
-
         self.status = tk.Label(
             self,
-            text=""
+            text="Status: Awaiting user input."
         )
-        self.label.pack(side=tk.LEFT)
+        self.status.pack(side=tk.LEFT)
 
         self.progress = ttk.Progressbar(
             self,
@@ -404,10 +398,16 @@ class StatusBar(tk.Frame):
         Args:
             text (str): A new status.
         """
-        self.status.config(text="Status: {}".format(text))
+        self.status["text"] = "Status: {}".format(text)
 
 
 class NaNEditor(tk.Toplevel):
+    """
+    A small window for checking and editing recognized nan values.
+
+    Saves to nans.json when closed.
+    """
+
     def __init__(self, parent, app, *args, **kwargs):
         """Instantiate the editor window.
 
@@ -464,6 +464,7 @@ class NaNEditor(tk.Toplevel):
         self.item_var.set(value=self.app.sp.nans)
 
     def additem(self):
+        """Open a string dialog to add a recognized value."""
         val = tk.simpledialog.askstring(
             parent=self,
             title="New NaN value",
@@ -472,6 +473,7 @@ class NaNEditor(tk.Toplevel):
         self.items.insert(tk.END, val)
 
     def removeitem(self):
+        """Remove the currently selected items."""
         items = [
             j
             for i, j
@@ -484,6 +486,66 @@ class NaNEditor(tk.Toplevel):
         self.item_var.set(value=items)
 
     def wm_exit(self):
+        """Close the window while saving the updated nans list."""
         self.app.sp.nans = self.items.get(0, tk.END)
         self.app.save_nans()
         self.destroy()
+
+
+class ProgressPopup(tk.Toplevel):
+    def __init__(self, parent, title, status, *args, **kwargs):
+        """Instantiate the editor window.
+
+        Args:
+            parent (Frame): Whatever's holding the panel.
+            app (MainApp): Generally the MainApp for easy method access.
+        """
+        super().__init__(parent, *args, **kwargs)
+        self.parent = parent
+
+        # stop main window interaction
+        self.grab_set()
+
+        # make window unclosable
+        self.protocol("WM_DELETE_WINDOW", lambda: None)
+
+        # set up window
+        self.title(title)
+
+        # frame for aligning progress and text
+        self.align = tk.Frame(
+            self,
+            padx=10,
+            pady=10
+        )
+        self.align.pack()
+
+        # status label
+        self.status = tk.Label(
+            self.align,
+            text=status,
+            pady=5
+        )
+        self.status.pack(anchor=tk.W)
+
+        # progress bar
+        self.progress = ttk.Progressbar(
+            self.align,
+            orient=tk.HORIZONTAL,
+            mode="indeterminate",
+            length=250
+        )
+        self.progress.pack()
+
+        self.progress.start(interval=10)
+
+        self.resizable(False, False)
+        # self.minsize(width=350, height=150)
+
+    def complete(self):
+        print("progress popup complete!")
+        self.grab_release()
+        self.destroy()
+
+    def set_status(self, status):
+        self.status["text"] = status
