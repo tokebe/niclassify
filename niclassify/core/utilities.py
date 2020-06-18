@@ -11,6 +11,7 @@ try:
     import subprocess
     import sys
     import xlrd
+    import requests
 
     import matplotlib as plt
     import numpy as np
@@ -472,9 +473,8 @@ def save_predictions(metadata, predict, feature_norm, out, predict_prob=None):
         print("  saving files to path: {}".format(
             os.path.realpath(output_path)))
         df.to_csv(out, index=False)
-    except (KeyError, FileNotFoundError, OSError):
-        logging.error("output folder creation failed.")
-        exit(-1)
+    except (KeyError, FileNotFoundError, OSError, IOError):
+        raise OSError("output folder creation failed.")
 
     # TODO keep trying to find ways to not use pd.concat
 
@@ -521,3 +521,52 @@ def view_open_file(filename):
     else:
         opener = "open" if sys.platform == "darwin" else "xdg-open"
         subprocess.call([opener, filename])
+
+
+def get_geo_taxon(filename, geo=None, taxon=None, api=None):
+    """
+    Save a request result from the api.
+
+    Args:
+        geo (str): Geography descriptor
+        taxon (str): Taxonomy descriptor
+        filename (str): Path to file to be created.
+        api (str, optional): Base API URL. Defaults to None.
+
+    Raises:
+        OSError: If file creation fails.
+        request.RequestException: If request otherwise fails.
+
+    """
+    if api is None:
+        api = "http://www.boldsystems.org/index.php/API_Public/combined?"
+
+    # create request from options
+    request = []
+
+    if taxon is not None:
+        request.append("taxon={}".format(taxon))
+    if geo is not None:
+        request.append("geo={}".format(geo))
+    request.append("format=tsv")
+
+    request = api + "&".join(request)
+
+    try:
+        with open(filename, "wb") as file, \
+                requests.get(request, stream=True) as response:
+
+            # error if response isn't success
+            request.raise_for_status()
+
+            # otherwise read to file
+            for line in response.iter_lines():
+                # print(line, end="\r")
+                file.write(line)
+                file.write(b"\n")
+
+    except (OSError, IOError, KeyError, TypeError, ValueError):
+        raise OSError("File could not be created.")
+
+    except requests.RequestException:
+        raise request.RequestException("Request Failed.")
