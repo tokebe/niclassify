@@ -1,0 +1,118 @@
+scaling data...
+imputing data...
+scaling data...
+imputing data...
+scaling data...
+splitting data...
+extracting fully known data...
+splitting data...
+extracting fully known data...
+training random forest...
+  training RandomForestClassifier
+  using variables:
+    x0
+    x1
+    x2
+    x3
+    x4
+    x5
+    x6
+    x7
+    x8
+    x9
+    x10
+    x11
+  obtaining best hyperparameters...
+  found best hyperparameters (as follows):
+    min_samples_split: 0.05
+    max_depth: 46
+
+final trained classifier report
+---
+out-of-bag score: 0.9675
+---
+train/test scoring method: balanced_accuracy_score
+---
+train set score: 0.9700623128894555
+train set: percent of 1 mislabeled to 0: 2.75%
+train set: percent of 0 mislabeled to 1: 0.25%
+---
+test set score: 0.96
+test set: percent of 1 mislabeled to 0: 3.50%
+test set: percent of 0 mislabeled to 1: 0.50%
+---
+feature permuation importances:
+  x11 : 0.115 +/- 0.115
+  x2  : 0.070 +/- 0.070
+  x4  : 0.046 +/- 0.046
+  x7  : 0.002 +/- 0.002
+  x8  : 0.000 +/- 0.000
+  x6  : 0.000 +/- 0.000
+  x5  : 0.000 +/- 0.000
+  x1  : 0.000 +/- 0.000
+  x0  : 0.000 +/- 0.000
+  x10 : -0.000 +/- -0.000
+  x9  : -0.000 +/- -0.000
+  x3  : -0.000 +/- -0.000
+---
+scaling data...
+imputing data...
+predicting unknown class labels...
+saving new output...
+scaling data...
+splitting data...
+extracting fully known data...
+splitting data...
+extracting fully known data...
+training random forest...
+  training RandomForestClassifier
+  using variables:
+    x0
+    x1
+    x2
+    x3
+    x4
+    x5
+    x6
+    x7
+    x8
+    x9
+    x10
+    x11
+  obtaining best hyperparameters...
+  found best hyperparameters (as follows):
+    min_samples_split: 0.1
+    max_depth: 27
+
+final trained classifier report
+---
+out-of-bag score: 0.927125
+---
+train/test scoring method: balanced_accuracy_score
+---
+train set score: 0.9285053080315817
+train set: percent of 0 mislabeled to 1: 4.64%
+train set: percent of 1 mislabeled to 0: 2.51%
+---
+test set score: 0.9305
+test set: percent of 0 mislabeled to 1: 4.35%
+test set: percent of 1 mislabeled to 0: 2.60%
+---
+feature permuation importances:
+  x4  : 0.198 +/- 0.198
+  x11 : 0.029 +/- 0.029
+  x8  : 0.001 +/- 0.001
+  x6  : 0.001 +/- 0.001
+  x3  : 0.000 +/- 0.000
+  x1  : 0.000 +/- 0.000
+  x7  : 0.000 +/- 0.000
+  x10 : 0.000 +/- 0.000
+  x0  : 0.000 +/- 0.000
+  x2  : 0.000 +/- 0.000
+  x9  : 0.000 +/- 0.000
+  x5  : 0.000 +/- 0.000
+---
+scaling data...
+imputing data...
+predicting unknown class labels...
+saving new output...

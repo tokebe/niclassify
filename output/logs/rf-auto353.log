@@ -1,0 +1,130 @@
+scaling data...
+splitting data...
+extracting fully known data...
+splitting data...
+extracting fully known data...
+training random forest...
+  training RandomForestClassifier
+  using variables:
+    ML_Distance
+    ML_Similarity
+    dN_Distance
+    dN_Similarity
+    dS_Distance
+    dS_Similarity
+    AA_Distance
+    AA_Similarity
+    Ztest_Distance
+    Ztest_Similarity
+    dN/dS_Distance
+    dN/dS_Similarity
+  obtaining best hyperparameters...
+  found best hyperparameters (as follows):
+    min_samples_split: 0.4
+    max_depth: 41
+
+final trained classifier report
+---
+out-of-bag score: 0.7204301075268817
+---
+train/test scoring method: balanced_accuracy_score
+---
+train set score: 0.8246630727762803
+train set: percent of introduced mislabeled to native: 0.36%
+train set: percent of native mislabeled to introduced: 26.52%
+---
+test set score: 0.8181818181818181
+test set: percent of introduced mislabeled to native: 0.00%
+test set: percent of native mislabeled to introduced: 34.29%
+---
+feature permuation importances:
+  AA_Distance      : 0.053 +/- 0.053
+  dN_Distance      : 0.038 +/- 0.038
+  dS_Distance      : 0.033 +/- 0.033
+  ML_Distance      : 0.015 +/- 0.015
+  dN/dS_Distance   : 0.004 +/- 0.004
+  AA_Similarity    : -0.000 +/- -0.000
+  dN/dS_Similarity : -0.001 +/- -0.001
+  Ztest_Distance   : -0.001 +/- -0.001
+  dN_Similarity    : -0.001 +/- -0.001
+  dS_Similarity    : -0.002 +/- -0.002
+  ML_Similarity    : -0.002 +/- -0.002
+  Ztest_Similarity : -0.003 +/- -0.003
+---
+scaling data...
+imputing data...
+predicting unknown class labels...
+saving new output...
+scaling data...
+splitting data...
+extracting fully known data...
+splitting data...
+extracting fully known data...
+training random forest...
+  training RandomForestClassifier
+  using variables:
+    ML_Distance
+    ML_Similarity
+    dN_Distance
+    dN_Similarity
+    dS_Distance
+    dS_Similarity
+    AA_Distance
+    AA_Similarity
+    Ztest_Distance
+    Ztest_Similarity
+    dN/dS_Distance
+    dN/dS_Similarity
+  obtaining best hyperparameters...
+  found best hyperparameters (as follows):
+    min_samples_split: 0.25
+    max_depth: 14
+
+final trained classifier report
+---
+out-of-bag score: 0.6147058823529412
+---
+train/test scoring method: balanced_accuracy_score
+---
+train set score: 0.725813283913029
+train set: percent of 100.0 mislabeled to 33.0: 4.41%
+train set: percent of 100.0 mislabeled to 66.0: 0.29%
+train set: percent of 100.0 mislabeled to 0.0: 0.29%
+train set: percent of 33.0 mislabeled to 100.0: 7.06%
+train set: percent of 33.0 mislabeled to 66.0: 7.94%
+train set: percent of 33.0 mislabeled to 0.0: 2.94%
+train set: percent of 66.0 mislabeled to 100.0: 5.59%
+train set: percent of 66.0 mislabeled to 33.0: 3.82%
+train set: percent of 66.0 mislabeled to 0.0: 1.18%
+train set: percent of 0.0 mislabeled to 100.0: 0.00%
+train set: percent of 0.0 mislabeled to 33.0: 0.00%
+train set: percent of 0.0 mislabeled to 66.0: 0.00%
+---
+test set score: 0.46078431372549017
+test set: percent of 100.0 mislabeled to 33.0: 3.49%
+test set: percent of 100.0 mislabeled to 66.0: 5.81%
+test set: percent of 100.0 mislabeled to 0.0: 1.16%
+test set: percent of 33.0 mislabeled to 100.0: 12.79%
+test set: percent of 33.0 mislabeled to 66.0: 13.95%
+test set: percent of 33.0 mislabeled to 0.0: 3.49%
+test set: percent of 66.0 mislabeled to 100.0: 5.81%
+test set: percent of 66.0 mislabeled to 33.0: 5.81%
+test set: percent of 66.0 mislabeled to 0.0: 0.00%
+test set: percent of 0.0 mislabeled to 100.0: 0.00%
+test set: percent of 0.0 mislabeled to 33.0: 0.00%
+test set: percent of 0.0 mislabeled to 66.0: 0.00%
+---
+feature permuation importances:
+  ML_Distance      : 0.081 +/- 0.081
+  Ztest_Similarity : 0.042 +/- 0.042
+  dS_Similarity    : 0.016 +/- 0.016
+  ML_Similarity    : 0.013 +/- 0.013
+  dN/dS_Distance   : 0.012 +/- 0.012
+  dN_Distance      : 0.008 +/- 0.008
+  AA_Distance      : 0.002 +/- 0.002
+  dN_Similarity    : 0.002 +/- 0.002
+  dS_Distance      : 0.001 +/- 0.001
+  dN/dS_Similarity : 0.000 +/- 0.000
+  Ztest_Distance   : -0.003 +/- -0.003
+  AA_Similarity    : -0.008 +/- -0.008
+---

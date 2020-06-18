@@ -29,8 +29,6 @@ from tkui.elements import PredictPanel, StatusBar, NaNEditor
 
 matplotlib.use('Agg')  # this makes threading not break
 
-# TODO ensure all new threaded functions are adequately documented (docstrings)
-# TODO one MORE extensive test
 # TODO once that's done, and nothing else has come up, I guess it's time to
 # resume testing of new steps
 
@@ -122,7 +120,13 @@ class MainApp(tk.Frame):
 
     @threaded
     def _get_data_file(self, data_file):
+        """
+        Get data file information in a thread.
 
+        Args:
+            data_file (str): The path to the data file.
+        """
+        # change status for user's sake
         self.status_bar.set_status("Reading file...")
         self.status_bar.progress["mode"] = "indeterminate"
         self.status_bar.progress.start()
@@ -149,6 +153,13 @@ class MainApp(tk.Frame):
                     message="Unable to read excel file. The file may be \
                         corrupted, or otherwise unable to be read."
                 )
+                # re-enable loading data
+                self.data_section.load_data_button["state"] = tk.ACTIVE
+
+                # stop status
+                self.status_bar.set_status("Awaiting user input.")
+                self.status_bar.progress.stop()
+                self.status_bar.progress["mode"] = "determinate"
                 return
 
             # update sheet options for dropdown and prompt user to select one
@@ -159,7 +170,7 @@ class MainApp(tk.Frame):
             # and to make it more apparent what the user needs to do
             self.data_section.excel_sheet_input.set(sheets[0])
             self.sp.excel_sheet = sheets[0]
-            self.get_sheet_cols(None)
+            # self.get_sheet_cols(None)
 
             # re-enable loading data
             self.data_section.load_data_button["state"] = tk.ACTIVE
@@ -198,6 +209,13 @@ class MainApp(tk.Frame):
                     message="Unable to read specified file. The file may be \
                         corrupted, invalid or otherwise unable to be read."
                 )
+                # re-enable loading data
+                self.data_section.load_data_button["state"] = tk.ACTIVE
+
+                # stop status
+                self.status_bar.set_status("Awaiting user input.")
+                self.status_bar.progress.stop()
+                self.status_bar.progress["mode"] = "determinate"
                 return
 
             # update column selections for known class labels
@@ -219,7 +237,53 @@ class MainApp(tk.Frame):
             self.status_bar.progress["mode"] = "determinate"
 
     @threaded
+    def _get_sheet_cols(self, sheet):
+        try:
+            column_names = pd.read_excel(
+                self.sp.data_file,
+                sheet_name=sheet,
+                na_values=utilities.NANS,
+                nrows=0,
+                keep_default_na=True
+            ).columns.values.tolist()
+        except (
+                OSError, IOError, KeyError,
+                TypeError, ValueError, XLRDError
+        ):
+            tk.messagebox.showwarning(
+                title="File Read Error",
+                message="Unable to read file. The file may have been \
+corrupted, deleted, or renamed since being selected."
+            )
+            # reset status and re-enable sheet selection
+            self.status_bar.set_status("Awaiting user input.")
+            self.data_section.excel_sheet_input["state"] = "readonly"
+            self.status_bar.progress["mode"] = "determinate"
+            self.status_bar.progress.stop()
+            return
+
+        # update known class label dropdown
+        self.train_section.known_select["values"] = column_names
+        # update column selection panel
+        self.data_section.col_select_panel.update_contents(
+            {x: i for i, x in enumerate(column_names)})
+
+        self.check_enable_predictions()
+
+        # reset status and re-enable sheet selection
+        self.status_bar.set_status("Awaiting user input.")
+        self.data_section.excel_sheet_input["state"] = "readonly"
+        self.status_bar.progress["mode"] = "determinate"
+        self.status_bar.progress.stop()
+
+    @threaded
     def _load_classifier(self, clf_file):
+        """
+        Load the chosen classifier in a thread.
+
+        Args:
+            clf_file (str): The path to the classifier.
+        """
         # disable train stuff in the event that a trained clf is overwritten
         try:
             self.sp.clf = utilities.load_classifier(clf_file)
@@ -231,14 +295,26 @@ class MainApp(tk.Frame):
             self.status_bar.set_status("Awaiting user input.")
             self.predict_section.classifier_load["state"] = tk.ACTIVE
             return
+
+        # reset controls and conditionally enable steps
         self.reset_controls(clf=True)
         self.check_enable_predictions()
+        # reset status and disabled button
         self.status_bar.set_status("Awaiting user input.")
         self.predict_section.classifier_load["state"] = tk.ACTIVE
 
     @threaded
     def _make_predictions(self, on_finish, status_cb):
+        """
+        Make predictions on data in a thread.
 
+        Args:
+            on_finish (func): Function to call when complete. Primarily used
+                for popup progressbar.
+            status_cb (func): Function to call to update status. Primarily used
+                for popup progressbar.
+        """
+        # update status and progress for user
         self.status_bar.progress["value"] = 0
         self.status_bar.progress.step(16.5)
         self.status_bar.set_status("Preparing data...")
@@ -257,6 +333,7 @@ class MainApp(tk.Frame):
 
         self.status_bar.progress.step(16.5)
         self.status_bar.set_status("Making predictions...")
+        status_cb("Making predictions...")
 
         # get predictions
         try:
@@ -274,6 +351,14 @@ class MainApp(tk.Frame):
                 title="Feature Data Error",
                 message=message
             )
+            # finish updating status
+            self.status_bar.progress["value"] = 100
+            time.sleep(0.2)
+            self.status_bar.progress["value"] = 0
+            self.status_bar.set_status("Awaiting user input.")
+
+            # call finisher function
+            on_finish()
             return
 
         # Because predict_AC may return predict_prob we check if it's a tuple
@@ -290,6 +375,7 @@ class MainApp(tk.Frame):
         # check if output exists and make sure it's closed if it does
         if self.output is not None:
             self.output.close()
+
         # create the tempfile
         self.output = tempfile.NamedTemporaryFile(
             mode="w+",
@@ -298,31 +384,49 @@ class MainApp(tk.Frame):
             dir=self.tempdir.name
         )
         self.output.close()
+
         # save to output file
         utilities.save_predictions(
             metadata, predict, features, self.output.name, predict_prob)
 
+        # enable outputs
         self.predict_section.enable_outputs()
         self.predict_section.output_save.config(state=tk.ACTIVE)
         self.make_pairplot(features, predict)
 
+        # finish updating status
         self.status_bar.progress["value"] = 100
         time.sleep(0.2)
         self.status_bar.progress["value"] = 0
         self.status_bar.set_status("Awaiting user input.")
 
+        # call finisher function
         on_finish()
 
     @threaded
     def _save_classifier(self, location):
+        """Save the classifier to a given location in a thread.
+
+        Args:
+            location (str): Path to the new file to save to.
+        """
         # save the classifier
         dump(self.sp.clf, location)
+        # reset buttons and status
         self.train_section.classifier_save["state"] = tk.ACTIVE
         self.status_bar.progress["mode"] = "determinate"
         self.status_bar.progress.stop()
 
     @threaded
     def _save_item(self, item, location):
+        """
+        Save the given item to the given location, in a thread.
+
+        Args:
+            item (str): Identifier for which item to save.
+            location (str): Path to the location to save to.
+        """
+        # dictionaries for easier lookup
         tempfiles = {
             "cm": self.cm,
             "pairplot": self.pairplot,
@@ -356,11 +460,13 @@ class MainApp(tk.Frame):
         # otherwise, copy the appropriate file
         shutil.copy(tempfiles[item].name, location)
 
+        # reset buttons and status
         buttons[item]["state"] = tk.ACTIVE
         self.status_bar.set_status("Awaiting user input.")
 
     @threaded
     def _save_nans(self):
+        """Save the NaN values to nans.json in a thread."""
         nans = {"nans": self.sp.nans}
         with open(
             os.path.join(
@@ -369,12 +475,22 @@ class MainApp(tk.Frame):
         ) as nansfile:
             json.dump(nans, nansfile)
 
+        # reset buttons and status
         self.status_bar.set_status("Awaiting user input.")
         self.data_section.nan_check["state"] = tk.ACTIVE
 
     @threaded
     def _train_classifier(self, on_finish, status_cb):
+        """
+        Train the classifier in a thread.
 
+        Args:
+            on_finish (func): Function to call when complete. Primarily used
+                for popup progressbar.
+            status_cb (func): Function to call to update status. Primarily used
+                for popup progressbar.
+        """
+        # set status and progress for user's sake
         self.status_bar.progress["value"] = 0
         self.status_bar.progress.step(20)
         self.status_bar.set_status("Preparing data...")
@@ -402,6 +518,7 @@ class MainApp(tk.Frame):
         self.make_report()
         self.make_cm(features_known, metadata_known[self.sp.class_column])
 
+        # finish up status updates
         self.status_bar.progress.step(20)
         time.sleep(0.2)
         self.status_bar.progress["value"] = 0
@@ -412,6 +529,7 @@ class MainApp(tk.Frame):
         self.train_section.enable_outputs()
         self.check_enable_predictions()
 
+        # finish up
         on_finish()
 
     def check_enable_predictions(self):
@@ -562,32 +680,14 @@ class MainApp(tk.Frame):
         # get sheet column names
         self.sp.excel_sheet = sheet
 
-        try:
-            column_names = pd.read_excel(
-                self.sp.data_file,
-                sheet_name=sheet,
-                na_values=utilities.NANS,
-                nrows=0,
-                keep_default_na=True
-            ).columns.values.tolist()
-        except (
-                OSError, IOError, KeyError,
-                TypeError, ValueError, XLRDError
-        ):
-            tk.messagebox.showwarning(
-                title="File Read Error",
-                message="Unable to read file. The file may have been \
-corrupted, deleted, or renamed since being selected."
-            )
-            return
+        # disable button and set status before launching thread
+        self.status_bar.set_status("Reading sheet...")
+        self.data_section.excel_sheet_input["state"] = tk.DISABLED
+        self.status_bar.progress["mode"] = "indeterminate"
+        self.status_bar.progress.start()
 
-        # update known class label dropdown
-        self.train_section.known_select["values"] = column_names
-        # update column selection panel
-        self.data_section.col_select_panel.update_contents(
-            {x: i for i, x in enumerate(column_names)})
-
-        self.check_enable_predictions()
+        # launch thread to get columns
+        self._get_sheet_cols(sheet)
 
     def load_classifier(self):
         """
@@ -616,7 +716,9 @@ corrupted, deleted, or renamed since being selected."
             self.status_bar.set_status("Awaiting user input.")
             return
 
+        # disable button while launching thread
         self.predict_section.classifier_load["state"] = tk.DISABLED
+        # launch thread to load the classifier
         self._load_classifier(clf_file)
 
     def make_cm(self, features_known, class_labels):
@@ -842,12 +944,14 @@ corrupted, deleted, or renamed since being selected."
             defaultextension=".gz",
             filetypes=[("GNU zipped archive", ".gz")]
         )
-
+        # set status for user
         self.status_bar.set_status("Saving classifier...")
         self.status_bar.progress["mode"] = "indeterminate"
         self.status_bar.progress.start()
 
+        # disable button while launching thread
         self.train_section.classifier_save["state"] = tk.DISABLED
+        # launch thread to save classifier
         self._save_classifier(location)
 
     def save_item(self, item):
@@ -906,15 +1010,19 @@ corrupted, deleted, or renamed since being selected."
             self.status_bar.set_status("Awaiting user input.")
             return
 
+        # set status and disable button while launching thread
         self.status_bar.set_status("Saving {}...".format(item))
         buttons[item]["state"] = tk.DISABLED
 
+        # launch thread to save item
         self._save_item(item, location)
 
     def save_nans(self):
         """Save nans value list to nans.json."""
+        # set status and disable button while launching thread
         self.status_bar.set_status("Saving NaN values...")
         self.data_section.nan_check["state"] = tk.DISABLED
+        # launch thread to save NaN values
         self._save_nans()
 
     def train_classifier(self):

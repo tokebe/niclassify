@@ -493,8 +493,11 @@ class NaNEditor(tk.Toplevel):
 
 
 class ProgressPopup(tk.Toplevel):
+    """A popup which displays a progressbar and status message."""
+
     def __init__(self, parent, title, status, *args, **kwargs):
-        """Instantiate the editor window.
+        """
+        Instantiate the progress window.
 
         Args:
             parent (Frame): Whatever's holding the panel.
@@ -542,10 +545,18 @@ class ProgressPopup(tk.Toplevel):
         self.resizable(False, False)
         # self.minsize(width=350, height=150)
 
+        self.focus_force()
+
     def complete(self):
-        print("progress popup complete!")
+        """Complete progress, returning control to main window."""
+        # print("progress popup complete!")
         self.grab_release()
         self.destroy()
 
     def set_status(self, status):
+        """Change the current status message.
+
+        Args:
+            status (str): A new status message.
+        """
         self.status["text"] = status
