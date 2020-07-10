@@ -51,6 +51,18 @@ class StandardProgram:
         self.interactive_parser = interactive_parser
 
         self.mode = None
+
+        # stored variables for data retrieval program
+        self.geo = None
+        self.taxon = None
+        self.api = None
+        self.request_fname = None
+        self.filtered_fname = None
+        self.fasta_fname = None
+        self.fasta_align_fname = None
+        self.delim_fname = None
+
+        # stored variables for classification program
         self.data_file = None
         self.excel_sheet = None
         self.feature_cols = None
@@ -60,6 +72,17 @@ class StandardProgram:
         self.output_filename = None
         self.nans = None
 
+    def align_fasta(self, external=None):
+        """
+        Align the fasta file.
+
+        Args:
+            external (bool, optional): Open in an external prompt
+                (non-blocking). Defaults to False.
+        """
+        utilities.align_fasta(
+            self.fasta_fname, self.fasta_align_fname, external)
+
     def boilerplate(self):
         """
         Set up the theme, ensure required folders exist, and set up logging.
@@ -68,6 +91,7 @@ class StandardProgram:
 
         Returns:
             str: the path to the log file to be written to
+
         """
         # set seaborn theme/format
         sns.set()
@@ -126,6 +150,12 @@ class StandardProgram:
 
         return True
 
+    def delimit_species(self, method="GMYC", external=None):
+        if method == "GMYC":
+            utilities.delimit_species_GMYC(
+                self.fasta_align_fname, self.delim_fname, external)
+
+
     def get_args(self):
         """
         Get arguments from either parser and store required values.
@@ -183,6 +213,16 @@ class StandardProgram:
         if self.classifier_file is not None:
             self.check_file_exists(
                 "output/classifiers/" + self.classifier_file)
+
+    def get_sequence_data(self):
+        """
+        Read in unprepared sequence data and return it.
+
+        Returns:
+            DataFrame: DataFrame of sequence data.
+
+        """
+        return utilities.get_data(self.request_fname)
 
     def impute_data(self, feature_norm):
         """
@@ -308,6 +348,21 @@ AutoClassifier")
 
         return features, metadata
 
+    def prep_sequence_data(self, data):
+        """
+        Prepare sequence data.
+
+        Args:
+            data (DataFrame): DataFrame of sequence data.
+
+        Returns:
+            DataFrame: Prepared sequence data.
+
+        """
+        data = utilities.prep_sequence_data(data)
+        utilities.write_fasta(data, self.fasta_fname)
+        return data
+
     def print_vars(self):
         """
         Print all the currently stored vars.
@@ -323,6 +378,11 @@ AutoClassifier")
         print("classifier_file: {}".format(self.classifier_file))
         print("output_filename: {}".format(self.output_filename))
         print("nans: {}".format(self.nans))
+
+    def retrieve_sequence_data(self):
+        """Retrieve sequence data from api, saving it to filename."""
+        utilities.get_geo_taxon(
+            self.request_fname, self.geo, self.taxon, self.api)
 
     def save_outputs(
             self,

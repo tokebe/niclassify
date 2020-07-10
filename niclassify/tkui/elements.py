@@ -84,14 +84,28 @@ class DataPanel(tk.LabelFrame):
         self.parent = parent
         self.app = app
 
+        self.data_button_frame = tk.Frame(self)
+        self.data_button_frame.pack(fill=tk.X)
+
         # button to load data
         self.load_data_button = tk.Button(
-            self,
+            self.data_button_frame,
             text="Load Data",
             pady=5,
             command=self.app.get_data_file
         )
-        self.load_data_button.pack(fill=tk.X, padx=1, pady=1)
+        self.load_data_button.pack(
+            side=tk.RIGHT, fill=tk.X, padx=1, pady=1, expand=True)
+
+        # button to load data
+        self.retrieve_data_button = tk.Button(
+            self.data_button_frame,
+            text="Prepare Sequence Data",
+            pady=5,
+            command=self.app.retrieve_seq_data_win
+        )
+        self.retrieve_data_button.pack(
+            side=tk.LEFT, fill=tk.X, padx=1, pady=1, expand=True)
 
         # excel sheet selection
         # TODO grey out unless opened file is excel
@@ -126,7 +140,6 @@ class DataPanel(tk.LabelFrame):
         self.output_open.pack(side=tk.LEFT, anchor=tk.NW, padx=1, pady=1)
 
         # button to open window allowing NaN values to be edited
-        # TODO implement the window, make it save to config (edit core, easier)
         self.nan_check = tk.Button(
             self,
             text="Check Recognized NaN values",
@@ -139,6 +152,240 @@ class DataPanel(tk.LabelFrame):
             self,
             text="Help")
         self.help_button.pack(side=tk.LEFT, anchor=tk.NW, padx=1, pady=1)
+
+
+class DataRetrievalWindow(tk.Toplevel):
+    """A window for retrieving data from BOLD."""
+
+    def __init__(self, parent, app, *args, **kwargs):
+        """
+        Instantiate the window.
+
+        Args:
+            parent (TopLevel): The Parent window.
+            app (MainApp): Generally the MainApp for easy method access.
+        """
+        super().__init__(parent, *args, **kwargs)
+        self.parent = parent
+        self.app = app
+
+        self.title("Sequence Data Tool")
+
+        # stop main window interaction
+        self.grab_set()
+
+        self.data_get_section = ttk.LabelFrame(
+            self,
+            text="Data Retrieval",
+            labelanchor=tk.N
+        )
+        self.data_get_section.pack(expand=True, fill=tk.X)
+
+        self.search_section = ttk.LabelFrame(
+            self.data_get_section,
+            text="BOLD Lookup",
+            labelanchor=tk.N
+        )
+        self.search_section.pack(expand=True, fill=tk.X, side=tk.LEFT)
+
+        self.load_section = ttk.LabelFrame(
+            self.data_get_section,
+            text="Custom Data",
+            labelanchor=tk.N
+        )
+        self.load_section.pack(expand=True, fill=tk.BOTH, side=tk.RIGHT)
+
+        self.data_section = ttk.LabelFrame(
+            self,
+            text="Data Preparation",
+            labelanchor=tk.N
+        )
+        self.data_section.pack(expand=True, fill=tk.X)
+
+        self.taxon_label = tk.Label(
+            self.search_section,
+            text="Taxonomy"
+        )
+        self.taxon_label.pack(anchor=tk.W)
+
+        self.taxon_input = tk.Entry(
+            self.search_section
+        )
+        self.taxon_input.pack(fill=tk.X)
+
+        self.geo_label = tk.Label(
+            self.search_section,
+            text="Geography"
+        )
+        self.geo_label.pack(anchor=tk.W)
+
+        self.geo_input = tk.Entry(
+            self.search_section
+        )
+        self.geo_input.pack(fill=tk.X)
+
+        self.data_lookup = tk.Button(
+            self.search_section,
+            text="Search Data From BOLD",
+            command=self.app.retrieve_seq_data
+        )
+        self.data_lookup.pack(expand=True, fill=tk.X, padx=1, pady=1)
+
+        self.load_button = tk.Button(
+            self.load_section,
+            text="Load Custom Data",
+            command=self.app.load_sequence_data
+        )
+        self.load_button.pack(expand=True, fill=tk.BOTH, padx=1, pady=1)
+
+        self.merge_button = tk.Button(
+            self.load_section,
+            text="Merge with BOLD Data",
+            command=self.app.merge_sequence_data,
+            state=tk.DISABLED
+        )
+        self.merge_button.pack(expand=True, fill=tk.BOTH, padx=1, pady=1)
+
+        self.align_button = tk.Button(
+            self.data_section,
+            text="Filter and Align Sequences",
+            command=self.app.align_seq_data,
+            pady=5
+        )
+        self.align_button.pack(expand=True, fill=tk.X, padx=1, pady=1)
+
+        self.align_box = tk.Frame(
+            self.data_section
+        )
+        self.align_box.pack(expand=True, fill=tk.X)
+
+        self.align_load_button = tk.Button(
+            self.align_box,
+            text="Load Edited Alignment",
+            command=self.app.load_alignment,
+            state=tk.DISABLED
+        )
+        self.align_load_button.pack(
+            expand=True, fill=tk.X, side=tk.RIGHT, padx=1, pady=1)
+
+        self.align_save_button = tk.Button(
+            self.align_box,
+            text="Save Alignment For Editing",
+            command=lambda: self.app.save_item("fasta_align"),
+            state=tk.DISABLED
+        )
+        self.align_save_button.pack(
+            expand=True, fill=tk.X, side=tk.RIGHT, padx=1, pady=1)
+
+        self.row1 = tk.Frame(self.data_section)
+        self.row1.pack(expand=True, fill=tk.X)
+
+        def save_raw():
+            if self.app.merged_raw is not None:
+                return self.app.merged_raw.name
+            elif self.app.user_sequence_raw is not None:
+                return self.app.user_sequence_raw
+            else:
+                return self.app.sequence_raw.name
+
+        self.raw_section = VS_Pair(
+            self.row1,
+            self.app,
+            lambda: self.app.view_item(save_raw()),
+            lambda: self.app.save_item("raw_data"),
+            text="Raw Data"
+        )
+        self.raw_section.pack(side=tk.RIGHT, expand=True, fill=tk.X)
+
+        self.filtered_section = VS_Pair(
+            self.row1,
+            self.app,
+            lambda: self.app.view_item(self.app.sequence_filtered.name),
+            lambda: self.app.save_item("filtered_data"),
+            text="Filtered Data",
+            labelanchor=tk.N
+        )
+        self.filtered_section.pack(side=tk.RIGHT, expand=True, fill=tk.X)
+
+        self.fasta_section = VS_Pair(
+            self.row1,
+            self.app,
+            lambda: self.app.view_item(self.app.fasta.name),
+            lambda: self.app.save_item("raw_fasta"),
+            text="Raw .fasta",
+            labelanchor=tk.N
+        )
+        self.fasta_section.pack(side=tk.RIGHT, expand=True, fill=tk.X)
+
+        self.method_select_label = tk.Label(
+            self.data_section,
+            text="Species Delimitation Method:"
+
+        )
+        self.method_select_label.pack(anchor=tk.W)
+
+        self.method_select = ttk.Combobox(
+            self.data_section,
+            height=10,
+            state="readonly",
+            # textvariable=self.app.known_column
+        )
+        self.method_select["values"] = ("GMYC", "PTP")
+        self.method_select.set("GMYC")
+        self.method_select.pack(fill=tk.X)
+
+        self.reference_geo_label = tk.Label(
+            self.data_section,
+            text="Reference Geography:",
+            anchor=tk.W
+        )
+
+        # TODO put either a selector or an input here depending on the reqs.
+
+        self.data_prep = tk.Button(
+            self.data_section,
+            text="Prepare Data",
+            command=self.app.prep_sequence_data,
+            pady=5,
+            state=tk.DISABLED
+        )
+        self.data_prep.pack(expand=True, fill=tk.X, padx=1, pady=1)
+
+        self.row2 = tk.Frame(self)
+        self.row2.pack(expand=True, fill=tk.X)
+
+        self.matrix_section = VS_Pair(
+            self.row2,
+            self.app,
+            lambda: print("user wants to view matrix!"),
+            lambda: print("user wants to save matrix!"),
+            text="Distance Matrix",
+            labelanchor=tk.N
+        )
+        self.matrix_section.pack(side=tk.LEFT, expand=True, fill=tk.X)
+
+        self.final_section = VS_Pair(
+            self.row2,
+            self.app,
+            lambda: print("user wants to view final!"),
+            lambda: print("user wants to save final!"),
+            text="Finalized Data",
+            labelanchor=tk.N
+        )
+        self.final_section.pack(side=tk.RIGHT, expand=True, fill=tk.X)
+
+        self.use_data_button = tk.Button(
+            self,
+            text="Use Prepared Data",
+            command=lambda: print(
+                "self.app._get_data_file(self.app.<something>)"),
+            pady=5,
+            state=tk.DISABLED
+        )
+        self.use_data_button.pack(expand=True, fill=tk.X, padx=1, pady=1)
+
+        self.minsize(300, self.winfo_height())
+        self.resizable(False, False)
 
 
 class OperationsPanel(tk.LabelFrame):
@@ -252,7 +499,7 @@ class TrainPanel(OperationsPanel):
         self.report_section = VS_Pair(
             self,
             self.app,
-            lambda: self.app.view_item("report"),
+            lambda: self.app.view_item(self.app.report.name),
             lambda: self.app.save_item("report"),
             text="Report",
             labelanchor=tk.N)
@@ -262,7 +509,7 @@ class TrainPanel(OperationsPanel):
         self.cm_section = VS_Pair(
             self,
             self.app,
-            lambda: self.app.view_item("cm"),
+            lambda: self.app.view_item(self.app.cm.name),
             lambda: self.app.save_item("cm"),
             text="Conf. Matrix",
             labelanchor=tk.N)
@@ -334,7 +581,7 @@ class PredictPanel(OperationsPanel):
         self.pairplot_section = VS_Pair(
             self,
             self.app,
-            lambda: self.app.view_item("pairplot"),
+            lambda: self.app.view_item(self.app.pairplot.name),
             lambda: self.app.save_item("pairplot"),
             text="Pairplot",
             labelanchor=tk.N

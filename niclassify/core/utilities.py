@@ -4,6 +4,7 @@ A set of utilties for handling the creation and application of a classifier.
 Strictly to be used in concert with the rest of the niclassify package.
 """
 try:
+    import csv
     import json
     import logging
     import os
@@ -12,12 +13,15 @@ try:
     import sys
     import xlrd
     import requests
+    import tempfile
 
     import matplotlib as plt
     import numpy as np
     import pandas as pd
     import seaborn as sns
 
+    from Bio.Align.Applications import MuscleCommandline
+    from Bio.Phylo.Applications import RaxmlCommandline
     from sklearn import metrics
     from sklearn import preprocessing
     from sklearn.impute import SimpleImputer
@@ -128,32 +132,42 @@ def get_data(filename, excel_sheet=None):
                     filename,
                     sheet_name=int(excel_sheet) - 1,
                     na_values=NANS,
-                    keep_default_na=True)
+                    keep_default_na=True,
+                    # engine="python"
+                )
             else:  # sheet name
                 raw_data = pd.read_excel(
                     filename,
                     sheet_name=excel_sheet,
                     na_values=NANS,
-                    keep_default_na=True)
+                    keep_default_na=True,
+                    # engine="python"
+                )
         else:  # sheet not given; use default first sheet
             raw_data = pd.read_excel(
                 filename,
                 sheet_name=0,
                 na_values=NANS,
-                keep_default_na=True)
+                keep_default_na=True,
+                # engine="python"
+            )
 
     elif ".csv" in os.path.splitext(filename)[1]:  # using csv
         raw_data = pd.read_csv(
             filename,
             na_values=NANS,
-            keep_default_na=True)
+            keep_default_na=True,
+            engine="python"
+        )
 
     elif ".tsv" in os.path.splitext(filename)[1]:  # using tsv
         raw_data = pd.read_csv(
             filename,
             na_values=NANS,
             keep_default_na=True,
-            sep="\t")
+            sep="\t",
+            engine="python"
+        )
 
     # using txt; must figure out delmiter
     elif ".txt" in os.path.splitext(filename)[1]:
@@ -162,7 +176,8 @@ def get_data(filename, excel_sheet=None):
             na_values=NANS,
             keep_default_na=True,
             sep=None,
-            engine="python")
+            engine="python"
+        )
     else:  # invalid extension
         raise TypeError(
             "data file type is unsupported, or file extension not included")
@@ -528,9 +543,9 @@ def get_geo_taxon(filename, geo=None, taxon=None, api=None):
     Save a request result from the api.
 
     Args:
+        filename (str): Path to file to be created.
         geo (str): Geography descriptor
         taxon (str): Taxonomy descriptor
-        filename (str): Path to file to be created.
         api (str, optional): Base API URL. Defaults to None.
 
     Raises:
@@ -538,8 +553,12 @@ def get_geo_taxon(filename, geo=None, taxon=None, api=None):
         request.RequestException: If request otherwise fails.
 
     """
+    print("making request...")
     if api is None:
         api = "http://www.boldsystems.org/index.php/API_Public/combined?"
+
+    if not os.path.isabs(filename):
+        filename = os.path.join(MAIN_PATH, "data/unprepared/" + filename)
 
     # create request from options
     request = []
@@ -552,21 +571,153 @@ def get_geo_taxon(filename, geo=None, taxon=None, api=None):
 
     request = api + "&".join(request)
 
-    try:
-        with open(filename, "wb") as file, \
-                requests.get(request, stream=True) as response:
+    # try:
+    with open(filename, "wb") as file, \
+            requests.get(request, stream=True) as response:
 
-            # error if response isn't success
-            request.raise_for_status()
+        # error if response isn't success
+        response.raise_for_status()
 
-            # otherwise read to file
-            for line in response.iter_lines():
-                # print(line, end="\r")
-                file.write(line)
-                file.write(b"\n")
+        # otherwise read to file
+        for line in response.iter_lines():
+            # print(line, end="\r")
+            file.write(line)
+            file.write(b"\n")
 
-    except (OSError, IOError, KeyError, TypeError, ValueError):
-        raise OSError("File could not be created.")
+    # except (OSError, IOError, KeyError, TypeError, ValueError):
+    #     raise OSError("File could not be created.")
 
-    except requests.RequestException:
-        raise request.RequestException("Request Failed.")
+    # except requests.RequestException:
+    #     raise request.RequestException("Request Failed.")
+
+
+def prep_sequence_data(data):
+    """
+    Prepare sequence data previously saved from API.
+
+    Args:
+        data (DataFrame): DataFrame of sequence data.
+
+    Returns:
+        DataFrame: The data after cleaning.
+
+    Raises:
+        pandas.errors.ParserError: If data could not be parsed. Likely caused
+            by request returning extraneous error code.
+
+    """
+    if data.shape[0] == 0:
+        raise ValueError("Datafile contains no observations.")
+
+    # change to str in case it's not?
+    data["nucleotides"] = data["nucleotides"].astype(str)
+
+    # remove rows missing COI-5P in marker_codes
+    data = data[data["marker_codes"].str.contains("COI-5P", na=False)]
+
+    # remove rows with less than 350 base pairs
+    data = data[
+        data.apply(
+            (lambda x: True
+             if len([i for i in x["nucleotides"] if i.isalpha()]) >= 350
+             else False),
+            axis=1
+        )
+    ]
+
+    return data
+
+
+def write_fasta(data, filename):
+    """
+    Write a fasta file from a dataframe of sequence data.
+
+    Args:
+        data (DataFrame): sequence data, preferably filtered.
+        filename (str): path to save fasta file to.
+    """
+    with open(filename, "w") as file:
+        for index, row in data.iterrows():
+            file.write(">{}\n".format(row["processid"]))
+            file.write(row["nucleotides"])
+            file.write("\n")
+
+
+def align_fasta(infname, outfname, external=None):
+    # TODO potentially support linux/mac
+    # TODO or just change it to stdout in a tkinter for easier support
+    """
+    Generate an alignment for the given fasta file.
+
+    Args:
+        infname (str): Path to fasta to be aligned.
+        outfname (str): Path to output fasta to be
+    """
+    alignment_call = MuscleCommandline(
+        os.path.realpath(
+            os.path.join(MAIN_PATH, "bin/muscle3.8.31_i86win32.exe")
+        ),
+        input=os.path.realpath(infname),
+        out=os.path.realpath(outfname)
+    )
+
+    print(alignment_call.__str__())
+
+    if external is not None:
+        subprocess.run(
+            alignment_call.__str__(),
+            creationflags=subprocess.CREATE_NEW_CONSOLE
+        )
+    else:
+        subprocess.Popen(alignment_call.__str__())
+
+
+def delimit_species_GMYC(infname, outfname, external=None):
+    r_script_exe = os.path.realpath(
+        os.path.join(
+            MAIN_PATH, "bin/R/R-Portable/App/R-Portable/bin/Rscript.exe")
+    )
+    r_script = os.path.realpath(
+        os.path.join(
+            MAIN_PATH, "niclassify/core/delim_spec.r")
+    )
+
+    if external is not None:
+        subprocess.run(
+            '"{}" "{}" "{}" "{}"'.format(
+                r_script_exe,
+                r_script,
+                infname,
+                outfname
+            ),
+            creationflags=subprocess.CREATE_NEW_CONSOLE
+        )
+    else:
+        subprocess.run(
+            '"{}" "{}" "{}" "{}"'.format(
+                r_script_exe,
+                r_script,
+                infname,
+                outfname
+            )
+        )
+
+
+def delimit_species_PTP(infname, outfname, external=None):
+
+    # STEPS
+    # create tree from raxml (save in a tempdir)
+    #   you can then access the file with name RAxML_bestTree.<name>
+    # feed into ptp (save the resulting delimitation)
+
+    # make a tempdir for the RAxML output
+    raxfolder = tempfile.TemporaryDirectory()
+
+    phylo_call = \
+        "bin/raxmlHPC.exe -m GTRGAMMA -p 12345 -s {} -n rax -w {}".format(
+            infname, raxfolder.name)
+
+    tree = os.path.join(raxfolder.name, "RAxML_bestTree.rax")
+
+    # TODO looks like you have to package python2 to make this work
+    # we can get back to this later

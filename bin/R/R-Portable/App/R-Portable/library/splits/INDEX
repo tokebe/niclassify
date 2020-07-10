@@ -1,0 +1,14 @@
+comp.delimit            Comparing the GMYC delimitation with an
+                        alternative clustering
+ddwtGap                 Identify the Number of Clusters in a Data
+                        Matrix.
+dimReduct               Strip uninformative measurements
+gmyc                    Optimizes genetic clusters using the
+                        generalized mixed yule coalescent.
+gmyc.support            Calculating AIC-based support values for the
+                        GMYC clusters
+splits                  SPecies LImits by Threshold Statistics
+splits-defunct          Defunct functions in packaga splits
+subsDiag                Apply two types of diagnostics to clustered
+                        data
+test.tr                 A test tree for use with gmyc.

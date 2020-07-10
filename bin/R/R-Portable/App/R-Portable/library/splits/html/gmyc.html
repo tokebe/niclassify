@@ -1,0 +1,144 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>R: Optimizes genetic clusters using the generalized mixed yule...</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body>
+
+<table width="100%" summary="page for gmyc {splits}"><tr><td>gmyc {splits}</td><td style="text-align: right;">R Documentation</td></tr></table>
+
+<h2>Optimizes genetic clusters using the generalized mixed yule coalescent.</h2>
+
+<h3>Description</h3>
+
+<p>This function optimizes either the single threshold (Pons et al. 2006; Fontaneto et al. 2007) or multiple threshold (Monaghan et al. Submitted) versions of the generalized mixed Yule coalescent. Note that the multiple threshold version is in development and can take a long time to run.  We recommend use of the single threshold version. Results are returned as a list object of class 'gmyc'.</p>
+
+
+<h3>Usage</h3>
+
+<pre>
+gmyc(tr, method = "single", interval = c(0, 5), quiet = FALSE)
+</pre>
+
+
+<h3>Arguments</h3>
+
+<table summary="R argblock">
+<tr valign="top"><td><code>tr</code></td>
+<td>
+<p>An ultrametric, dichotomous tree object in ape format.</p>
+</td></tr>
+<tr valign="top"><td><code>method</code></td>
+<td>
+<p>Method of analysis, either &quot;single&quot; for single-threshold version or &quot;multiple&quot; for multiple-threshold version.</p>
+</td></tr>
+<tr valign="top"><td><code>interval</code></td>
+<td>
+<p>Upper and lower limit of estimation of scaling parameters, e.g. c(0,10)</p>
+</td></tr>
+<tr valign="top"><td><code>quiet</code></td>
+<td>
+<p>By default shows progress on console. Use quiet = FALSE to disable.</p>
+</td></tr>
+</table>
+
+
+<h3>Details</h3>
+
+<p>The function optimizes the likelihood function described in Pons et al. 2006, which specifies the likelihood of branching intervals assuming: i) between species branching according to a Yule model or assuming evenly increasing or decreasing net speciation rates towards the present; ii) coalescence within species according to a neutral coalescent or with evenly increasing or decreasing rates of coalescent branching towards the ancestral node. The single threshold version uses a single threshold to specify the transition from between- to within-species branching. The multiple threshold version starts with a single threshold, but uses an iterative algorithm to test whether relaxation of the single threshold leads to a significant improvement in model fit (described in Monghan et al. submitted). After completing optimization, use plot to see the likelihood surface, a log-lineage through time plot and a tree with clusters indicated. Use summary to summarize the output statistics, including a log-likelihood ratio test of the fitted model against a null model of no distinct species clusters.
+</p>
+
+
+<h3>Value</h3>
+
+<p>gmyc returns an object of class &quot;gmyc&quot;: a list with the follow elements
+</p>
+<table summary="R valueblock">
+<tr valign="top"><td><code>method </code></td>
+<td>
+<p>method used for an analysis</p>
+</td></tr>
+<tr valign="top"><td><code>likelihood </code></td>
+<td>
+<p>likelihood values for each optimization</p>
+</td></tr>
+<tr valign="top"><td><code>parameters </code></td>
+<td>
+<p>estimated parameters for each optimization. (lambda1, lambda2, pp1, pp2)</p>
+</td></tr>
+<tr valign="top"><td><code>entity </code></td>
+<td>
+<p>numbers of entities</p>
+</td></tr>
+<tr valign="top"><td><code>cluster </code></td>
+<td>
+<p>numbers of clusters</p>
+</td></tr>
+<tr valign="top"><td><code>MRCA </code></td>
+<td>
+<p>index of MRCA nodes, i.e. ancestral node of each delimited cluster</p>
+</td></tr>
+<tr valign="top"><td><code>threshold.time </code></td>
+<td>
+<p>The optimized threshold times.</p>
+</td></tr>
+<tr valign="top"><td><code>tree </code></td>
+<td>
+<p>The tree.</p>
+</td></tr>
+</table>
+
+
+<h3>Warning </h3>
+
+<p>The multiple threshold version works, but is very experimental (highly sensitive to initial conditions) and takes a long time to run.
+</p>
+<p>The likelihood ratio test by summary.gmyc is now revised with a new interpretion of threshold time, and results using older splits packages (&lt;= 1.0-14) need revisions. Any result using former versions with a P-value &lt;= 0.112 will be significant.</p>
+
+
+<h3>Note</h3>
+
+<p>Important: Having the input tree in the correct format - ultrametric, fully dichotomous - is very important as the code assumes these properties. You can use r8s by Sanderson to derive ultrametric trees or simply fit a molecular clock model in PAUP. TreeEdit is useful for manipulating trees in terms of rooting and converting polytomies to dichotomies with zero branch lengths. Use <code><a href="../../ape/html/read.tree.html">read.tree</a></code> or <code><a href="../../ape/html/read.nexus.html">read.nexus</a></code> to read trees into R using ape (&gt;=1.9).</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Tomochika Fujisawa <a href="mailto:tomochika.fujisawa05@imperial.ac.uk">tomochika.fujisawa05@imperial.ac.uk</a> and Tim Barraclough <a href="mailto:t.barraclough@imperial.ac.uk">t.barraclough@imperial.ac.uk</a></p>
+
+
+<h3>References</h3>
+
+<p>Fontaneto, D. E. Herniou, C. Boschetti, M. Caprioli, G. Melone, C. Ricci and T.G. Barraclough. 2007. Independently evolving species in asexual bdelloid rotifers. PLoS Biology. 5:e87
+</p>
+<p>Monaghan, M.T., Wild, R., Elliot, M., Fujisawa, T., Balke, M., Inward, D.J.G., Lees, D.C., Ranaivosolo, R., Eggleton, P., Barraclough, T.G., Vogler, AP. 2009. Accelerated species inventory on Madagascar using coalescent-based models of species delineation. Systematic Biology. 58:298-311.
+</p>
+<p>Pons, J, Barraclough, TG, Gomez-Zurita, J, Cardoso, A, Duran, DP, Hazell, S, Kamoun, S, Sumlin, WD, Vogler, AP,2006. Sequence-based species delimitation for the DNA taxonomy of undescribed insects. Systematic Biology. 55:595-609.
+</p>
+<p>Fujisawa, T and Barraclough T.G. in press. Delimiting species using single locus data and the generalized mixed Yule coalescent approach. Systematic Biology.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code><a href="gmyc.html">spec.list</a></code>, <code><a href="test.tr.html">test.tr</a></code>, <code><a href="gmyc.support.html">gmyc.support</a></code></p>
+
+
+<h3>Examples</h3>
+
+<pre>
+data(test.tr)
+##run the single threshold model
+test1 &lt;- gmyc(test.tr, method="single", interval=c(0, 10))
+summary(test1)   ##show summary results
+spec.list(test1) ##show species-sample associations
+
+plot(test1)
+
+##plot results
+##un-comment to run the multiple threshold model, NOTE it takes a long time
+#test2 &lt;- gmyc(test.tr, method="multiple", interval= c(0, 10))
+#summary(test2)
+#plot(test2)
+
+</pre>
+
+<hr /><div style="text-align: center;">[Package <em>splits</em> version 1.0-19 <a href="00Index.html">Index</a>]</div>
+</body></html>

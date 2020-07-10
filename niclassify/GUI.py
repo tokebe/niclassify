@@ -8,6 +8,7 @@ import json
 import matplotlib
 import os
 import shutil
+import subprocess
 import threading
 import tempfile
 import time
@@ -26,12 +27,19 @@ from core.StandardProgram import StandardProgram
 from core.classifiers import RandomForestAC
 from tkui.elements import DataPanel, TrainPanel, ProgressPopup
 from tkui.elements import PredictPanel, StatusBar, NaNEditor
+from tkui.elements import DataRetrievalWindow
+from tkui.output import OutputConsole, TextRedirector
 
 matplotlib.use('Agg')  # this makes threading not break
 
-# TODO once that's done, and nothing else has come up, I guess it's time to
-# resume testing of new steps
 
+# NOW
+# TODO add new delimitations back into filtered data
+# will have to add support down the line for ignoring rows with no group name
+# TODO implement native-nonnative lookup for known species
+
+# LATER
+# TODO implement backend for both GYMC and PTP and add to gui func
 
 def threaded(func):
     def wrapper(*args, **kwargs):
@@ -63,6 +71,7 @@ class MainApp(tk.Frame):
         # set up program utilities
         self.sp = StandardProgram(RandomForestAC())
         self.logname = self.sp.boilerplate()
+        self.data_retrieval_window = None
 
         # set nans in sp
         self.sp.nans = utilities.NANS
@@ -74,6 +83,13 @@ class MainApp(tk.Frame):
         self.report = None
         self.pairplot = None
         self.output = None
+        self.sequence_raw = None
+        self.user_sequence_raw = None
+        self.merged_raw = None
+        self.sequence_filtered = None
+        self.fasta = None
+        self.fasta_align = None
+        self.delim = None
 
         # set up elements of main window
         parent.title("Random Forest Classifier Tool")
@@ -150,7 +166,7 @@ class MainApp(tk.Frame):
             ):
                 tk.messagebox.showwarning(
                     title="Excel Read Error",
-                    message="Unable to read excel file. The file may be \
+                    message="Unable to read excel file. \nThe file may be \
                         corrupted, or otherwise unable to be read."
                 )
                 # re-enable loading data
@@ -206,7 +222,7 @@ class MainApp(tk.Frame):
             ):
                 tk.messagebox.showwarning(
                     title="File Read Error",
-                    message="Unable to read specified file. The file may be \
+                    message="Unable to read specified file. \nThe file may be \
                         corrupted, invalid or otherwise unable to be read."
                 )
                 # re-enable loading data
@@ -252,7 +268,7 @@ class MainApp(tk.Frame):
         ):
             tk.messagebox.showwarning(
                 title="File Read Error",
-                message="Unable to read file. The file may have been \
+                message="Unable to read file. \nThe file may have been \
 corrupted, deleted, or renamed since being selected."
             )
             # reset status and re-enable sheet selection
@@ -379,6 +395,7 @@ corrupted, deleted, or renamed since being selected."
         # create the tempfile
         self.output = tempfile.NamedTemporaryFile(
             mode="w+",
+            prefix="prediction_ouput_",
             suffix=".csv",
             delete=False,
             dir=self.tempdir.name
@@ -401,6 +418,23 @@ corrupted, deleted, or renamed since being selected."
         self.status_bar.set_status("Awaiting user input.")
 
         # call finisher function
+        on_finish()
+
+    @threaded
+    def _retrieve_seq_data(self, on_finish):
+        """
+        Pull data from BOLD in a thread.
+
+        Args:
+            on_finish (func): Function to call on completion.
+        """
+        # retrieve the data
+        self.sp.retrieve_sequence_data()
+
+        # conditionally enable merge data button
+        if self.user_sequence_raw is not None:
+            self.data_retrieval_window.merge_button.config(state=tk.ACTIVE)
+
         on_finish()
 
     @threaded
@@ -431,13 +465,15 @@ corrupted, deleted, or renamed since being selected."
             "cm": self.cm,
             "pairplot": self.pairplot,
             "report": self.report,
-            "output": self.output
+            "output": self.output,
+            "fasta_align": self.fasta_align
         }
         buttons = {
             "cm": self.train_section.cm_section.button_save,
             "pairplot": self.predict_section.pairplot_section.button_save,
             "report": self.train_section.report_section.button_save,
-            "output": self.predict_section.output_save
+            "output": self.predict_section.output_save,
+            "fasta_align": self.data_retrieval_window.align_save_button
         }
         # if the item's the prediction output we need to convert it to whatever
         # type the user wants because apparently scientists hate CSV
@@ -531,6 +567,79 @@ corrupted, deleted, or renamed since being selected."
 
         # finish up
         on_finish()
+
+    def align_seq_data(self):
+        # prepare tempfile for prepped data
+        self.sequence_filtered = tempfile.NamedTemporaryFile(
+            mode="w+",
+            prefix="filtered_sequence_",
+            suffix=".tsv",
+            delete=False,
+            dir=self.tempdir.name
+        )
+        self.sequence_filtered.close()
+
+        # prepare tempfile for fasta
+        self.fasta = tempfile.NamedTemporaryFile(
+            mode="w+",
+            prefix="unaligned_fasta_",
+            suffix=".fasta",
+            delete=False,
+            dir=self.tempdir.name
+        )
+        self.fasta.close()
+
+        # prepare tempfile for aligned fasta
+        self.fasta_align = tempfile.NamedTemporaryFile(
+            mode="w+",
+            prefix="aligned_fasta_",
+            suffix=".fasta",
+            delete=False,
+            dir=self.tempdir.name
+        )
+        self.fasta_align.close()
+
+        # set filenames in StandardProgram
+        self.sp.fasta_fname = self.fasta.name
+        self.sp.fasta_align_fname = self.fasta_align.name
+
+        # make a new output console to show results
+        # console = OutputConsole(self, self)
+
+        # get request result tsv and prep it (write fasta)
+        if self.merged_raw is not None:
+            self.sp.request_fname = self.merged_raw.name
+        elif self.user_sequence_raw is not None:
+            self.sp.request_fname = self.user_sequence_raw
+        else:
+            self.sp.request_fname = self.sequence_raw.name
+        data = self.sp.prep_sequence_data(self.sp.get_sequence_data())
+
+        # save filtered data for later use
+        data.to_csv(self.sequence_filtered.name, sep="\t")
+
+        # align the fasta file
+        self.sp.align_fasta(external=True)
+
+        # enable alignment save/load buttons
+        self.data_retrieval_window.align_load_button["state"] = tk.ACTIVE
+        self.data_retrieval_window.align_save_button["state"] = tk.ACTIVE
+
+        # enable other saving buttons
+        self.data_retrieval_window.raw_section.enable_buttons()
+        self.data_retrieval_window.filtered_section.enable_buttons()
+        self.data_retrieval_window.fasta_section.enable_buttons()
+
+        # enable next step
+        self.data_retrieval_window.data_prep["state"] = tk.ACTIVE
+
+        # advise the user to check the alignment
+        tk.messagebox.showinfo(
+            title="Alignment Complete",
+            message="The sequence alignment is complete. \nIt is recommended \
+that you review the alignment file and edit it as necessary. \nPlease \
+overwrite the file provided if you make any changes."
+        )
 
     def check_enable_predictions(self):
         """
@@ -689,6 +798,25 @@ corrupted, deleted, or renamed since being selected."
         # launch thread to get columns
         self._get_sheet_cols(sheet)
 
+    def load_alignment(self):
+        self.status_bar.set_status("Awaiting user file selection...")
+
+        # prompt the user for the classifier file
+        file = filedialog.askopenfilename(
+            title="Open Edited Alignment",
+            initialdir=os.path.realpath(
+                os.path.join(utilities.MAIN_PATH, "output/")),
+            filetypes=[("FASTA formatted sequence data", ".fasta")]
+        )
+
+        # don't do anything if the user selected nothing
+        if len(file) <= 0:
+            self.status_bar.set_status("Awaiting user input.")
+            return
+
+        # overwrite the alignment file
+        shutil.copy(file, self.fasta_align.name)
+
     def load_classifier(self):
         """
         Prompt the user to select a saved classifier and load it.
@@ -721,6 +849,69 @@ corrupted, deleted, or renamed since being selected."
         # launch thread to load the classifier
         self._load_classifier(clf_file)
 
+    def load_sequence_data(self):
+        """
+        Get the location of custom user sequence data for later use.
+
+        Also conditionally enables the 'merge data' button.
+        """
+        req_cols = [
+            "processid",
+            "nucleotides",
+            "marker_codes",
+            "species_name"
+        ]
+
+        self.status_bar.set_status("Awaiting user file selection...")
+
+        # check if user is overwriting and make sure they're ok with it
+        if self.user_sequence_raw is not None:
+            if not tk.messagebox.askokcancel(
+                title="Overwrite Warning",
+                message="You've already loaded custom sequence data. Are you \
+sure?"
+            ):
+                self.status_bar.set_status("Awaiting user input.")
+                return
+
+        # prompt the user for the classifier file
+        file = filedialog.askopenfilename(
+            title="Open Data File",
+            initialdir=os.path.realpath(
+                os.path.join(utilities.MAIN_PATH, "data/")),
+            filetypes=[
+                ("Standard deliniated text file", ".txt .tsv .csv"),
+                ("Excel file", ".xlsx .xlsm .xlsb .xltx .xltm .xls .xlt .xml"),
+                ("Comma separated values", ".csv .txt"),
+                ("Tab separated values", ".tsv .txt"),
+            ]
+        )
+        # don't do anything if the user selected nothing
+        if len(file) <= 0:
+            self.status_bar.set_status("Awaiting user input.")
+            return
+
+        # check that file has required column names
+        self.status_bar.set_status("Checking user sequence file...")
+        data_cols = utilities.get_data(file).columns.values.tolist()
+        if not all(r in data_cols for r in req_cols):
+            tk.messagebox.showwarning(
+                title="Invalid data file",
+                message="Selected data file does not contain required columns.\
+\nPlease see help document for a list of required columns with exact names."
+            )
+            self.status_bar.set_status("Awaiting user input.")
+            return
+
+        # set file location
+        self.user_sequence_raw = file
+
+        self.status_bar.set_status("Awaiting user input.")
+
+        # conditionally enable merge data button
+        if self.sequence_raw is not None:
+            self.data_retrieval_window.merge_button.config(state=tk.ACTIVE)
+
     def make_cm(self, features_known, class_labels):
         """
         Generate a confusion matrix graph and save to tempfile.
@@ -738,6 +929,7 @@ corrupted, deleted, or renamed since being selected."
         # create the tempfile
         self.cm = tempfile.NamedTemporaryFile(
             mode="w+",
+            prefix="confusion_matrix_",
             suffix=".png",
             delete=False,
             dir=self.tempdir.name
@@ -786,6 +978,7 @@ corrupted, deleted, or renamed since being selected."
         # create the tempfile
         self.report = tempfile.NamedTemporaryFile(
             mode="w+",
+            prefix="training_report_",
             suffix=".txt",
             delete=False,
             dir=self.tempdir.name
@@ -825,6 +1018,7 @@ not be generated."
         # create the tempfile
         self.pairplot = tempfile.NamedTemporaryFile(
             mode="w+",
+            prefix="pairplot_",
             suffix=".png",
             delete=False,
             dir=self.tempdir.name
@@ -864,7 +1058,7 @@ not be generated."
         if not os.path.exists(self.sp.data_file):
             tk.messagebox.showwarning(
                 title="File Read Error",
-                message="Unable to read file. The file may have been \
+                message="Unable to read file. \nThe file may have been \
 corrupted, deleted, or renamed since being selected."
             )
             return
@@ -884,6 +1078,54 @@ corrupted, deleted, or renamed since being selected."
             progress_popup.set_status
         )
 
+    def merge_sequence_data(self):
+        # TODO thread this with a progress bar
+
+        if self.merged_raw is not None:
+            answer = tk.messagebox.askyesnocancel(
+                title="Existing Merged Data",
+                message="Merged data already exists. \nDo you wish to merge \
+additional data? Selecting 'No' will Merge current user data with BOLD data, \
+overwriting previous merge."
+            )
+
+            if answer is None:
+                return
+            elif answer is True:
+                bold_data = utilities.get_data(self.merged_raw.name)
+            else:
+                bold_data = utilities.get_data(self.sequence_raw.name)
+
+        else:
+            bold_data = utilities.get_data(self.sequence_raw.name)
+
+        user_data = utilities.get_data(self.user_sequence_raw)
+
+        # merge the two sets
+        merged = pd.concat(
+            (bold_data, user_data),
+            axis=0,
+            ignore_index=True,
+            sort=False
+        )
+
+        # create merged tempfile
+        self.merged_raw = tempfile.NamedTemporaryFile(
+            mode="w+",
+            prefix="merged_seq_unfiltered_",
+            suffix=".tsv",
+            delete=False,
+            dir=self.tempdir.name
+        )
+        self.merged_raw.close()
+
+        merged.to_csv(self.merged_raw.name, sep="\t")
+
+        tk.messagebox.showinfo(
+            title="Merge Completed",
+            message="Custom and BOLD data merged successfully."
+        )
+
     def open_nans(self):
         """Open a window to view and edit NaN values."""
         # test = tk.Toplevel(self.parent)
@@ -897,6 +1139,21 @@ corrupted, deleted, or renamed since being selected."
         Doesn't open user-defined save locations.
         """
         utilities.view_open_file(os.path.join(utilities.MAIN_PATH, "output/"))
+
+    def prep_sequence_data(self):
+        # create delim tempfile
+        self.delim = tempfile.NamedTemporaryFile(
+            mode="w+",
+            prefix="species_delim_",
+            suffix=".csv",
+            delete=False,
+            dir=self.tempdir.name
+        )
+        self.delim.close()
+        self.sp.delim_fname = self.delim.name
+
+        # delimit the species
+        self.sp.delimit_species(external=True)
 
     def reset_controls(self, clf=False):
         """
@@ -921,13 +1178,63 @@ corrupted, deleted, or renamed since being selected."
             self.data_section.col_select_panel.update_contents({})
             self.train_section.known_select["values"] = []
             self.train_section.known_select.set(
-                "")  # TODO this probably breaks it
+                "")
 
         # disable buttons
         if not clf or self.train_section.known_select.get() == "":
             self.train_section.reset_enabled()
         if not clf:
             self.predict_section.reset_enabled()
+
+    def retrieve_seq_data(self):
+        self.sp.geo = self.data_retrieval_window.geo_input.get()
+        self.sp.taxon = self.data_retrieval_window.taxon_input.get()
+
+        if (self.sp.geo is None or self.sp.taxon is None):
+            tk.messagebox.showwarning(
+                title="Missing Search Term(s)",
+                message="Please fill in both search terms before requesting \
+data."
+            )
+            return
+        elif len(self.sp.geo) == 0 or len(self.sp.taxon) == 0:
+            tk.messagebox.showwarning(
+                title="Missing Search Term(s)",
+                message="Please fill in both search terms before requesting \
+data."
+            )
+            return
+
+        if not tk.messagebox.askokcancel(
+            title="Confirm Search Terms",
+            message="Please confirm the search terms: \
+\nGeography: {} \nTaxonomy: {}".format(self.sp.geo, self.sp.taxon)
+        ):
+            return
+
+        progress_popup = ProgressPopup(
+            self.data_retrieval_window,
+            "BOLD Data Download",
+            "Downloading from BOLD API..."
+        )
+
+        # set up tempfile for download
+        # create the tempfile
+        self.sequence_raw = tempfile.NamedTemporaryFile(
+            mode="w+",
+            prefix="unfiltered_sequence_",
+            suffix=".tsv",
+            delete=False,
+            dir=self.tempdir.name
+        )
+
+        self.sequence_raw.close()
+        self.sp.request_fname = self.sequence_raw.name
+
+        self._retrieve_seq_data(progress_popup.complete)
+
+    def retrieve_seq_data_win(self):
+        self.data_retrieval_window = DataRetrievalWindow(self, self)
 
     def save_classifier(self):
         """
@@ -966,7 +1273,11 @@ corrupted, deleted, or renamed since being selected."
             "cm": "Confusion Matrix",
             "pairplot": "Pairplot",
             "report": "Training Report",
-            "output": "Prediction Output"
+            "output": "Prediction Output",
+            "raw_data": "Raw Data",
+            "filtered_data": "Filtered Data",
+            "raw_fasta": "Unaligned Fasta",
+            "fasta_align": "Aligned Fasta"
         }
         graphtypes = [("Portable Network Graphics image", ".png")]
         reportypes = [("Plain text file", ".txt")]
@@ -975,24 +1286,37 @@ corrupted, deleted, or renamed since being selected."
             ("Tab separated values", ".tsv"),
             ("All Files", ".*"),
         ]
+        fastatypes = [("FASTA formatted sequence data", ".fasta")]
 
         types = {
             "cm": graphtypes,
             "pairplot": graphtypes,
             "report": reportypes,
-            "output": outputtypes
+            "output": outputtypes,
+            "raw_data": outputtypes,
+            "filtered_data": outputtypes,
+            "raw_fasta": fastatypes,
+            "fasta_align": fastatypes
         }
         default_extensions = {
             "cm": ".png",
             "pairplot": ".png",
             "report": ".txt",
-            "output": ".csv"
+            "output": ".csv",
+            "raw_data": ".csv",
+            "filtered_data": ".csv",
+            "raw_fasta": ".fasta",
+            "fasta_align": ".fasta"
         }
         buttons = {
             "cm": self.train_section.cm_section.button_save,
             "pairplot": self.predict_section.pairplot_section.button_save,
             "report": self.train_section.report_section.button_save,
-            "output": self.predict_section.output_save
+            "output": self.predict_section.output_save,
+            "raw_data": self.data_retrieval_window.raw_section.button_save,
+            "filtered_data": self.data_retrieval_window.filtered_section.button_save,
+            "raw_fasta": self.data_retrieval_window.fasta_section.button_save,
+            "fasta_align": self.data_retrieval_window.align_save_button
         }
 
         self.status_bar.set_status("Awaiting user save location...")
@@ -1051,7 +1375,7 @@ corrupted, deleted, or renamed since being selected."
         if not os.path.exists(self.sp.data_file):
             tk.messagebox.showwarning(
                 title="File Read Error",
-                message="Unable to read file. The file may have been \
+                message="Unable to read file. \nThe file may have been \
 corrupted, deleted, or renamed since being selected."
             )
             return
@@ -1088,15 +1412,20 @@ corrupted, deleted, or renamed since being selected."
         View an item using the system default.
 
         Args:
-            item (str): A tag selecting which item to be viewed.
+            item (str): Path to a file to open.
         """
-        tempfiles = {
-            "cm": self.cm,
-            "pairplot": self.pairplot,
-            "report": self.report,
-            "output": self.output
-        }
-        utilities.view_open_file(tempfiles[item].name)
+        try:
+            utilities.view_open_file(item)
+        except OSError:
+            if tk.messagebox.askokcancel(
+                title="No Default Program",
+                message="The file could not be opened becase there is no \
+default program associated with the filetype <{}>. \nAn explorer window with \
+the file selected will be opened so you may select a program.".format(
+                    os.path.splitext(item)[1]),
+                icon='warning'
+            ):
+                subprocess.Popen('explorer /select,{}'.format(item))
 
 
 def main():
@@ -1118,9 +1447,9 @@ def main():
         """
         print(threading.active_count())
         plt.close("all")
+        app.tempdir.cleanup()
         root.quit()
         root.destroy()
-        app.tempdir.cleanup()
 
     root.protocol("WM_DELETE_WINDOW", graceful_exit)
 
