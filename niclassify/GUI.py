@@ -7,6 +7,7 @@ import csv
 import json
 import matplotlib
 import os
+import requests
 import shutil
 import subprocess
 import threading
@@ -28,18 +29,23 @@ from core.classifiers import RandomForestAC
 from tkui.elements import DataPanel, TrainPanel, ProgressPopup
 from tkui.elements import PredictPanel, StatusBar, NaNEditor
 from tkui.elements import DataRetrievalWindow
-from tkui.output import OutputConsole, TextRedirector
 
 matplotlib.use('Agg')  # this makes threading not break
 
-
 # NOW
-# TODO add new delimitations back into filtered data
-# will have to add support down the line for ignoring rows with no group name
-# TODO implement native-nonnative lookup for known species
+# TODO fix handling of "Native & Introduced" ITIS returns
+# TODO implement multiprocessing for status lookup
+# TODO popup reporting number of final statuses, with warning if too few
+# TODO add support for user editing of statuses
+# TODO break apart filtering and alignment to allow for viewing filtered data
 
 # LATER
-# TODO implement backend for both GYMC and PTP and add to gui func
+# TODO implement backend for PTP
+
+# FIXES & MINOR FEATURES
+# TODO report on number of observations returned from BOLD
+# TODO warning when no data returned from search
+
 
 def threaded(func):
     def wrapper(*args, **kwargs):
@@ -428,12 +434,25 @@ corrupted, deleted, or renamed since being selected."
         Args:
             on_finish (func): Function to call on completion.
         """
-        # retrieve the data
-        self.sp.retrieve_sequence_data()
+        try:
+            # retrieve the data
+            self.sp.retrieve_sequence_data()
+        except requests.exceptions.RequestException:
+            tk.messagebox.showerror(
+                parent=self.data_retrieval_window,
+                title="Connection Error",
+                message="There was an error searching BOLD. \nPlease check \
+your connection and the status of the BOLD servers."
+            )
+            on_finish()
+            return
 
         # conditionally enable merge data button
         if self.user_sequence_raw is not None:
             self.data_retrieval_window.merge_button.config(state=tk.ACTIVE)
+
+        self.data_retrieval_window.align_button["state"] = tk.ACTIVE
+        self.data_retrieval_window.raw_section.enable_buttons()
 
         on_finish()
 
@@ -600,6 +619,7 @@ corrupted, deleted, or renamed since being selected."
         self.fasta_align.close()
 
         # set filenames in StandardProgram
+        self.sp.filtered_fname = self.sequence_filtered.name
         self.sp.fasta_fname = self.fasta.name
         self.sp.fasta_align_fname = self.fasta_align.name
 
@@ -616,7 +636,7 @@ corrupted, deleted, or renamed since being selected."
         data = self.sp.prep_sequence_data(self.sp.get_sequence_data())
 
         # save filtered data for later use
-        data.to_csv(self.sequence_filtered.name, sep="\t")
+        data.to_csv(self.sequence_filtered.name, sep="\t", index=False)
 
         # align the fasta file
         self.sp.align_fasta(external=True)
@@ -635,10 +655,11 @@ corrupted, deleted, or renamed since being selected."
 
         # advise the user to check the alignment
         tk.messagebox.showinfo(
+            parent=self.data_retrieval_window,
             title="Alignment Complete",
             message="The sequence alignment is complete. \nIt is recommended \
 that you review the alignment file and edit it as necessary. \nPlease \
-overwrite the file provided if you make any changes."
+load the new file after making any changes."
         )
 
     def check_enable_predictions(self):
@@ -745,6 +766,10 @@ overwrite the file provided if you make any changes."
 
         # threaded portion of function
         self._get_data_file(data_file)
+
+    def get_geographies(self):
+        return sorted(utilities.get_geographies())
+        # return utilities.get_geographies()
 
     def get_selected_cols(self):
         """
@@ -911,6 +936,9 @@ sure?"
         # conditionally enable merge data button
         if self.sequence_raw is not None:
             self.data_retrieval_window.merge_button.config(state=tk.ACTIVE)
+
+        # enable alignment button
+        self.data_retrieval_window.align_button["state"] = tk.ACTIVE
 
     def make_cm(self, features_known, class_labels):
         """
@@ -1119,7 +1147,7 @@ overwriting previous merge."
         )
         self.merged_raw.close()
 
-        merged.to_csv(self.merged_raw.name, sep="\t")
+        merged.to_csv(self.merged_raw.name, sep="\t", index=False)
 
         tk.messagebox.showinfo(
             title="Merge Completed",
@@ -1154,6 +1182,10 @@ overwriting previous merge."
 
         # delimit the species
         self.sp.delimit_species(external=True)
+
+        # get statuses
+        self.sp.ref_geo = self.data_retrieval_window.reference_geo_select.get()
+        self.sp.lookup_status()
 
     def reset_controls(self, clf=False):
         """
@@ -1445,9 +1477,12 @@ def main():
 
         This includes cleaning tempfiles and closing any processes.
         """
+        try:
+            app.tempdir.cleanup()
+        except PermissionError:
+            None
         print(threading.active_count())
         plt.close("all")
-        app.tempdir.cleanup()
         root.quit()
         root.destroy()
 

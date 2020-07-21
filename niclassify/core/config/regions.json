@@ -1,0 +1,187 @@
+{
+    "Africa": {
+        "Subtropics": false,
+        "Pantropical": true,
+        "Contains": {
+            "East Tropical Africa": {
+                "Subtropics": false,
+                "Pantropical": true,
+                "Contains": null
+            },
+            "West Tropical Africa": {
+                "Subtropics": false,
+                "Pantropical": true,
+                "Contains": null
+            }
+        }
+    },
+    "Asia": {
+        "Subtropics": false,
+        "Pantropical": true,
+        "Contains": {
+            "Asia-Temperate": {
+                "Subtropics": false,
+                "Pantropical": false,
+                "Contains": null
+            },
+            "Asia-Tropical": {
+                "Subtropics": false,
+                "Pantropical": true,
+                "Contains": null
+            },
+            "Eastern Asia": {
+                "Subtropics": false,
+                "Pantropical": false,
+                "Contains": {
+                    "China": {
+                        "Subtropics": false,
+                        "Pantropical": false,
+                        "Contains": null
+                    },
+                    "Japan": {
+                        "Subtropics": false,
+                        "Pantropical": false,
+                        "Contains": null
+                    }
+                }
+            },
+            "Sri Lanka": {
+                "Subtropics": false,
+                "Pantropical": false,
+                "Contains": null
+            }
+        }
+    },
+    "Central America": {
+        "Subtropics": false,
+        "Pantropical": true,
+        "Contains": null
+    },
+    "Caribbean Territories": {
+        "Subtropics": false,
+        "Pantropical": true,
+        "Contains": null
+    },
+    "Europe": {
+        "Subtropics": false,
+        "Pantropical": false,
+        "Contains": {
+            "Northern Europe": {
+                "Subtropics": false,
+                "Pantropical": false,
+                "Contains": null
+            },
+            "Middle Europe": {
+                "Subtropics": false,
+                "Pantropical": false,
+                "Contains": {
+                    "Austria": {
+                        "Subtropics": false,
+                        "Pantropical": false,
+                        "Contains": null
+                    },
+                    "Switzerland": {
+                        "Subtropics": false,
+                        "Pantropical": false,
+                        "Contains": null
+                    },
+                    "Slovenia": {
+                        "Subtropics": false,
+                        "Pantropical": false,
+                        "Contains": null
+                    }
+                }
+            },
+            "Italy": {
+                "Subtropics": false,
+                "Pantropical": false,
+                "Contains": null
+            },
+            "Sicilia (Sicily)": {
+                "Subtropics": false,
+                "Pantropical": false,
+                "Contains": null
+            }
+        }
+    },
+    "Northern America": {
+        "Subtropics": false,
+        "Pantropical": false,
+        "Contains": {
+            "Continental US": {
+                "Subtropics": false,
+                "Pantropical": false,
+                "Contains": {
+                    "Northeastern U.S.A.": {
+                        "Subtropics": false,
+                        "Pantropical": false,
+                        "Contains": null
+                    },
+                    "Northwestern U.S.A.": {
+                        "Subtropics": false,
+                        "Pantropical": false,
+                        "Contains": null
+                    },
+                    "Southeastern U.S.A.": {
+                        "Subtropics": false,
+                        "Pantropical": false,
+                        "Contains": null
+                    },
+                    "Southwestern U.S.A.": {
+                        "Subtropics": false,
+                        "Pantropical": false,
+                        "Contains": null
+                    },
+                    "Alaska": {
+                        "Subtropics": false,
+                        "Pantropical": false,
+                        "Contains": null
+                    }
+                }
+            },
+            "Canada": {
+                "Subtropics": false,
+                "Pantropical": false,
+                "Contains": {
+                    "Western Canada": {
+                        "Subtropics": false,
+                        "Pantropical": false,
+                        "Contains": null
+                    },
+                    "Eastern Canada": {
+                        "Subtropics": false,
+                        "Pantropical": false,
+                        "Contains": null
+                    }
+                }
+            }
+        }
+    },
+    "Pacific Ocean": {
+        "Subtropics": true,
+        "Pantropical": true,
+        "Contains": {
+            "North Pacific Ocean": {
+                "Subtropics": true,
+                "Pantropical": true,
+                "Contains": {
+                    "Hawaii": {
+                        "Subtropics": false,
+                        "Pantropical": true,
+                        "Contains": null
+                    }
+                }
+            },
+            "Central Pacific Territories": {
+                "Subtropics": true,
+                "Pantropical": true,
+                "Contains": null
+            }
+        }
+    },
+    "Mexico": {
+        "Subtropics": true,
+        "Pantropical": true,
+        "Contains": null
+    }
+}

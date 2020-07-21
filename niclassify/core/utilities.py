@@ -25,6 +25,7 @@ try:
     from sklearn import metrics
     from sklearn import preprocessing
     from sklearn.impute import SimpleImputer
+    from xml.etree import ElementTree
 
     import importlib.resources as pkg_resources
 
@@ -721,3 +722,176 @@ def delimit_species_PTP(infname, outfname, external=None):
 
     # TODO looks like you have to package python2 to make this work
     # we can get back to this later
+
+
+def get_geographies():
+    with open(os.path.join(
+            MAIN_PATH, "niclassify/core/config/regions.json"), "r") as regions:
+        hierarchy = json.load(regions)
+
+    # print(hierarchy)
+
+    def getlist(section):
+        items = []
+        for name, sub in section.items():
+            items.append(name)
+            if sub["Contains"] is not None:
+                items.extend(getlist(sub["Contains"]))
+        return items
+
+    return getlist(hierarchy)
+
+
+def get_jurisdictions(species_name):
+
+    tsn_link = "http://www.itis.gov/ITISWebService/services/ITISService/getITISTermsFromScientificName?srchKey="
+    jurisdiction_link = "http://www.itis.gov/ITISWebService/services/ITISService/getJurisdictionalOriginFromTSN?tsn="
+
+    print("making request...")
+    # get TSN
+    req = "{}{}".format(
+        tsn_link, species_name.replace(" ", "%20"))
+
+    # query website and check for error
+    response = requests.get(req)  # stream this if it's a large response
+    print("got request, parsing...")
+    response.raise_for_status()  # TODO implement handling gui-side
+    # get xml tree from response
+    tree = ElementTree.fromstring(response.content)
+    # get any TSN's
+    vals = [
+        i.text
+        for i
+        in tree.iter('{http://data.itis_service.itis.usgs.gov/xsd}tsn')
+    ]
+
+    if vals is None:  # skip if there's no tsn to be found
+        return None
+
+    elif len(vals) != 1:  # skip if tsn is empty or there are more than one
+        return None
+
+    tsn = vals[0]  # tsn captured
+
+    # get jurisdiction
+    req = "{}{}".format(jurisdiction_link, tsn)
+
+    response = requests.get(req)
+
+    response.raise_for_status()
+
+    tree = ElementTree.fromstring(response.content)
+
+    juris = {
+        j.text: n.text
+        for j, n
+        in zip(
+            tree.iter(
+                '{http://data.itis_service.itis.usgs.gov/xsd}jurisdictionValue'
+            ),
+            tree.iter('{http://data.itis_service.itis.usgs.gov/xsd}origin')
+        )
+    }
+
+    if len(juris) == 0:  # or if it's somehow returned empty
+        return None
+
+    return juris
+
+
+def get_native_ranges(species_name):
+
+    code_link = "http://api.gbif.org/v1/species?name="
+    records_link = "http://api.gbif.org/v1/species/"
+
+    # get taxonKey
+    req = "{}{}".format(
+        code_link, species_name.replace(" ", "%20"))
+
+    response = requests.get(req)  # stream this if it's a large response
+
+    response.raise_for_status()
+
+    # print("got 1st response")
+
+    # search for "taxonID":"gbif:" with some numbers, getting the numbers
+    taxonKey = re.search('(?<="taxonID":"gbif:)\d+', response.text)
+
+    if taxonKey is None:
+        # print("no key found")
+        return None
+    else:
+        taxonKey = taxonKey.group()
+
+    # get native range
+    req = "{}{}/descriptions".format(
+        records_link, taxonKey)
+
+    response = requests.get(req)  # stream this if it's a large response
+
+    response.raise_for_status()
+
+    results = response.json()
+
+    lookup = [
+        res["description"]
+        for res in results["results"]
+        if res["type"] == "native range"
+    ]
+
+    if len(lookup) == 0:
+        return None
+    else:
+        return lookup
+
+
+def get_ref_hierarchy(ref_geo):
+
+    with open(os.path.join(
+            MAIN_PATH, "niclassify/core/config/regions.json"), "r") as regions:
+        geos = json.load(regions)
+
+    def find_geo(level, ref):
+        if level is None:
+            return None
+        result = None
+
+        for name, sub in level.items():
+            if name == ref:
+                result = sub
+                break
+            elif result is None:
+                result = find_geo(sub["Contains"], ref)
+
+        return result
+
+    return find_geo(geos, ref_geo)
+
+
+def geo_contains(ref_geo, geo):
+
+    # get the actual hierarchy
+    hierarchy = get_ref_hierarchy(ref_geo)
+    if hierarchy is None:
+        # raise TypeError(
+        print(
+            "reference geography <{}> does not exist!".format(ref_geo))
+        return False
+    if hierarchy["Contains"] is None:
+        return False
+
+    def match_geo(level, ref):
+        if level is None:
+            return False
+        result = False
+
+        for name, sub in level.items():
+            if name == ref:
+                result = True
+                break
+            elif not result and sub["Contains"] is not None:
+                result = match_geo(sub["Contains"], ref)
+
+        return result
+
+    return match_geo(hierarchy["Contains"], geo)

@@ -250,7 +250,8 @@ class DataRetrievalWindow(tk.Toplevel):
             self.data_section,
             text="Filter and Align Sequences",
             command=self.app.align_seq_data,
-            pady=5
+            pady=5,
+            state=tk.DISABLED
         )
         self.align_button.pack(expand=True, fill=tk.X, padx=1, pady=1)
 
@@ -336,9 +337,19 @@ class DataRetrievalWindow(tk.Toplevel):
 
         self.reference_geo_label = tk.Label(
             self.data_section,
-            text="Reference Geography:",
-            anchor=tk.W
+            text="Species Delimitation Method:"
         )
+        self.reference_geo_label.pack(anchor=tk.W)
+
+        self.reference_geo_select = ttk.Combobox(
+            self.data_section,
+            height=10,
+            state="readonly",
+            # textvariable=self.app.known_column
+        )
+        self.reference_geo_select["values"] = app.get_geographies()
+        self.reference_geo_select.set("Continental US")
+        self.reference_geo_select.pack(fill=tk.X)
 
         # TODO put either a selector or an input here depending on the reqs.
 

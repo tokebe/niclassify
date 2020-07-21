@@ -9,10 +9,13 @@ try:
     # import main libraries
     import os
     import logging
+    import tempfile
 
     import numpy as np
     import pandas as pd
     import seaborn as sns
+
+    from multiprocessing import Pool
 
 except ModuleNotFoundError:
     logging.error("Missing required modules. Install requirements by running")
@@ -56,6 +59,7 @@ class StandardProgram:
         self.geo = None
         self.taxon = None
         self.api = None
+        self.ref_geo = None
         self.request_fname = None
         self.filtered_fname = None
         self.fasta_fname = None
@@ -150,11 +154,104 @@ class StandardProgram:
 
         return True
 
+    def check_native_gbif(self, row):
+        if pd.isna(row["species_name"]):
+            return np.NaN
+        elif len(row["species_name"]) == 0:
+            return np.NaN
+
+        # check GBIF native ranges
+        nranges = utilities.get_native_ranges(row["species_name"])
+
+        if nranges is None:
+            return np.NaN
+
+        crypto = False
+
+        for nrange in nranges:
+            if nrange == "Cosmopolitan, Cryptogenic":
+                print("  {}: cryptogenic".format(row["species_name"]))
+                crypto = True
+                continue
+            if nrange == "Pantropical, Circumtropical":
+                print("  {}:".format(row["species_name"]))
+                ref_hierarchy = utilities.get_ref_hierarchy(self.ref_geo)
+                if ref_hierarchy["Pantropical"] is True:
+                    return "Native"
+                else:
+                    continue
+            if nrange == "Subtropics":
+                print("  {}: subtropics".format(row["species_name"]))
+                ref_hierarchy = utilities.get_ref_hierarchy(self.ref_geo)
+                if ref_hierarchy["Subtropics"] is True:
+                    return "Native"
+                else:
+                    continue
+
+            if nrange == self.ref_geo:
+                print("  {}: direct native to ref".format(row["species_name"]))
+                return "Native"
+            elif (utilities.geo_contains(self.ref_geo, nrange)
+                  or utilities.geo_contains(nrange, self.ref_geo)):
+                print("  {}: {} <=> {}".format(
+                    row["species_name"], self.ref_geo, nrange))
+                return "Native"
+            else:
+                print("  {}: {} <!=> {}".format(
+                    row["species_name"], self.ref_geo, nrange))
+
+        # if it hasn't found a reason to call it native
+        return "Introduced" if not crypto else np.NaN
+
+    def check_native_itis(self, row):
+        if pd.isna(row["species_name"]):
+            return np.NaN
+        elif len(row["species_name"]) == 0:
+            return np.NaN
+
+        # check ITIS jurisdictions
+        jurisdictions = utilities.get_jurisdictions(row["species_name"])
+
+        if jurisdictions is None:
+            print("  no jurisdiction(s) returned")
+            return np.NaN
+
+        # simple first: check if jurisdiction is just current reference geo
+        for jurisdiction, status in jurisdictions.items():
+            print("{}, {}".format(jurisdiction, status))
+            if jurisdiction == self.ref_geo:
+                return status
+            # otherwise if one contains the other it's native
+            elif (utilities.geo_contains(self.ref_geo, jurisdiction)
+                  or utilities.geo_contains(jurisdiction, self.ref_geo)):
+                print("{}: {} <=> {}".format(
+                    row["species_name"], self.ref_geo, jurisdiction))
+                return status
+            else:
+                print("{}: {} <!=> {}".format(
+                    row["species_name"], self.ref_geo, jurisdiction))
+
+        # if it hasn't found a reason to call it native
+        return "Introduced"  # this maybe should be NA
+
     def delimit_species(self, method="GMYC", external=None):
         if method == "GMYC":
             utilities.delimit_species_GMYC(
                 self.fasta_align_fname, self.delim_fname, external)
 
+        # read in filtered sequence data and new delim file for combining
+        seq_filtered = utilities.get_data(self.filtered_fname)
+
+        delim = utilities.get_data(self.delim_fname)
+
+        # rename sample_name to processid for merge
+        delim.rename(columns={"sample_name": "processid"}, inplace=True)
+
+        # left join gymc species back into filtered data
+        seq_filtered = pd.merge(
+            seq_filtered, delim, on="processid", how="left")
+
+        seq_filtered.to_csv(self.filtered_fname, sep="\t", index=False)
 
     def get_args(self):
         """
@@ -243,6 +340,39 @@ class StandardProgram:
         # impute data
         logging.info("imputing data...")
         return utilities.impute_data(feature_norm)
+
+    def lookup_status(self):
+        # look up the status through ITIS and GBIF and add native/introduced
+        # columns
+
+        # get data
+        data = utilities.get_data(self.filtered_fname)
+
+        # lookup statuses and create columns
+        print("Getting gbif statuses...")
+        data["gbif_status"] = data.apply(self.check_native_gbif, axis=1)
+        print("Getting itis statuses...")
+        data["itis_status"] = data.apply(self.check_native_itis, axis=1)
+
+        def combine_status(row):
+            if row["itis_status"] == row["gbif_status"]:
+                return row["itis_status"]
+            elif (pd.isnull(row["itis_status"])
+                  and pd.notnull(row["gbif_status"])):
+                return row["gbif_status"]
+            elif (pd.isnull(row["gbif_status"])
+                  and pd.notnull(row["itis_status"])):
+                return row["itis_status"]
+            else:
+                return np.NaN
+
+        print("combining statuses...")
+        # create a column based on agreement of previous two
+        data["final_status"] = data.apply(combine_status, axis=1)
+
+        print("saving statuses...")
+        # save changes
+        data.to_csv(self.filtered_fname, sep="\t", index=False)
 
     def predict_AC(self, clf, feature_norm, status_cb=None):
         """
