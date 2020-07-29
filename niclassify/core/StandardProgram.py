@@ -15,7 +15,11 @@ try:
     import pandas as pd
     import seaborn as sns
 
+    from functools import partial
     from multiprocessing import Pool
+    from multiprocessing import cpu_count
+    from requests.exceptions import RequestException
+    from time import sleep
 
 except ModuleNotFoundError:
     logging.error("Missing required modules. Install requirements by running")
@@ -25,6 +29,26 @@ except ModuleNotFoundError:
 # import rest of program modules
 from . import utilities
 from . import classifiers
+
+
+def parallelize(df, func, n_cores=None):
+    if n_cores is None:
+        n_cores = cpu_count()
+
+    df_split = np.array_split(df, n_cores)
+    pool = Pool(n_cores)
+    df = pd.concat(pool.map(func, df_split))
+    pool.close()
+    pool.join()
+    return df
+
+
+def run_on_subset(func, data_subset):
+    return data_subset.apply(func, axis=1)
+
+
+def parallelize_on_rows(data, func, n_cores=None):
+    return parallelize(data, partial(run_on_subset, func), n_cores)
 
 
 class StandardProgram:
@@ -161,7 +185,13 @@ class StandardProgram:
             return np.NaN
 
         # check GBIF native ranges
-        nranges = utilities.get_native_ranges(row["species_name"])
+        try:
+            nranges = utilities.get_native_ranges(row["species_name"])
+        except RequestException:
+            return np.NaN
+
+        # no rate limit provided, so we'll just wait a bit to be safe
+        sleep(0.01)
 
         if nranges is None:
             return np.NaN
@@ -210,7 +240,13 @@ class StandardProgram:
             return np.NaN
 
         # check ITIS jurisdictions
-        jurisdictions = utilities.get_jurisdictions(row["species_name"])
+        try:
+            jurisdictions = utilities.get_jurisdictions(row["species_name"])
+        except RequestException:
+            return np.NaN
+
+        # no rate limit provided, so we'll just wait a bit to be safe
+        sleep(0.01)
 
         if jurisdictions is None:
             print("  no jurisdiction(s) returned")
@@ -220,13 +256,13 @@ class StandardProgram:
         for jurisdiction, status in jurisdictions.items():
             print("{}, {}".format(jurisdiction, status))
             if jurisdiction == self.ref_geo:
-                return status
+                return status if status != "Native&Introduced" else np.NaN
             # otherwise if one contains the other it's native
             elif (utilities.geo_contains(self.ref_geo, jurisdiction)
                   or utilities.geo_contains(jurisdiction, self.ref_geo)):
                 print("{}: {} <=> {}".format(
                     row["species_name"], self.ref_geo, jurisdiction))
-                return status
+                return status if status != "Native&Introduced" else np.NaN
             else:
                 print("{}: {} <!=> {}".format(
                     row["species_name"], self.ref_geo, jurisdiction))
@@ -348,11 +384,20 @@ class StandardProgram:
         # get data
         data = utilities.get_data(self.filtered_fname)
 
+        # make a table of all unique species
+        # this should somewhat reduce the number of lookups
+        species = pd.DataFrame({"species_name": data["species_name"].unique()})
+
         # lookup statuses and create columns
         print("Getting gbif statuses...")
-        data["gbif_status"] = data.apply(self.check_native_gbif, axis=1)
-        print("Getting itis statuses...")
-        data["itis_status"] = data.apply(self.check_native_itis, axis=1)
+        # data["gbif_status"] = data.apply(self.check_native_gbif, axis=1)
+        species["gbif_status"] = parallelize_on_rows(
+            species, self.check_native_gbif)
+
+        # print("Getting itis statuses...")
+        # data["itis_status"] = data.apply(self.check_native_itis, axis=1)
+        species["itis_status"] = parallelize_on_rows(
+            species, self.check_native_itis)
 
         def combine_status(row):
             if row["itis_status"] == row["gbif_status"]:
@@ -368,9 +413,12 @@ class StandardProgram:
 
         print("combining statuses...")
         # create a column based on agreement of previous two
-        data["final_status"] = data.apply(combine_status, axis=1)
+        species["final_status"] = species.apply(combine_status, axis=1)
 
-        print("saving statuses...")
+        # merge species table back in
+        data = pd.merge(data, species, on="species_name", how="left")
+
+        # print("saving statuses...")
         # save changes
         data.to_csv(self.filtered_fname, sep="\t", index=False)
 

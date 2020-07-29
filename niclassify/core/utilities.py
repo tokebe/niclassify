@@ -22,6 +22,8 @@ try:
 
     from Bio.Align.Applications import MuscleCommandline
     from Bio.Phylo.Applications import RaxmlCommandline
+    from Bio.Phylo.TreeConstruction import DistanceCalculator
+    from Bio import AlignIO
     from sklearn import metrics
     from sklearn import preprocessing
     from sklearn.impute import SimpleImputer
@@ -895,3 +897,13 @@ def geo_contains(ref_geo, geo):
         return result
 
     return match_geo(hierarchy["Contains"], geo)
+
+
+def make_genetic_measures(infname, outfname=None):
+    print("reading data...")
+    aln = AlignIO.read(open(infname), 'fasta')
+    print("calculating distances...")
+    calculator = DistanceCalculator('identity')
+    dm = calculator.get_distance(aln)
+
+    print(dm)
