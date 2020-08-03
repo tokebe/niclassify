@@ -32,6 +32,18 @@ from . import classifiers
 
 
 def parallelize(df, func, n_cores=None):
+    """
+    Parallelize applying a function to a DataFrame.
+
+    Args:
+        df (DataFrame): DataFrame to apply function to.
+        func (func): A function suitable for df.apply().
+        n_cores (int, optional): Number of processes to use. Defaults to None.
+
+    Returns:
+        df: The resulting output.
+
+    """
     if n_cores is None:
         n_cores = cpu_count()
 
@@ -44,10 +56,33 @@ def parallelize(df, func, n_cores=None):
 
 
 def run_on_subset(func, data_subset):
+    """
+    Apply a function to a subset of a DataFrame.
+
+    Args:
+        func (func): A function suitable for df.apply().
+        data_subset (DataFrame): A subset of a larger DataFrame.
+
+    Returns:
+        DataFrame: The resulting output subset.
+
+    """
     return data_subset.apply(func, axis=1)
 
 
 def parallelize_on_rows(data, func, n_cores=None):
+    """
+    Parallelize applying a function to a DataFrame, row-wise.
+
+    Args:
+        data (DataFrame): A DataFrame.
+        func (func): A function suitable for df.apply().
+        n_cores (int, optional): Number of processes to use. Defaults to None.
+
+    Returns:
+        DataFrame: The resulting output.
+
+    """
     return parallelize(data, partial(run_on_subset, func), n_cores)
 
 
@@ -179,6 +214,16 @@ class StandardProgram:
         return True
 
     def check_native_gbif(self, row):
+        """
+        Check if a given species is native according to gbif.
+
+        Args:
+            row (df row): A DataFrame row with a column "species_name".
+
+        Returns:
+            str or np.NaN: Native, Introduced, or np.NaN if unknown.
+
+        """
         if pd.isna(row["species_name"]):
             return np.NaN
         elif len(row["species_name"]) == 0:
@@ -234,6 +279,16 @@ class StandardProgram:
         return "Introduced" if not crypto else np.NaN
 
     def check_native_itis(self, row):
+        """
+        Check if a given species is native according to itis.
+
+        Args:
+            row (df row): A DataFrame row with a column "species_name".
+
+        Returns:
+            str or np.NaN: Native, Introduced, or np.NaN if unknown.
+
+        """
         if pd.isna(row["species_name"]):
             return np.NaN
         elif len(row["species_name"]) == 0:
@@ -271,6 +326,13 @@ class StandardProgram:
         return "Introduced"  # this maybe should be NA
 
     def delimit_species(self, method="GMYC", external=None):
+        """Delimit species by their nucleotide sequences.
+
+        Args:
+            method (str, optional): Delimitation method. Defaults to "GMYC".
+            external (bool, optional): Run the delimitation concurrently in an
+                external console. Defaults to None.
+        """
         if method == "GMYC":
             utilities.delimit_species_GMYC(
                 self.fasta_align_fname, self.delim_fname, external)
@@ -378,6 +440,7 @@ class StandardProgram:
         return utilities.impute_data(feature_norm)
 
     def lookup_status(self):
+        """Look up the statuses of species on GBIF and ITIS."""
         # look up the status through ITIS and GBIF and add native/introduced
         # columns
 
@@ -400,6 +463,7 @@ class StandardProgram:
             species, self.check_native_itis)
 
         def combine_status(row):
+            """Combine given GBIF and ITIS statuses."""
             if row["itis_status"] == row["gbif_status"]:
                 return row["itis_status"]
             elif (pd.isnull(row["itis_status"])

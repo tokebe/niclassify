@@ -12,12 +12,14 @@ import tkinter as tk
 
 from joblib import dump
 from tkinter import filedialog
+from tkinter import messagebox
 from xlrd import XLRDError
 
 from .clfpanels import DataPanel, PredictPanel, StatusBar, TrainPanel
 from .smallwindows import NaNEditor, ProgressPopup
 from .datatool import DataPreparationTool
 from .threadwrap import threaded
+from .dialogs.dialog import DialogLibrary
 
 
 class ClassifierTool(tk.Frame):
@@ -51,7 +53,9 @@ class ClassifierTool(tk.Frame):
         self.sp = standard_program(classifier())
         self.util = utilities
         self.logname = self.sp.boilerplate()
-        self.seq_prep_win = None
+        self.data_win = None
+        self.dlib = DialogLibrary(
+            os.path.join(self.util.MAIN_PATH, "niclassify/tkui/dialogs"))
 
         # set nans in sp
         self.sp.nans = self.util.NANS
@@ -121,7 +125,7 @@ class ClassifierTool(tk.Frame):
             self.sp.data_file is not None,
             self.sp.clf.is_trained()
         ]
-        print(conditions)
+        # print(conditions)
         if all(conditions):
             self.predict_sec.prediction_make.config(state=tk.ACTIVE)
             return True
@@ -142,10 +146,7 @@ class ClassifierTool(tk.Frame):
             self.predict_sec.prediction_make["state"] != tk.DISABLED
         ]
         if all(conditions):
-            return tk.messagebox.askokcancel(
-                title="Overwrite Warning",
-                message="This will delete unsaved classifier and results."
-            )
+            return self.dlib.dialog(messagebox.askokcancel, "OVERWRITE_CLF")
         else:
             return True
 
@@ -198,11 +199,8 @@ class ClassifierTool(tk.Frame):
                         OSError, IOError, KeyError,
                         TypeError, ValueError, XLRDError
                 ):
-                    tk.messagebox.showwarning(
-                        title="Excel Read Error",
-                        message="Unable to read excel file. \nThe file may be \
-                            corrupted, or otherwise unable to be read."
-                    )
+                    self.dlib.dialog(messagebox.showwarning, "EXCEL_READ_ERR")
+
                     # re-enable loading data
                     self.data_sec.load_data_button["state"] = tk.ACTIVE
 
@@ -230,10 +228,7 @@ class ClassifierTool(tk.Frame):
                 self.status_bar.progress.stop()
                 self.status_bar.progress["mode"] = "determinate"
 
-                tk.messagebox.showinfo(
-                    title="Excel Sheet Detected",
-                    message="You will have to specify the sheet to proceed."
-                )
+                self.dlib.dialog(messagebox.showinfo, "EXCEL_DETECTED")
 
             else:  # otherwise it's some sort of text file
                 # disable sheet selection dropdown
@@ -254,11 +249,7 @@ class ClassifierTool(tk.Frame):
                         OSError, IOError, KeyError,
                         TypeError, ValueError, csv.Error
                 ):
-                    tk.messagebox.showwarning(
-                        title="File Read Error",
-                        message="Unable to read specified file. \nThe file may be \
-                            corrupted, invalid or otherwise unable to be read."
-                    )
+                    self.dlib.dialog(messagebox.showwarning, "FILE_READ_ERR")
                     # re-enable loading data
                     self.data_sec.load_data_button["state"] = tk.ACTIVE
 
@@ -372,11 +363,9 @@ class ClassifierTool(tk.Frame):
                     OSError, IOError, KeyError,
                     TypeError, ValueError, XLRDError
             ):
-                tk.messagebox.showwarning(
-                    title="File Read Error",
-                    message="Unable to read file. \nThe file may have been \
-corrupted, deleted, or renamed since being selected."
-                )
+                self.dlib.dialog(
+                    messagebox.showwarning, "FILE_READ_ERR_AFTER_SUCCESS")
+
                 # reset status and re-enable sheet selection
                 self.status_bar.set_status("Awaiting user input.")
                 self.data_sec.excel_sheet_input["state"] = "readonly"
@@ -446,10 +435,9 @@ corrupted, deleted, or renamed since being selected."
             try:
                 self.sp.clf = self.util.load_classifier(clf_file)
             except (TypeError, KeyError):
-                tk.messagebox.showwarning(
-                    title="Incompatible File",
-                    message="The chosen file is not a compatible AutoClassifier."
-                )
+                self.dlib.dialog(
+                    messagebox.showwarning, "INCOMPATIBLE_NOT_CLF")
+
                 self.status_bar.set_status("Awaiting user input.")
                 self.predict_sec.classifier_load["state"] = tk.ACTIVE
                 return
@@ -533,10 +521,7 @@ corrupted, deleted, or renamed since being selected."
             with open(self.logname, "r") as log:
                 loglines = log.readlines()
         except IOError:
-            tk.messagebox.showerror(
-                title="Report Log Error",
-                message="Unable to generate report: logfile inaccessible."
-            )
+            self.dlib.dialog(messagebox.showerror, "REPORT_GENERATE_ERROR")
 
         for line in reversed(loglines):
             if line == "---\n":
@@ -576,17 +561,11 @@ corrupted, deleted, or renamed since being selected."
         # pairplot generation fails beyond 92 variables
         if len(features.columns) > 25:
             if len(features.columns) > 92:
-                tk.messagebox.showwarning(
-                    title="Pairplot Overload",
-                    message="Due to software limitations, a pairplot will not \
-be generated."
-                )
+                self.dlib.dialog(
+                    messagebox.showwarning, "NO_PAIRPLOT_OVERLOAD")
+
             else:
-                tk.messagebox.showwarning(
-                    title="Pairplot Size",
-                    message="Due to the number of variables, a pairplot will \
-not be generated."
-                )
+                self.dlib.dialog(messagebox.showwarning, "NO_PAIRPLOT_USELESS")
             self.predict_sec.pairplot_sec.disable_buttons()
             return
         # check if pairplot exists and make sure it's closed if it does
@@ -651,18 +630,13 @@ not be generated."
             try:
                 predict = self.sp.predict_AC(self.sp.clf, features, status_cb)
             except (ValueError,  KeyError) as err:
-                message = (
-                    "The classifier expects different number of features than \
-        selected."
+                problem = (
+                    "FEATURE_ERR_NUM"
                     if isinstance(err, ValueError)
                     else
-                    "Given feature names do not match those expected by the \
-        classfier"
+                    "FEATURE_ERR_NAMES"
                 )
-                tk.messagebox.showerror(
-                    title="Feature Data Error",
-                    message=message
-                )
+                self.dlib.dialog(messagebox.showerror, problem)
                 # finish updating status
                 self.status_bar.progress["value"] = 100
                 time.sleep(0.2)
@@ -721,27 +695,19 @@ not be generated."
         if len(
             self.data_sec.col_select_panel.sel_contents.get(0, tk.END)
         ) <= 0:
-            tk.messagebox.showwarning(
-                title="No Data Columns Selected",
-                message="Please select at least one feature column."
-            )
+            self.dlib.dialog(messagebox.showwarning, "NO_COLUMNS_SELECTED")
             return
 
         # check if user is overwriting and make sure they're ok with it
         if self.predict_sec.output_save["state"] != tk.DISABLED:
-            if not tk.messagebox.askokcancel(
-                title="Overwrite Warning",
-                message="This will delete unsaved prediction results."
-            ):
+            if not self.dlib.dialog(
+                    messagebox.askokcancel, "PREDICTION_OVERWRITE"):
                 return
 
         # check if file still exists
         if not os.path.exists(self.sp.data_file):
-            tk.messagebox.showwarning(
-                title="File Read Error",
-                message="Unable to read file. \nThe file may have been \
-corrupted, deleted, or renamed since being selected."
-            )
+            self.dlib.dialog(
+                messagebox.showwarning, "FILE_READ_ERR_AFTER_SUCCESS")
             return
 
         self.get_selected_cols()
@@ -761,7 +727,7 @@ corrupted, deleted, or renamed since being selected."
 
     def open_data_tool(self):
         """Open the data preparation tool."""
-        self.seq_prep_win = DataPreparationTool(
+        self.data_win = DataPreparationTool(
             self, self, self.tempdir, self.util)
 
     def open_nans(self):
@@ -863,6 +829,8 @@ corrupted, deleted, or renamed since being selected."
             "pairplot": "Pairplot",
             "report": "Training Report",
             "output": "Prediction Output",
+            "bold_results": "BOLD Data",
+            "merged_results": "Merged Data",
             "filtered_data": "Filtered Data",
             "raw_fasta": "Unaligned Fasta",
             "fasta_align": "Aligned Fasta"
@@ -880,6 +848,8 @@ corrupted, deleted, or renamed since being selected."
             "pairplot": graphtypes,
             "report": reportypes,
             "output": outputtypes,
+            "bold_results": outputtypes,
+            "merged_results": outputtypes,
             "filtered_data": outputtypes,
             "raw_fasta": fastatypes,
             "fasta_align": fastatypes
@@ -889,6 +859,8 @@ corrupted, deleted, or renamed since being selected."
             "pairplot": ".png",
             "report": ".txt",
             "output": ".csv",
+            "bold_results": ".csv",
+            "merged_results": ".csv",
             "filtered_data": ".csv",
             "raw_fasta": ".fasta",
             "fasta_align": ".fasta"
@@ -898,18 +870,22 @@ corrupted, deleted, or renamed since being selected."
             "pairplot": self.predict_sec.pairplot_sec.button_save,
             "report": self.train_sec.report_sec.button_save,
             "output": self.predict_sec.output_save,
-            "filtered_data": self.seq_prep_win.data_sec.filtered_sec.button_save,
-            "raw_fasta": self.seq_prep_win.data_sec.fasta_sec.button_save,
-            "fasta_align": self.seq_prep_win.data_sec.align_save_button
+            "bold_results": self.data_win.get_data_sec.save_bold_button,
+            "merged_results": self.data_win.get_data_sec.save_merge_button,
+            "filtered_data": self.data_win.data_sec.filtered_sec.button_save,
+            "raw_fasta": self.data_win.data_sec.fasta_sec.button_save,
+            "fasta_align": self.data_win.data_sec.align_save_button
         }
         tempfiles = {
             "cm": self.cm,
             "pairplot": self.pairplot,
             "report": self.report,
             "output": self.output,
-            "filtered_data": self.seq_prep_win.sequence_filtered,
-            "raw_fasta": self.seq_prep_win.fasta,
-            "fasta_align": self.seq_prep_win.fasta_align
+            "bold_results": self.data_win.sequence_raw,
+            "merged_results": self.data_win.merged_raw,
+            "filtered_data": self.data_win.sequence_filtered,
+            "raw_fasta": self.data_win.fasta,
+            "fasta_align": self.data_win.fasta_align
         }
 
         # ----- threaded function -----
@@ -922,23 +898,22 @@ corrupted, deleted, or renamed since being selected."
                 item (str): Identifier for which item to save.
                 location (str): Path to the location to save to.
             """
-            # if the item's the prediction output we need to convert it to what
-            # type the user wants
-            extension = os.path.splitext(location)[1]
-            if item == "output" and extension == ".tsv":
-                with open(tempfiles[item].name, "r") as csvin, \
-                        open(location, "w") as tsvout:
-                    csvin = csv.reader(csvin)
-                    tsvout = csv.writer(tsvout, delimiter='\t')
+            # check if user wants to translate between csv and tsv
+            in_ext = os.path.splitext(tempfiles[item].name)[1]
+            out_ext = os.path.splitext(location)[1]
+            if (in_ext != out_ext) and (out_ext in (".csv", ".tsv")):
+                self.util.get_data(tempfiles[item].name).to_csv(
+                    location,
+                    sep=('\t' if out_ext == ".tsv" else ","),
+                    index=False
+                )
+            else:
+                # if user chose some other extension, just give them csv
+                # because I can't be bothered to infer atypical delimitation
+                # standards
 
-                    for row in csvin:
-                        tsvout.writerow(row)
-
-            # if user chose some other extension, we're just giving them csv
-            # because I can't be bothered to infer their preference
-
-            # otherwise, copy the appropriate file
-            shutil.copy(tempfiles[item].name, location)
+                # otherwise, copy the appropriate file
+                shutil.copy(tempfiles[item].name, location)
 
             # reset buttons and status
             buttons[item]["state"] = tk.ACTIVE
@@ -1005,10 +980,10 @@ corrupted, deleted, or renamed since being selected."
             Train the classifier in a thread.
 
             Args:
-                on_finish (func): Function to call when complete. Primarily used
-                    for popup progressbar.
-                status_cb (func): Function to call to update status. Primarily used
-                    for popup progressbar.
+                on_finish (func): Function to call when complete. Primarily
+                    used for popup progressbar.
+                status_cb (func): Function to call to update status. Primarily
+                    used for popup progressbar.
             """
             # set status and progress for user's sake
             self.status_bar.progress["value"] = 0
@@ -1057,25 +1032,16 @@ corrupted, deleted, or renamed since being selected."
         if len(
             self.data_sec.col_select_panel.sel_contents.get(0, tk.END)
         ) <= 0:
-            tk.messagebox.showwarning(
-                title="No Data Columns Selected",
-                message="Please select at least one feature column."
-            )
+            self.dlib.dialog(messagebox.showwarning, "NO_COLUMNS_SELECTED")
             return
         if self.train_sec.known_select.get() in self.get_selected_cols():
-            tk.messagebox.showwarning(
-                title="Known Class And Feature Columns Overlap",
-                message="Class column must not be a selected feature column."
-            )
+            self.dlib.dialog(
+                messagebox.showwarning, "ERR_OVERLAP_FEATURES_CLASS")
             return
 
         # check if file still exists
         if not os.path.exists(self.sp.data_file):
-            tk.messagebox.showwarning(
-                title="File Read Error",
-                message="Unable to read file. \nThe file may have been \
-corrupted, deleted, or renamed since being selected."
-            )
+            self.dlib.dialog(messagebox.showwarning, "FILE_READ_ERR")
             return
 
         # get multirun setting
@@ -1115,12 +1081,11 @@ corrupted, deleted, or renamed since being selected."
         try:
             self.util.view_open_file(item)
         except OSError:
-            if tk.messagebox.askokcancel(
-                title="No Default Program",
-                message="The file could not be opened becase there is no \
-default program associated with the filetype <{}>. \nAn explorer window with \
-the file selected will be opened so you may select a program.".format(
-                    os.path.splitext(item)[1]),
-                icon='warning'
+
+            if self.dlib.dialog(
+                messagebox.askokcancel,
+                "NO_DEFAULT_PROGRAM",
+                form=os.path.splitext(item)[1],
+                icon="warning"
             ):
                 subprocess.Popen('explorer /select,{}'.format(item))

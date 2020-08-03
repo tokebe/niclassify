@@ -1,0 +1,82 @@
+{
+    "OVERWRITE_CLF": {
+        "title": "Overwrite Warning",
+        "message": "This will delete unsaved classifier and results."
+    },
+    "EXCEL_READ_ERR": {
+        "title": "Excel Read Error",
+        "message": "Unable to read excel file. \nThe file may be corrupted, or otherwise unable to be read."
+    },
+    "FILE_READ_ERR": {
+        "title": "File Read Error",
+        "message": "Unable to read specified file. \nThe file may be corrupted, invalid or otherwise unable to be read."
+    },
+    "FILE_READ_ERR_AFTER_SUCCESS": {
+        "title": "File Read Error",
+        "message": "Unable to read file. \nThe file may have been corrupted, deleted, or renamed since being selected."
+    },
+    "INCOMPATIBLE_NOT_CLF": {
+        "title": "Incompatible File",
+        "message": "The chosen file is not a compatible AutoClassifier."
+    },
+    "REPORT_GENERATE_ERR": {
+        "title": "Report Log Error",
+        "message": "Unable to generate report: logfile inaccessible."
+    },
+    "NO_PAIRPLOT_OVERLOAD": {
+        "title": "Pairplot Overload",
+        "message": "Due to software limitations, a pairplot will not be generated."
+    },
+    "NO_PAIRPLOT_USELESS": {
+        "title": "Pairplot Size",
+        "message": "Due to the number of variables, a pairplot will not be generated."
+    },
+    "FEATURE_ERR_NUM": {
+        "title": "Feature Data Error",
+        "message": "The classifier expects different number of features than selected."
+    },
+    "FEATURE_ERR_NAMES": {
+        "title": "Feature Data Error",
+        "message": "Given feature names do not match those expected by the classfier."
+    },
+    "NO_COLUMNS_SELECTED": {
+        "title": "No Data Columns Selected",
+        "message": "Please select at least one feature column."
+    },
+    "PREDICTION_OVERWRITE": {
+        "title": "Overwrite Warning",
+        "message": "This will delete unsaved prediction results."
+    },
+    "ERR_OVERLAP_FEATURES_CLASS": {
+        "title": "Known Class And Feature Columns Overlap",
+        "message": "Class column must not be a selected feature column."
+    },
+    "SEQUENCE_OVERWRITE": {
+        "title": "Overwrite Warning",
+        "message": "You've already loaded custom sequence data. Are you sure?"
+    },
+    "INVALID_SEQUENCE_DATA": {
+        "title": "Invalid data file",
+        "message": "Selected data file does not contain required columns.\nPlease see help document for a list of required columns with exact names."
+    },
+    "LOW_CLASS_COUNT": {
+        "title": "Low Classification Count",
+        "message": "Only {} observations were succesfully classified by online search. This may result in an inaccurate classifier if used for training.\nAdditional manual classification, if possible, is recommended."
+    },
+    "BOLD_NO_OBSERVATIONS": {
+        "title": "No Observations Found",
+        "message": "No observations were found. Please check your search terms."
+    },
+    "MISSING_SEARCH_TERMS": {
+        "title": "Missing Search Term(s)",
+        "message": "Please fill in both search terms before requesting data."
+    },
+    "BOLD_SEARCH_ERROR": {
+        "title": "Connection Error",
+        "message": "There was an error searching BOLD. \nPlease check your connection and the status of the BOLD servers."
+    },
+    "BOLD_FILE_ERROR": {
+        "title": "Download Error",
+        "message": "Download from BOLD returned an erroneous file, please try again."
+    },
+}

@@ -19,7 +19,7 @@ class TwoColumnSelect(tk.Frame):
 
     def __init__(self, parent, *args, **kwargs):
         """
-        Instantiate the interface.
+        Initialize the interface.
 
         Args:
             parent (Frame): Whatever's holding this interface.
@@ -207,7 +207,7 @@ class DataPanel(tk.LabelFrame):
 
     def __init__(self, parent, app, *args, **kwargs):
         """
-        Instantiate the DataPanel.
+        Initialize the DataPanel.
 
         Args:
             parent (Frame): Whatever's holding the DataPanel.
@@ -241,7 +241,6 @@ class DataPanel(tk.LabelFrame):
             side=tk.LEFT, fill=tk.X, padx=1, pady=1, expand=True)
 
         # excel sheet selection
-        # TODO grey out unless opened file is excel
         self.excel_label = tk.Label(
             self,
             text="Specify Excel Sheet:")
@@ -296,7 +295,7 @@ class OperationsPanel(tk.LabelFrame):
 
     def __init__(self, parent,  *args, **kwargs):
         """
-        Instantiate the panel.
+        Initialize the panel.
 
         Args:
             parent (Frame): Whatever's holding the panel.
@@ -331,7 +330,7 @@ class TrainPanel(OperationsPanel):
     """
 
     def __init__(self, parent, app, *args, **kwargs):
-        """Instantiate the panel.
+        """Initialize the panel.
 
         Args:
             parent (Frame): Whatever's holding the panel.
@@ -347,7 +346,6 @@ class TrainPanel(OperationsPanel):
             text="Select Known Class Column:")
         self.known_select_label.pack(anchor=tk.W)
         # combobox (see top todo)
-        # TODO highlight text red if invalid
         self.known_select = ttk.Combobox(
             self,
             height=10,
@@ -450,7 +448,7 @@ class PredictPanel(OperationsPanel):
 
     def __init__(self, parent, app, *args, **kwargs):
         """
-        Instantiate the Panel.
+        Initialize the Panel.
 
         Args:
             parent (Frame): Whatever's holding the Panel.
@@ -512,7 +510,7 @@ class StatusBar(tk.Frame):
     """
 
     def __init__(self, parent, app, *args, **kwargs):
-        """Instantiate the statusbar.
+        """Initialize the statusbar.
 
         Args:
             parent (Frame): Whatever's holding the statusbar.

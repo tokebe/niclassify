@@ -20,12 +20,12 @@ from tkui.clftool import ClassifierTool
 matplotlib.use('Agg')  # this makes threading not break
 
 # NOW
-# TODO refactor stuff to not suck
-#   move all dialog strings to a json or something to load at startup
-#   look at each function and see if there's a way to improve it
-#   start with save_item
+# TODO make a new module for getting title/message for dialogs, make json
+# can just be functions replacing the message functions, will make things easy
 # TODO look for everywhere a file is interacted with and add failure warnings
 # TODO do the same for web requests
+# TODO see if you can increase timeout time for requests
+# TODO misc. todo's throughout files
 
 # LATER
 # TODO implement matrix and measures generation

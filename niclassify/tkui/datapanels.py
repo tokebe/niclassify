@@ -1,3 +1,4 @@
+"""Panel structures used in the data tool window."""
 import tkinter as tk
 
 from tkinter import ttk
@@ -6,8 +7,18 @@ from .elements import VS_Pair
 
 
 class RetrievalPanel(ttk.LabelFrame):
+    """Panel containing data retrieval interface."""
 
     def __init__(self, parent, app, *args, **kwargs):
+        """
+        Initialize the panel.
+
+        Note parent and app should be the same in the normal use case.
+
+        Args:
+            parent (Frame): The container for this panel.
+            app (TopLevel): The program containing the button functions.
+        """
         super().__init__(parent, *args, **kwargs)
 
         self.app = app
@@ -48,6 +59,29 @@ class RetrievalPanel(ttk.LabelFrame):
         )
         self.data_lookup.pack(expand=True, fill=tk.X, padx=1, pady=1)
 
+        self.util_button_sec = tk.Frame(
+            self.search_sec
+        )
+        self.util_button_sec.pack(fill=tk.X, expand=True)
+
+        self.merge_bold_button = tk.Button(
+            self.util_button_sec,
+            text="Add To Merge",
+            command=lambda: self.app.merge_sequence_data(bold=True),
+            state=tk.DISABLED
+        )
+        self.merge_bold_button.pack(
+            expand=True, fill=tk.BOTH, side=tk.RIGHT, padx=1, pady=1)
+
+        self.save_bold_button = tk.Button(
+            self.util_button_sec,
+            text="Save Results",
+            command=lambda: self.app.app.save_item("bold_results"),
+            state=tk.DISABLED
+        )
+        self.save_bold_button.pack(
+            expand=True, fill=tk.BOTH, side=tk.RIGHT, padx=1, pady=1)
+
         self.load_sec = ttk.LabelFrame(
             self,
             text="Custom Data",
@@ -64,16 +98,33 @@ class RetrievalPanel(ttk.LabelFrame):
 
         self.merge_button = tk.Button(
             self.load_sec,
-            text="Merge with BOLD Data",
+            text="Add to Merge",
             command=self.app.merge_sequence_data,
             state=tk.DISABLED
         )
         self.merge_button.pack(expand=True, fill=tk.BOTH, padx=1, pady=1)
 
+        self.save_merge_button = tk.Button(
+            self.load_sec,
+            text="Save Merged File",
+            command=lambda: self.app.app.save_item("merged_results"),
+            state=tk.DISABLED
+        )
+        self.save_merge_button.pack(expand=True, fill=tk.BOTH, padx=1, pady=1)
+
 
 class PreparationPanel(ttk.LabelFrame):
+    """Panel containing the data preparation interface."""
 
     def __init__(self, parent, app, *args, **kwargs):
+        """Initialize the panel.
+
+        Note that parent and app should be the same in the normal use case.
+
+        Args:
+            parent (Frame): The container for this panel.
+            app (TopLevel): The program containing functions for the buttons.
+        """
         super().__init__(parent, *args, **kwargs)
 
         self.app = app
@@ -165,8 +216,6 @@ class PreparationPanel(ttk.LabelFrame):
         self.ref_geo_select["values"] = self.app.get_geographies()
         self.ref_geo_select.set("Continental US")
         self.ref_geo_select.pack(fill=tk.X)
-
-        # TODO put either a selector or an input here depending on the reqs.
 
         self.data_prep = tk.Button(
             self,

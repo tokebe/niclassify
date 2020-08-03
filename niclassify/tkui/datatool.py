@@ -1,29 +1,25 @@
-import csv
-import json
-import matplotlib
+"""
+Data preparation tool window.
+
+Used exclusively in tandem with the classifer tool, which handles some key
+functions such as access to the inner-layer StandardProgram.
+"""
 import os
 import requests
 import shutil
-import subprocess
-import threading
-import tempfile
-import time
 
-import matplotlib.pyplot as plt
+import tempfile
+
+
 import pandas as pd
 import tkinter as tk
 
-from joblib import dump
 from tkinter import filedialog
-from tkinter import ttk
-from xlrd import XLRDError
+from tkinter import messagebox
 
 from .datapanels import RetrievalPanel, PreparationPanel
-from .elements import VS_Pair
 from .smallwindows import ProgressPopup
 from .threadwrap import threaded
-
-# TODO add check and warning for unmerged data
 
 
 class DataPreparationTool(tk.Toplevel):
@@ -46,7 +42,9 @@ class DataPreparationTool(tk.Toplevel):
         self.tempdir = tempdir
         # tempfiles
         self.sequence_raw = None
+        self.sequence_previous = None
         self.user_sequence_raw = None
+        self.user_sequence_previous = None
         self.merged_raw = None
         self.sequence_filtered = None
         self.fasta = None
@@ -54,12 +52,8 @@ class DataPreparationTool(tk.Toplevel):
         self.delim = None
 
         self.title("Sequence Data Tool")
-        self.panels = tk.Frame(self)
-        self.panels.pack(fill=tk.BOTH, expand=True)
 
-        # stop main window interaction
-        self.grab_set()
-
+        # intialize UI panels
         self.get_data_sec = RetrievalPanel(
             self,
             self,
@@ -159,13 +153,8 @@ class DataPreparationTool(tk.Toplevel):
             on_finish()
 
             # advise the user to check the alignment
-            tk.messagebox.showinfo(
-                parent=self,
-                title="Alignment Complete",
-                message="The sequence alignment is complete. \nIt is \
-recommended that you review the alignment file and edit it as necessary. \
-\nPlease load the new file after making any changes."
-            )
+            self.app.dlib.dialog(
+                messagebox.showinfo, "ALIGNMENT_COMPLETE", parent=self)
         # ----- end threaded function -----
 
         # disable buttons by opening progress bar
@@ -182,10 +171,23 @@ recommended that you review the alignment file and edit it as necessary. \
         )
 
     def get_geographies(self):
+        """
+        Return a list of all geographies.
+
+        Returns:
+            list: All configured geographies.
+
+        """
         return sorted(self.util.get_geographies())
         # return self.util.get_geographies()
 
     def load_item(self, item):
+        """
+        Load an item into the program.
+
+        Args:
+            item (str): key for which item to load.
+        """
         self.app.status_bar.set_status("Awaiting user file selection...")
 
         filetypes = {
@@ -234,16 +236,15 @@ recommended that you review the alignment file and edit it as necessary. \
 
         # check if user is overwriting and make sure they're ok with it
         if self.user_sequence_raw is not None:
-            if not tk.messagebox.askokcancel(
-                title="Overwrite Warning",
-                message="You've already loaded custom sequence data. Are you \
-sure?"
-            ):
+            if not self.app.dlib.dialog(
+                    messagebox.askokcancel, "SEQUENCE_OVERWRITE", parent=self):
                 self.app.status_bar.set_status("Awaiting user input.")
                 return
 
-        # prompt the user for the classifier file
-        # TODO ask if user wants to keep current merged file
+            # keep old data in case user wants to merge
+            self.user_sequence_previous = self.user_sequence_raw
+
+        # prompt the user for the sequence file
         file = filedialog.askopenfilename(
             title="Open Data File",
             initialdir=os.path.realpath(
@@ -264,11 +265,8 @@ sure?"
         self.app.status_bar.set_status("Checking user sequence file...")
         data_cols = self.util.get_data(file).columns.values.tolist()
         if not all(r in data_cols for r in req_cols):
-            tk.messagebox.showwarning(
-                title="Invalid data file",
-                message="Selected data file does not contain required columns.\
-\nPlease see help document for a list of required columns with exact names."
-            )
+            self.app.dlib.dialog(
+                messagebox.showwarning, "INVALID_SEQUENCE_DATA", parent=self)
             self.app.status_bar.set_status("Awaiting user input.")
             return
 
@@ -278,62 +276,112 @@ sure?"
         self.app.status_bar.set_status("Awaiting user input.")
 
         # conditionally enable merge data button
-        if self.sequence_raw is not None:
+        if (self.sequence_raw is not None
+                or self.user_sequence_previous is not None):
             self.get_data_sec.merge_button.config(state=tk.ACTIVE)
 
         # enable alignment button
         self.data_sec.align_button["state"] = tk.ACTIVE
 
-    def merge_sequence_data(self):
-        # TODO thread this with a progress bar
+    def merge_sequence_data(self, bold=False):
+        """
+        Merge multiple sequence files.
 
-        if self.merged_raw is not None:
-            answer = tk.messagebox.askyesnocancel(
-                title="Existing Merged Data",
-                message="Merged data already exists. \nDo you wish to merge \
-additional data? Selecting 'No' will Merge current user data with BOLD data, \
-overwriting previous merge."
+        Args:
+            bold (bool, optional): Denotes merging BOLD search results.
+                Defaults to False.
+        """
+        # ----- threaded function -----
+        @threaded
+        def _merge_sequence_data(on_finish):
+            if self.merged_raw is not None:
+                if bold:
+                    answer = self.app.dlib.dialog(
+                        messagebox.askyesnocancel,
+                        "MESSAGE_MERGE_BOLD",
+                        parent=self
+                    )
+                else:
+                    answer = self.app.dlib.dialog(
+                        messagebox.askyesnocancel,
+                        "EXISTING_MERGE_USER",
+                        parent=self
+                    )
+
+                if answer is None:
+                    return
+                elif answer is True:
+                    bold_data = self.util.get_data(self.merged_raw.name)
+                    if bold:
+                        user_data = self.util.get_data(self.sequence_raw.name)
+                    else:
+                        user_data = self.util.get_data(self.user_sequence_raw)
+                else:
+                    bold_data = self.util.get_data(self.sequence_raw.name)
+                    if bold:
+                        user_data = self.util.get_data(
+                            self.sequence_previous.name)
+                    else:
+                        user_data = self.util.get_data(self.user_sequence_raw)
+
+            else:
+                if self.sequence_raw is None:
+                    bold_data = self.util.get_data(self.user_sequence_previous)
+                else:
+                    bold_data = self.util.get_data(self.sequence_raw.name)
+                if bold:
+                    user_data = self.util.get_data(self.sequence_previous.name)
+                else:
+                    user_data = self.util.get_data(self.user_sequence_raw)
+
+            # merge the two sets
+            merged = pd.concat(
+                (bold_data, user_data),
+                axis=0,
+                ignore_index=True,
+                sort=False
             )
 
-            if answer is None:
-                return
-            elif answer is True:
-                bold_data = self.util.get_data(self.merged_raw.name)
-            else:
-                bold_data = self.util.get_data(self.sequence_raw.name)
+            # create merged tempfile
+            self.merged_raw = tempfile.NamedTemporaryFile(
+                mode="w+",
+                prefix="merged_seq_unfiltered_",
+                suffix=".tsv",
+                delete=False,
+                dir=self.tempdir.name
+            )
+            self.merged_raw.close()
 
-        else:
-            bold_data = self.util.get_data(self.sequence_raw.name)
+            merged.to_csv(self.merged_raw.name, sep="\t", index=False)
 
-        user_data = self.util.get_data(self.user_sequence_raw)
+            self.get_data_sec.save_merge_button["state"] = tk.ACTIVE
 
-        # merge the two sets
-        merged = pd.concat(
-            (bold_data, user_data),
-            axis=0,
-            ignore_index=True,
-            sort=False
+            # re-enable buttons
+            self.get_data_sec.merge_bold_button["state"] = tk.ACTIVE
+            self.get_data_sec.merge_button["state"] = tk.ACTIVE
+
+            on_finish()
+
+            self.app.dlib.dialog(
+                messagebox.showinfo, "MERGE_COMPLETE", parent=self)
+
+        # ----- end threaded function -----
+
+        # disable buttons
+        self.get_data_sec.merge_bold_button["state"] = tk.DISABLED
+        self.get_data_sec.merge_button["state"] = tk.DISABLED
+
+        # make popup to keep user from pressing buttons and breaking it
+        progress = ProgressPopup(
+            self,
+            "Data Merge",
+            "Merging data..."
         )
 
-        # create merged tempfile
-        self.merged_raw = tempfile.NamedTemporaryFile(
-            mode="w+",
-            prefix="merged_seq_unfiltered_",
-            suffix=".tsv",
-            delete=False,
-            dir=self.tempdir.name
-        )
-        self.merged_raw.close()
-
-        merged.to_csv(self.merged_raw.name, sep="\t", index=False)
-
-        tk.messagebox.showinfo(
-            parent=self,
-            title="Merge Completed",
-            message="Custom and BOLD data merged successfully."
-        )
+        _merge_sequence_data(progress.complete)
 
     def prep_sequence_data(self):
+        """Prepare aligned sequence data."""
         # ----- threaded function -----
         @threaded
         def _prep_sequence_data(on_finish, status_cb):
@@ -369,19 +417,17 @@ overwriting previous merge."
 
             # TODO change this threshold to something that makes sense
             if n_classified < 500:
-                tk.messagebox.showwarning(
-                    parent=self,
-                    title="Low Classification Count",
-                    message="Only {} observations were succesfully classified \
-by online search. This may result in an inaccurate classifier if used for \
-training.\nAdditional manual classification, if possible, is recommended.\
-".format(n_classified)
+                self.app.dlib.dialog(
+                    messagebox.showwarning,
+                    "LOW_CLASS_COUNT",
+                    form=n_classified,
+                    parent=self
                 )
-            tk.messagebox.showinfo(
-                parent=self,
-                title="Data Preparation Complete",
-                message="{} observations were classified by online lookup.\
-\nData is ready for use with classifier tool.".format(n_classified)
+            self.app.dlib.dialog(
+                messagebox.showinfo,
+                "DATA_PREP_COMPLETE",
+                form=n_classified,
+                parent=self
             )
 
             on_finish()
@@ -398,6 +444,7 @@ training.\nAdditional manual classification, if possible, is recommended.\
         _prep_sequence_data(progress.complete, progress.set_status)
 
     def retrieve_seq_data(self):
+        """Search for sequence data from BOLD."""
         # ----- threaded function -----
         @threaded
         def _retrieve_seq_data(on_finish):
@@ -407,6 +454,9 @@ training.\nAdditional manual classification, if possible, is recommended.\
             Args:
                 on_finish (func): Function to call on completion.
             """
+            # keep old search file if it exits
+            if self.sequence_raw is not None:
+                self.sequence_previous = self.sequence_raw
             # set up tempfile for download
             # create the tempfile
             self.sequence_raw = tempfile.NamedTemporaryFile(
@@ -423,12 +473,8 @@ training.\nAdditional manual classification, if possible, is recommended.\
                 # retrieve the data
                 self.app.sp.retrieve_sequence_data()
             except requests.exceptions.RequestException:
-                tk.messagebox.showerror(
-                    parent=self,
-                    title="Connection Error",
-                    message="There was an error searching BOLD. \nPlease check \
-    your connection and the status of the BOLD servers."
-                )
+                self.app.dlib.dialog(
+                    messagebox.showerror, "BOLD_SEARCH_ERROR", parent=self)
                 on_finish()
                 return
 
@@ -436,11 +482,8 @@ training.\nAdditional manual classification, if possible, is recommended.\
             try:
                 nlines = self.util.get_data(self.sequence_raw.name).shape[0]
             except pd.errors.ParserError:
-                tk.messagebox.showerror(
-                    parent=self,
-                    title="Download Error",
-                    message="Download from BOLD failed, please try again."
-                )
+                self.app.dlib.dialog(
+                    messagebox.showerror, "BOLD_FILE_ERROR", parent=self)
                 on_finish()
                 return
 
@@ -449,49 +492,45 @@ training.\nAdditional manual classification, if possible, is recommended.\
                 self.get_data_sec.merge_button.config(state=tk.ACTIVE)
 
             self.data_sec.align_button["state"] = tk.ACTIVE
+            self.get_data_sec.save_bold_button["state"] = tk.ACTIVE
+            if (self.merged_raw is not None
+                    or self.sequence_previous is not None):
+                self.get_data_sec.merge_bold_button["state"] = tk.ACTIVE
 
             on_finish()
 
             if nlines == 0:
-                tk.messagebox.showwarning(
-                    parent=self,
-                    title="No Observations Found",
-                    message="No observations were found. Please check your search \
-    terms."
+                self.app.dlib.dialog(
+                    messagebox.showwarning,
+                    "BOLD_NO_OBSERVATIONS",
+                    parent=self
                 )
+
                 return
 
             # tell user it worked/how many lines downloaded
-            tk.messagebox.showinfo(
-                parent=self,
-                title="BOLD Lookup Complete",
-                message="BOLD lookup returned {} observations.".format(nlines)
-            )
+            self.app.dlib.dialog(
+                messagebox.showinfo, "BOLD_SEARCH_COMPLETE", parent=self)
         # ----- end threaded function -----
 
         self.app.sp.geo = self.get_data_sec.geo_input.get()
         self.app.sp.taxon = self.get_data_sec.taxon_input.get()
 
         if (self.app.sp.geo is None or self.app.sp.taxon is None):
-            tk.messagebox.showwarning(
-                title="Missing Search Term(s)",
-                message="Please fill in both search terms before requesting \
-data."
-            )
+            self.app.dlib.dialog(
+                messagebox.showwarning, "MISSING_SEARCH_TERMS", parent=self)
             return
         elif len(self.app.sp.geo) == 0 or len(self.app.sp.taxon) == 0:
-            tk.messagebox.showwarning(
-                title="Missing Search Term(s)",
-                message="Please fill in both search terms before requesting \
-data."
-            )
+            self.app.dlib.dialog(
+                messagebox.showwarning, "MISSING_SEARCH_TERMS", parent=self)
+
             return
 
-        if not tk.messagebox.askokcancel(
-            parent=self,
-            title="Confirm Search Terms",
-            message="Please confirm the search terms: \
-\nGeography: {} \nTaxonomy: {}".format(self.app.sp.geo, self.app.sp.taxon)
+        if not self.app.dlib.dialog(
+            messagebox.askokcancel,
+            "CONFIRM_SEARCH_TERMS",
+            form=(self.app.sp.geo, self.app.sp.taxon),
+            parent=self
         ):
             return
 

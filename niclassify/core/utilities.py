@@ -4,7 +4,6 @@ A set of utilties for handling the creation and application of a classifier.
 Strictly to be used in concert with the rest of the niclassify package.
 """
 try:
-    import csv
     import json
     import logging
     import os
@@ -494,8 +493,6 @@ def save_predictions(metadata, predict, feature_norm, out, predict_prob=None):
     except (KeyError, FileNotFoundError, OSError, IOError):
         raise OSError("output folder creation failed.")
 
-    # TODO keep trying to find ways to not use pd.concat
-
 
 def scale_data(data):
     """
@@ -647,8 +644,7 @@ def write_fasta(data, filename):
 
 
 def align_fasta(infname, outfname, external=None):
-    # TODO potentially support linux/mac
-    # TODO or just change it to stdout in a tkinter for easier support
+    # TODO support for linux/mac
     """
     Generate an alignment for the given fasta file.
 
@@ -676,6 +672,16 @@ def align_fasta(infname, outfname, external=None):
 
 
 def delimit_species_GMYC(infname, outfname, external=None):
+    """
+    Delimit species by nucleotide sequence using GMYC method.
+
+    Args:
+        infname (str): Input file path.
+        outfname (str): Output file path.
+        external (bool, optional): Run delimitation concurrently in an external
+            console. Defaults to None.
+    """
+    # TODO support for linux/mac
     r_script_exe = os.path.realpath(
         os.path.join(
             MAIN_PATH, "bin/R/R-Portable/App/R-Portable/bin/Rscript.exe")
@@ -707,7 +713,16 @@ def delimit_species_GMYC(infname, outfname, external=None):
 
 
 def delimit_species_PTP(infname, outfname, external=None):
+    """
+    Delimit species by nucleotide sequence using PTP method.
 
+    Args:
+        infname (str): Input file path.
+        outfname (str): Output file path.
+        external (bool, optional): Run delimitation concurrently in an external
+            console. Defaults to None.
+    """
+    # TODO support for linux/mac
     # STEPS
     # create tree from raxml (save in a tempdir)
     #   you can then access the file with name RAxML_bestTree.<name>
@@ -727,6 +742,13 @@ def delimit_species_PTP(infname, outfname, external=None):
 
 
 def get_geographies():
+    """
+    Return a list of all geographies in regions config file.
+
+    Returns:
+        list: All geography names as str.
+
+    """
     with open(os.path.join(
             MAIN_PATH, "niclassify/core/config/regions.json"), "r") as regions:
         hierarchy = json.load(regions)
@@ -745,9 +767,24 @@ def get_geographies():
 
 
 def get_jurisdictions(species_name):
+    """
+    Get ITIS jurisdictions for a given species.
 
-    tsn_link = "http://www.itis.gov/ITISWebService/services/ITISService/getITISTermsFromScientificName?srchKey="
-    jurisdiction_link = "http://www.itis.gov/ITISWebService/services/ITISService/getJurisdictionalOriginFromTSN?tsn="
+    Args:
+        species_name (str): A binomial species name.
+
+    Returns:
+        dict: A dictionary of jurisdictions and status.
+
+    """
+    tsn_link = (
+        "http://www.itis.gov/ITISWebService/services/ITISService/\
+getITISTermsFromScientificName?srchKey="
+    )
+    jurisdiction_link = (
+        "http://www.itis.gov/ITISWebService/services/ITISService/\
+            getJurisdictionalOriginFromTSN?tsn="
+    )
 
     print("making request...")
     # get TSN
@@ -757,7 +794,7 @@ def get_jurisdictions(species_name):
     # query website and check for error
     response = requests.get(req)  # stream this if it's a large response
     print("got request, parsing...")
-    response.raise_for_status()  # TODO implement handling gui-side
+    response.raise_for_status()
     # get xml tree from response
     tree = ElementTree.fromstring(response.content)
     # get any TSN's
@@ -802,7 +839,16 @@ def get_jurisdictions(species_name):
 
 
 def get_native_ranges(species_name):
+    """
+    Get native ranges from GBIF for a given species.
 
+    Args:
+        species_name (str): A binomial species name.
+
+    Returns:
+        list: A list of native ranges as str.
+
+    """
     code_link = "http://api.gbif.org/v1/species?name="
     records_link = "http://api.gbif.org/v1/species/"
 
@@ -817,7 +863,7 @@ def get_native_ranges(species_name):
     # print("got 1st response")
 
     # search for "taxonID":"gbif:" with some numbers, getting the numbers
-    taxonKey = re.search('(?<="taxonID":"gbif:)\d+', response.text)
+    taxonKey = re.search('(?<="taxonID":"gbif:)\\d+', response.text)
 
     if taxonKey is None:
         # print("no key found")
@@ -848,7 +894,16 @@ def get_native_ranges(species_name):
 
 
 def get_ref_hierarchy(ref_geo):
+    """
+    Get a hierarchy contained in a given reference geography.
 
+    Args:
+        ref_geo (str): A geography name.
+
+    Returns:
+        dict: The hierarchy contained in the reference geography.
+
+    """
     with open(os.path.join(
             MAIN_PATH, "niclassify/core/config/regions.json"), "r") as regions:
         geos = json.load(regions)
@@ -871,7 +926,20 @@ def get_ref_hierarchy(ref_geo):
 
 
 def geo_contains(ref_geo, geo):
+    """
+    Check if a given reference geography contains another geography.
 
+    Args:
+        ref_geo (str): The reference geography.
+        geo (str): The geography expected to be contained within the reference.
+
+    Raises:
+        TypeError: If the reference geography does not exist in the configs.
+
+    Returns:
+        bool: True if geo in ref_geo else False.
+
+    """
     # get the actual hierarchy
     hierarchy = get_ref_hierarchy(ref_geo)
     if hierarchy is None:
@@ -900,6 +968,13 @@ def geo_contains(ref_geo, geo):
 
 
 def make_genetic_measures(infname, outfname=None):
+    """
+    Make the genetic measures to be used for classification.
+
+    Args:
+        infname (str): Input file path.
+        outfname (str, optional): Output file path. Defaults to None.
+    """
     print("reading data...")
     aln = AlignIO.read(open(infname), 'fasta')
     print("calculating distances...")
