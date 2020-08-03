@@ -20,8 +20,6 @@ from tkui.clftool import ClassifierTool
 matplotlib.use('Agg')  # this makes threading not break
 
 # NOW
-# TODO make a new module for getting title/message for dialogs, make json
-# can just be functions replacing the message functions, will make things easy
 # TODO look for everywhere a file is interacted with and add failure warnings
 # TODO do the same for web requests
 # TODO see if you can increase timeout time for requests

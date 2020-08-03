@@ -1085,7 +1085,7 @@ class ClassifierTool(tk.Frame):
             if self.dlib.dialog(
                 messagebox.askokcancel,
                 "NO_DEFAULT_PROGRAM",
-                form=os.path.splitext(item)[1],
+                form=(os.path.splitext(item)[1],),
                 icon="warning"
             ):
                 subprocess.Popen('explorer /select,{}'.format(item))

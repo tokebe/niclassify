@@ -78,5 +78,5 @@
     "BOLD_FILE_ERROR": {
         "title": "Download Error",
         "message": "Download from BOLD returned an erroneous file, please try again."
-    },
+    }
 }

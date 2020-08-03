@@ -34,5 +34,5 @@
     "EXISTING_MERGE_USER": {
         "title": "Existing Merged Data",
         "message": "Merged data already exists. \nDo you wish to merge additional data? Selecting 'No' will Merge current user data with BOLD data, overwriting any curerntly merged data."
-    },
+    }
 }

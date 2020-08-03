@@ -21,29 +21,6 @@ from core import utilities
 from tkui.elements import DataPanel, TrainPanel, PredictPanel, StatusBar
 from tkui.utilities import view_open_file
 
-# TODO TOP PRIORITY: RENAME ALL DATA TO FEATURES
-
-# TODO grab your dad to push buttons until something breaks
-# TODO after you've done that see if there are ways to make this whole thing
-# more professional and easily maintainable:
-# - methods that should be combined/deleted/decombined/made private/properties
-# - things that should be objects/objects that should be re-parented
-# - look at a guide for making a good python application or something I guess
-# - prefer to not keep dataframes and do inplace=True when possible
-# - try to make everything more object oriented instead of proceedural
-# - change most functions to take arguments and return things rather than
-# relying on class variables
-# TODO try to optimize idle RAM usage
-# this will be a huge task and will definitely involve rewriting core
-# you'll have to try and keep as little data stored as possible
-# esp. the actual data files.
-# TODO add threading to basically everything
-# TODO add progress bars while doing threading
-# TODO add status updates to everything while doing threading
-# TODO add logging to everything
-# TODO add popup notifications for things such as completing training, etc
-# TODO possible thing to do later: automatic wizard creation
-
 
 class MainApp(tk.Frame):
     def __init__(self, parent, *args, **kwargs):

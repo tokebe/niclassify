@@ -420,13 +420,13 @@ class DataPreparationTool(tk.Toplevel):
                 self.app.dlib.dialog(
                     messagebox.showwarning,
                     "LOW_CLASS_COUNT",
-                    form=n_classified,
+                    form=(n_classified,),
                     parent=self
                 )
             self.app.dlib.dialog(
                 messagebox.showinfo,
                 "DATA_PREP_COMPLETE",
-                form=n_classified,
+                form=(n_classified,),
                 parent=self
             )
 
