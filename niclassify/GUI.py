@@ -20,7 +20,8 @@ from tkui.clftool import ClassifierTool
 matplotlib.use('Agg')  # this makes threading not break
 
 # NOW
-# TODO look for everywhere a file is interacted with and add failure warnings
+# TODO look for everywhere a file is interacted with and add failure warnings]
+# TODO additionally go bak and make all raised exceptions more descriptive
 # TODO do the same for web requests
 # TODO see if you can increase timeout time for requests
 # TODO misc. todo's throughout files

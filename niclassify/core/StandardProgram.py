@@ -162,18 +162,23 @@ class StandardProgram:
         # ensure required folders exist
         utilities.assure_path()
 
-        # set log filename
-        i = 0
-        while os.path.exists(
-            os.path.join(
-                utilities.MAIN_PATH,
-                "output/logs/rf-auto{}.log".format(i)
-            )
-        ):
-            i += 1
+        # # set log filename
+        # i = 0
+        # while os.path.exists(
+        #     os.path.join(
+        #         utilities.MAIN_PATH,
+        #         "output/logs/rf-auto{}.log".format(i)
+        #     )
+        # ):
+        #     i += 1
+        # logname = os.path.join(
+        #     utilities.MAIN_PATH,
+        #     "output/logs/rf-auto{}.log".format(i)
+        # )
+        # set log filename (overwriting previous)
         logname = os.path.join(
             utilities.MAIN_PATH,
-            "output/logs/rf-auto{}.log".format(i)
+            "output/logs/rf-auto{}.log".format(0)
         )
 
         # set up logging
@@ -326,7 +331,8 @@ class StandardProgram:
         return "Introduced"  # this maybe should be NA
 
     def delimit_species(self, method="GMYC", external=None):
-        """Delimit species by their nucleotide sequences.
+        """
+        Delimit species by their nucleotide sequences.
 
         Args:
             method (str, optional): Delimitation method. Defaults to "GMYC".

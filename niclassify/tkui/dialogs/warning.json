@@ -71,12 +71,16 @@
         "title": "Missing Search Term(s)",
         "message": "Please fill in both search terms before requesting data."
     },
-    "BOLD_SEARCH_ERROR": {
+    "BOLD_SEARCH_ERR": {
         "title": "Connection Error",
         "message": "There was an error searching BOLD. \nPlease check your connection and the status of the BOLD servers."
     },
-    "BOLD_FILE_ERROR": {
+    "BOLD_FILE_ERR": {
         "title": "Download Error",
         "message": "Download from BOLD returned an erroneous file, please try again."
+    },
+    "NAN_DUMP_ERR": {
+        "title": "File Save Error",
+        "message": "Unable to save the NANs file due to unknown error.\nPlease ensure the NANs file has not been corrupted."
     }
 }

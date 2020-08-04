@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import tempfile
 import time
+import traceback
 
 import pandas as pd
 import tkinter as tk
@@ -48,6 +49,9 @@ class ClassifierTool(tk.Frame):
         tk.Frame.__init__(self, parent, *args, **kwargs)
 
         self.parent = parent
+
+        # set up error handling for uncaught exceptions
+        self.parent.report_callback_exception = self.uncaught_exception
 
         # set up the inner-layer program and prep log, etc
         self.sp = standard_program(classifier())
@@ -521,7 +525,7 @@ class ClassifierTool(tk.Frame):
             with open(self.logname, "r") as log:
                 loglines = log.readlines()
         except IOError:
-            self.dlib.dialog(messagebox.showerror, "REPORT_GENERATE_ERROR")
+            self.dlib.dialog(messagebox.showerror, "REPORT_GENERATE_ERR")
 
         for line in reversed(loglines):
             if line == "---\n":
@@ -949,12 +953,14 @@ class ClassifierTool(tk.Frame):
         def _save_nans():
             """Save the NaN values to nans.json in a thread."""
             nans = {"nans": self.sp.nans}
-            with open(
-                os.path.join(
+            try:
+                with open(os.path.join(
                     self.util.MAIN_PATH, "niclassify/core/config/nans.json"),
-                "w"
-            ) as nansfile:
-                json.dump(nans, nansfile)
+                    "w"
+                ) as nansfile:
+                    json.dump(nans, nansfile)
+            except IOError:
+                self.dlib.dialog(messagebox.showerror, "NAN_DUMP_ERR")
 
             # reset buttons and status
             self.status_bar.set_status("Awaiting user input.")
@@ -966,6 +972,16 @@ class ClassifierTool(tk.Frame):
         self.data_sec.nan_check["state"] = tk.DISABLED
         # launch thread to save NaN values
         _save_nans()
+
+    def uncaught_exception(self, *args):
+        """Catch exceptions that aren't explicitely caught and report them."""
+        err = traceback.format_exception(*args)
+        messagebox.showerror(
+            title="Uncaught Exception",
+            message="An uncaught exception occured. Traceback:\n\n{}".format(
+                "".join(err)
+            )
+        )
 
     def train_classifier(self):
         """
