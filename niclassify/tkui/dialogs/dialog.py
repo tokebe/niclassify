@@ -55,7 +55,7 @@ class DialogLibrary:
         for name, lib in self.items.items():
             for description, contents in lib.items():
                 if description == desc:
-                    return contents
+                    return (contents, name)
         return None
 
     def dialog(self, diag_type, desc, form=(None,), **kwargs):
@@ -64,7 +64,7 @@ class DialogLibrary:
 
         Args:
             diag_type (func): A tkinter messagebox method.
-            desc (str): The
+            desc (str): The dialog descriptor for content search.
             form (object, optional): A tuple of formatting arguments.
 
         **kwargs:
@@ -74,13 +74,21 @@ class DialogLibrary:
             bool: Return value of the dialog generated.
 
         """
-        contents = self.get(desc)
-        if contents is None:
-            raise KeyError("dialog description not found.")
+        if type(form) != tuple:
+            form = (form,)
+        diag_info = self.get(desc)
+
+        if diag_info is None:
+            raise KeyError("dialog description not found")
+
+        contents = diag_info[0]
 
         dialog = diag_type(
             title=contents["title"],
-            message=contents["message"].format(*form),
+            message="{}\n{}".format(
+                contents["message"].format(*form),
+                "code: {}".format(desc) if diag_info[1] == "error" else ""
+            ),
             **kwargs
         )
         return dialog

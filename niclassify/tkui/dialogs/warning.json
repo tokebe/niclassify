@@ -3,26 +3,6 @@
         "title": "Overwrite Warning",
         "message": "This will delete unsaved classifier and results."
     },
-    "EXCEL_READ_ERR": {
-        "title": "Excel Read Error",
-        "message": "Unable to read excel file. \nThe file may be corrupted, or otherwise unable to be read."
-    },
-    "FILE_READ_ERR": {
-        "title": "File Read Error",
-        "message": "Unable to read specified file. \nThe file may be corrupted, invalid or otherwise unable to be read."
-    },
-    "FILE_READ_ERR_AFTER_SUCCESS": {
-        "title": "File Read Error",
-        "message": "Unable to read file. \nThe file may have been corrupted, deleted, or renamed since being selected."
-    },
-    "INCOMPATIBLE_NOT_CLF": {
-        "title": "Incompatible File",
-        "message": "The chosen file is not a compatible AutoClassifier."
-    },
-    "REPORT_GENERATE_ERR": {
-        "title": "Report Log Error",
-        "message": "Unable to generate report: logfile inaccessible."
-    },
     "NO_PAIRPLOT_OVERLOAD": {
         "title": "Pairplot Overload",
         "message": "Due to software limitations, a pairplot will not be generated."
@@ -30,14 +10,6 @@
     "NO_PAIRPLOT_USELESS": {
         "title": "Pairplot Size",
         "message": "Due to the number of variables, a pairplot will not be generated."
-    },
-    "FEATURE_ERR_NUM": {
-        "title": "Feature Data Error",
-        "message": "The classifier expects different number of features than selected."
-    },
-    "FEATURE_ERR_NAMES": {
-        "title": "Feature Data Error",
-        "message": "Given feature names do not match those expected by the classfier."
     },
     "NO_COLUMNS_SELECTED": {
         "title": "No Data Columns Selected",
@@ -71,16 +43,12 @@
         "title": "Missing Search Term(s)",
         "message": "Please fill in both search terms before requesting data."
     },
-    "BOLD_SEARCH_ERR": {
-        "title": "Connection Error",
-        "message": "There was an error searching BOLD. \nPlease check your connection and the status of the BOLD servers."
+    "CANNOT_TRAIN": {
+        "title": "Not Enough Known Classes",
+        "message": "The data contains fewer than two classes, and cannot be used for training a classifier.\nDid you mean to use this data for prediction with a saved classifier?"
     },
-    "BOLD_FILE_ERR": {
-        "title": "Download Error",
-        "message": "Download from BOLD returned an erroneous file, please try again."
-    },
-    "NAN_DUMP_ERR": {
-        "title": "File Save Error",
-        "message": "Unable to save the NANs file due to unknown error.\nPlease ensure the NANs file has not been corrupted."
+    "NOT_ENOUGH_CLASSES": {
+        "title": "Not Enough Known Classes",
+        "message": "Automatic status lookup returned fewer than 2 status types (native, introduced).\nThis data will not be useable for training without manual status entry to ensure a minimum of 2 status types."
     }
 }

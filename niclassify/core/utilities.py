@@ -613,6 +613,7 @@ def prep_sequence_data(data):
     data["nucleotides"] = data["nucleotides"].astype(str)
 
     # remove rows missing COI-5P in marker_codes
+    data["marker_codes"] = data["marker_codes"].astype(str)  # avoid exceptions
     data = data[data["marker_codes"].str.contains("COI-5P", na=False)]
 
     # remove rows with less than 350 base pairs
@@ -643,7 +644,7 @@ def write_fasta(data, filename):
             file.write("\n")
 
 
-def align_fasta(infname, outfname, external=None):
+def align_fasta(infname, outfname, external=False):
     # TODO support for linux/mac
     """
     Generate an alignment for the given fasta file.
@@ -662,7 +663,7 @@ def align_fasta(infname, outfname, external=None):
 
     print(alignment_call.__str__())
 
-    if external is not None:
+    if external:
         subprocess.run(
             alignment_call.__str__(),
             creationflags=subprocess.CREATE_NEW_CONSOLE
@@ -671,14 +672,15 @@ def align_fasta(infname, outfname, external=None):
         subprocess.Popen(alignment_call.__str__())
 
 
-def delimit_species_GMYC(infname, outfname, external=None):
+def delimit_species_GMYC(infname, outtreefname, outfname, external=False):
     """
     Delimit species by nucleotide sequence using GMYC method.
 
     Args:
         infname (str): Input file path.
+        outtreefname (str): Output tree file path.
         outfname (str): Output file path.
-        external (bool, optional): Run delimitation concurrently in an external
+        external (bool, optional): Run delimitation in an external
             console. Defaults to None.
     """
     # TODO support for linux/mac
@@ -688,16 +690,64 @@ def delimit_species_GMYC(infname, outfname, external=None):
     )
     r_script = os.path.realpath(
         os.path.join(
-            MAIN_PATH, "niclassify/core/delim_spec.r")
+            MAIN_PATH, "niclassify/core/delim_tree.R")
     )
 
-    if external is not None:
+    if external:
+        subprocess.run(
+            '"{}" "{}" "{}" "{}" "{}"'.format(
+                r_script_exe,
+                r_script,
+                infname,
+                outtreefname,
+                outfname
+            ),
+            creationflags=subprocess.CREATE_NEW_CONSOLE
+        )
+    else:
+        subprocess.run(
+            '"{}" "{}" "{}" "{}" "{}"'.format(
+                r_script_exe,
+                r_script,
+                infname,
+                outtreefname,
+                outfname
+            )
+        )
+
+
+def delimit_species_bPTP(infname, outtreefname, outfname, external=False):
+    """
+    Delimit species by nucleotide sequence using bPTP method.
+
+    Args:
+        infname (str): Input file path.
+        outtreefname (str): Output tree file path.
+        outfname (str): Output file path.
+        external (bool, optional): Run delimitation in an external
+            console. Defaults to None.
+    """
+    r_script_exe = os.path.realpath(
+        os.path.join(
+            MAIN_PATH, "bin/R/R-Portable/App/R-Portable/bin/Rscript.exe")
+    )
+    r_script = os.path.realpath(
+        os.path.join(
+            MAIN_PATH, "niclassify/core/delim_tree.R")
+    )
+    bPTP = os.path.realpath(
+        os.path.join(
+            MAIN_PATH, "bin/PTP-master/bin/bPTP.py")
+    )
+
+    # make tree
+    if external:
         subprocess.run(
             '"{}" "{}" "{}" "{}"'.format(
                 r_script_exe,
                 r_script,
                 infname,
-                outfname
+                outtreefname
             ),
             creationflags=subprocess.CREATE_NEW_CONSOLE
         )
@@ -707,38 +757,98 @@ def delimit_species_GMYC(infname, outfname, external=None):
                 r_script_exe,
                 r_script,
                 infname,
-                outfname
+                outtreefname
             )
         )
 
+    if os.stat(outtreefname).st_size == 0:
+        raise ChildProcessError("bPTP Delimitation: Tree gen failed.")
 
-def delimit_species_PTP(infname, outfname, external=None):
-    """
-    Delimit species by nucleotide sequence using PTP method.
+    # delimit species
+    if external:
+        subprocess.run(
+            '"python" "{}" -t "{}" -o "{}" -s 123'.format(
+                bPTP,
+                outtreefname,
+                os.path.dirname(outfname) + "delim",
 
-    Args:
-        infname (str): Input file path.
-        outfname (str): Output file path.
-        external (bool, optional): Run delimitation concurrently in an external
-            console. Defaults to None.
-    """
-    # TODO support for linux/mac
-    # STEPS
-    # create tree from raxml (save in a tempdir)
-    #   you can then access the file with name RAxML_bestTree.<name>
-    # feed into ptp (save the resulting delimitation)
+            ),
+            creationflags=subprocess.CREATE_NEW_CONSOLE
+        )
+    else:
+        subprocess.run(
+            '"python" "{}" -t "{}" -o "{}" -s 123'.format(
+                bPTP,
+                outtreefname,
+                os.path.dirname(outfname) + "delim",
 
-    # make a tempdir for the RAxML output
-    raxfolder = tempfile.TemporaryDirectory()
+            )
+        )
 
-    phylo_call = \
-        "bin/raxmlHPC.exe -m GTRGAMMA -p 12345 -s {} -n rax -w {}".format(
-            infname, raxfolder.name)
+    # read delimitation file and convert to .tsv
+    with open(
+        os.path.dirname(outfname) + "delim.PTPMLPartition.txt",
+        "r"
+    ) as dfile:
+        # read lines of file
+        delim = dfile.readlines()
+        # first line is useless for data capture
+        del delim[0]
 
-    tree = os.path.join(raxfolder.name, "RAxML_bestTree.rax")
+        # grab species and samples
+        species = [
+            re.search("(?<=Species) [0-9]*", d).group()
+            for d in delim[::3]
+        ]
+        samples = [d.strip().split(",") for d in delim[1::3]]
 
-    # TODO looks like you have to package python2 to make this work
-    # we can get back to this later
+        # make two equal-length lists of data in long format
+        species_expanded = []
+        samples_expanded = []
+
+        for sp, sa in {sp: sa for sp, sa in zip(species, samples)}.items():
+            for sample in sa:
+                species_expanded.append(sp)
+                samples_expanded.append(sample)
+
+        # convert to dataframe and save to file
+        pd.DataFrame({
+            "GMYC_spec": species_expanded,
+            "sample_name": samples_expanded
+        }).to_csv(outfname, sep="\t", index=False)
+
+
+def generate_measures(fastafname, delimfname, outfname, external=False):
+    r_script_exe = os.path.realpath(
+        os.path.join(
+            MAIN_PATH, "bin/R/R-Portable/App/R-Portable/bin/Rscript.exe")
+    )
+    r_script = os.path.realpath(
+        os.path.join(
+            MAIN_PATH, "niclassify/core/create_measures.R")
+    )
+    # run script
+    if external:
+        subprocess.run(
+            '"{}" "{}" "{}" "{}" "{}"'.format(
+                r_script_exe,
+                r_script,
+                fastafname,
+                delimfname,
+                outfname
+            ),
+            creationflags=subprocess.CREATE_NEW_CONSOLE
+        )
+    else:
+        subprocess.run(
+            '"{}" "{}" "{}" "{}" "{}"'.format(
+                r_script_exe,
+                r_script,
+                fastafname,
+                delimfname,
+                outfname
+            )
+        )
 
 
 def get_geographies():

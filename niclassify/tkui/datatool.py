@@ -4,7 +4,9 @@ Data preparation tool window.
 Used exclusively in tandem with the classifer tool, which handles some key
 functions such as access to the inner-layer StandardProgram.
 """
+import csv
 import os
+import re
 import requests
 import shutil
 
@@ -16,10 +18,16 @@ import tkinter as tk
 
 from tkinter import filedialog
 from tkinter import messagebox
+from pandas.errors import EmptyDataError, ParserError
 
 from .datapanels import RetrievalPanel, PreparationPanel
 from .smallwindows import ProgressPopup
 from .threadwrap import threaded
+
+# TODO change how measures are generated to give per-sample unique data
+# TODO attempt to generate a complete requirments.txt for testing purposes
+
+# TODO continue trying to find reasons for current data prep failures
 
 
 class DataPreparationTool(tk.Toplevel):
@@ -38,6 +46,8 @@ class DataPreparationTool(tk.Toplevel):
         self.app = app
         self.util = utilities
 
+        self.report_callback_exception = self.app.uncaught_exception
+
         # tempdir for tempfiles
         self.tempdir = tempdir
         # tempfiles
@@ -50,6 +60,9 @@ class DataPreparationTool(tk.Toplevel):
         self.fasta = None
         self.fasta_align = None
         self.delim = None
+        self.tree = None
+        self.seq_features = None
+        self.finalized_data = None
 
         self.title("Sequence Data Tool")
 
@@ -73,6 +86,12 @@ class DataPreparationTool(tk.Toplevel):
         self.minsize(300, self.winfo_height())
         self.resizable(False, False)
 
+        def on_exit():
+            self.app.data_sec.retrieve_data_button["state"] = tk.ACTIVE
+            self.destroy()
+
+        self.protocol("WM_DELETE_WINDOW", on_exit)
+
     def align_seq_data(self):
         """Filter and align sequences."""
         # ----- threaded function -----
@@ -84,26 +103,6 @@ class DataPreparationTool(tk.Toplevel):
                 on_finish (func): Function to call on completion.
                 status_cb (func): Callback function for status updates.
             """
-            # prepare tempfile for prepped data
-            self.sequence_filtered = tempfile.NamedTemporaryFile(
-                mode="w+",
-                prefix="filtered_sequence_",
-                suffix=".tsv",
-                delete=False,
-                dir=self.tempdir.name
-            )
-            self.sequence_filtered.close()
-
-            # prepare tempfile for fasta
-            self.fasta = tempfile.NamedTemporaryFile(
-                mode="w+",
-                prefix="unaligned_fasta_",
-                suffix=".fasta",
-                delete=False,
-                dir=self.tempdir.name
-            )
-            self.fasta.close()
-
             # prepare tempfile for aligned fasta
             self.fasta_align = tempfile.NamedTemporaryFile(
                 mode="w+",
@@ -113,31 +112,17 @@ class DataPreparationTool(tk.Toplevel):
                 dir=self.tempdir.name
             )
             self.fasta_align.close()
-
-            # set filenames in StandardProgram
-            self.app.sp.filtered_fname = self.sequence_filtered.name
-            self.app.sp.fasta_fname = self.fasta.name
             self.app.sp.fasta_align_fname = self.fasta_align.name
 
-            # get request result tsv and prep it (filter + write fasta)
-            # check if using merged, user, or downloaded data
-            if self.merged_raw is not None:
-                self.app.sp.request_fname = self.merged_raw.name
-            elif self.user_sequence_raw is not None:
-                self.app.sp.request_fname = self.user_sequence_raw
-            else:
-                self.app.sp.request_fname = self.sequence_raw.name
-
-            data = self.app.sp.prep_sequence_data(
-                self.app.sp.get_sequence_data())
-
-            # save filtered data for later use
-            data.to_csv(self.sequence_filtered.name, sep="\t", index=False)
-
-            status_cb("Aligning sequences...")
-
             # align the fasta file
-            self.app.sp.align_fasta(external=True)
+            try:
+                self.app.sp.align_fasta(external=True)
+            except ChildProcessError:
+                self.app.dlib.dialog(
+                    messagebox.showerror,
+                    "ALIGN_ERR",
+                    parent=self
+                )
 
             # enable alignment save/load buttons
             self.data_sec.align_load_button["state"] = tk.ACTIVE
@@ -161,7 +146,7 @@ class DataPreparationTool(tk.Toplevel):
         progress_popup = ProgressPopup(
             self,
             "Alignment",
-            "Filtering data..."
+            "Aligning Sequences..."
         )
 
         # start threaded function
@@ -169,6 +154,75 @@ class DataPreparationTool(tk.Toplevel):
             progress_popup.complete,
             progress_popup.set_status
         )
+
+    def filter_seq_data(self):
+        """Filter Sequence Data"""
+        # ----- threaded function -----
+        @threaded
+        def _filter_seq_data(on_finish):
+            # prepare tempfile for prepped data
+            self.sequence_filtered = tempfile.NamedTemporaryFile(
+                mode="w+",
+                prefix="filtered_sequence_",
+                suffix=".tsv",
+                delete=False,
+                dir=self.tempdir.name
+            )
+            self.sequence_filtered.close()
+            self.app.sp.filtered_fname = self.sequence_filtered.name
+
+            # prepare tempfile for fasta
+            self.fasta = tempfile.NamedTemporaryFile(
+                mode="w+",
+                prefix="unaligned_fasta_",
+                suffix=".fasta",
+                delete=False,
+                dir=self.tempdir.name
+            )
+            self.fasta.close()
+            self.app.sp.fasta_fname = self.fasta.name
+
+            # prepare tempfile for aligned fasta
+            self.fasta_align = tempfile.NamedTemporaryFile(
+                mode="w+",
+                prefix="aligned_fasta_",
+                suffix=".fasta",
+                delete=False,
+                dir=self.tempdir.name
+            )
+            self.fasta_align.close()
+            self.app.sp.fasta_align_fname = self.fasta_align.name
+
+            # get request result tsv and prep it (filter + write fasta)
+            # check if using merged, user, or downloaded data
+            if self.merged_raw is not None:
+                self.app.sp.request_fname = self.merged_raw.name
+            elif self.user_sequence_raw is not None:
+                self.app.sp.request_fname = self.user_sequence_raw
+            else:
+                self.app.sp.request_fname = self.sequence_raw.name
+
+            data = self.app.sp.prep_sequence_data(
+                self.app.sp.get_sequence_data())
+
+            # save filtered data for later use
+            data.to_csv(self.sequence_filtered.name, sep="\t", index=False)
+
+            # enable alignment buttons
+            self.data_sec.align_button["state"] = tk.ACTIVE
+            self.data_sec.align_load_button["state"] = tk.ACTIVE
+
+            on_finish()
+        # ----- end threaded function -----
+
+        # disable buttons by opening progress bar
+        progress_popup = ProgressPopup(
+            self,
+            "Data Preparation",
+            "Filtering Sequences..."
+        )
+
+        _filter_seq_data(progress_popup.complete)
 
     def get_geographies(self):
         """
@@ -188,27 +242,69 @@ class DataPreparationTool(tk.Toplevel):
         Args:
             item (str): key for which item to load.
         """
-        self.app.status_bar.set_status("Awaiting user file selection...")
-
         filetypes = {
             "alignment": [("FASTA formatted sequence data", ".fasta")],
             "filtered": [
                 ("All files", ".*"),
                 ("Comma-separated values", ".csv"),
                 ("Tab-separated values", ".tsv"),
-            ]
+            ],
+            "finalized": [
+                ("All files", ".*"),
+                ("Comma-separated values", ".csv"),
+                ("Tab-separated values", ".tsv"),
+            ],
         }
         tempfiles = {
             "alignment": self.fasta_align.name,
-            "filtered": self.sequence_filtered.name
+            "filtered": self.sequence_filtered.name,
+            "finalized": (self.finalized_data.name
+                          if self.finalized_data is not None else None)
         }
+        # ----- threaded function -----
+
+        def _load_alignment(alignfname):
+            data = (
+                self.util.get_data(self.merged_raw.name)
+                if self.merged_raw is not None
+                else self.util.get_data(self.user_sequence_raw)
+                if self.util.get_data(self.user_sequence_raw) is not None
+                else self.util.get_data(self.sequence_raw)
+            )
+
+            # check that the alignment matches the data
+            with open(alignfname, "r") as file:
+                names = []
+                for line in file.readlines():
+                    names.extend(re.findall("(?<=>).*(?=\n)", line))
+
+                # print(names)
+
+                for name in names:
+                    if name not in data["processid"].unique():
+                        # print("'{}' not found".format(name))
+                        self.app.dlib.dialog(
+                            messagebox.showerror,
+                            "ALIGN_MISMATCH",
+                            parent=self
+                        )
+                        return
+
+            # load file
+            shutil.copy(alignfname, tempfiles[item])
+            self.data_sec.align_load_button["state"] = tk.ACTIVE
+            self.data_sec.data_prep["state"] = tk.ACTIVE
+
+        # ----- end threaded function -----
+        self.app.status_bar.set_status("Awaiting user file selection...")
 
         # prompt the user for the classifier file
         file = filedialog.askopenfilename(
             title="Open Edited Alignment",
             initialdir=os.path.realpath(
                 os.path.join(self.util.MAIN_PATH, "output/")),
-            filetypes=filetypes[item]
+            filetypes=filetypes[item],
+            parent=self
         )
 
         # don't do anything if the user selected nothing
@@ -216,8 +312,13 @@ class DataPreparationTool(tk.Toplevel):
             self.app.status_bar.set_status("Awaiting user input.")
             return
 
-        # overwrite the alignment file
-        shutil.copy(file, tempfiles[item])
+        if item == "alignment":
+            self.data_sec.align_load_button["state"] = tk.DISABLED
+            # enable next step
+            _load_alignment(file)
+        else:
+            # overwrite the alignment file
+            shutil.copy(file, tempfiles[item])
 
     def load_sequence_data(self):
         """
@@ -254,7 +355,8 @@ class DataPreparationTool(tk.Toplevel):
                 ("Excel file", ".xlsx .xlsm .xlsb .xltx .xltm .xls .xlt .xml"),
                 ("Comma separated values", ".csv .txt"),
                 ("Tab separated values", ".tsv .txt"),
-            ]
+            ],
+            parent=self
         )
         # don't do anything if the user selected nothing
         if len(file) <= 0:
@@ -263,7 +365,15 @@ class DataPreparationTool(tk.Toplevel):
 
         # check that file has required column names
         self.app.status_bar.set_status("Checking user sequence file...")
-        data_cols = self.util.get_data(file).columns.values.tolist()
+        try:
+            data_cols = self.util.get_data(file).columns.values.tolist()
+        except (ParserError, EmptyDataError, OSError, IOError, KeyError,
+                TypeError, ValueError, csv.Error):
+            self.app.dlib.dialog(
+                messagebox.showwarning,
+                "FILE_READ_ERR"
+            )
+            return
         if not all(r in data_cols for r in req_cols):
             self.app.dlib.dialog(
                 messagebox.showwarning, "INVALID_SEQUENCE_DATA", parent=self)
@@ -280,8 +390,17 @@ class DataPreparationTool(tk.Toplevel):
                 or self.user_sequence_previous is not None):
             self.get_data_sec.merge_button.config(state=tk.ACTIVE)
 
-        # enable alignment button
-        self.data_sec.align_button["state"] = tk.ACTIVE
+        # enable filter button
+        self.data_sec.filter_button["state"] = tk.ACTIVE
+        # disable buttons
+        self.data_sec.align_button["state"] = tk.DISABLED
+        self.data_sec.align_load_button["state"] = tk.DISABLED
+        self.data_sec.align_save_button["state"] = tk.DISABLED
+        self.data_sec.data_prep["state"] = tk.DISABLED
+        self.data_sec.use_data_button["state"] = tk.DISABLED
+        self.data_sec.final_load_button["state"] = tk.DISABLED
+        self.data_sec.final_save_button["state"] = tk.DISABLED
+        self.data_sec.use_data_button["state"] = tk.DISABLED
 
     def merge_sequence_data(self, bold=False):
         """
@@ -360,6 +479,19 @@ class DataPreparationTool(tk.Toplevel):
             self.get_data_sec.merge_bold_button["state"] = tk.ACTIVE
             self.get_data_sec.merge_button["state"] = tk.ACTIVE
 
+            # disable buttons
+            self.data_sec.align_button["state"] = tk.DISABLED
+            self.data_sec.align_load_button["state"] = tk.DISABLED
+            self.data_sec.align_save_button["state"] = tk.DISABLED
+            self.data_sec.data_prep["state"] = tk.DISABLED
+            self.data_sec.use_data_button["state"] = tk.DISABLED
+            self.data_sec.final_load_button["state"] = tk.DISABLED
+            self.data_sec.final_save_button["state"] = tk.DISABLED
+            self.data_sec.use_data_button["state"] = tk.DISABLED
+            self.data_sec.fasta_sec.disable_buttons()
+            self.data_sec.filtered_sec.disable_buttons()
+            self.data_sec.tree_sec.disable_buttons()
+
             on_finish()
 
             self.app.dlib.dialog(
@@ -385,50 +517,124 @@ class DataPreparationTool(tk.Toplevel):
         # ----- threaded function -----
         @threaded
         def _prep_sequence_data(on_finish, status_cb):
+
+            method = self.data_sec.method_select.get()
+
             # create delim tempfile
             self.delim = tempfile.NamedTemporaryFile(
                 mode="w+",
                 prefix="species_delim_",
-                suffix=".csv",
+                suffix=".tsv",
                 delete=False,
                 dir=self.tempdir.name
             )
             self.delim.close()
             self.app.sp.delim_fname = self.delim.name
 
+            self.tree = tempfile.NamedTemporaryFile(
+                mode="w+",
+                prefix="tree_",
+                suffix=".tre",
+                delete=False,
+                dir=self.tempdir.name
+            )
+            self.tree.close()
+            self.app.sp.tree_fname = self.tree.name
+
+            self.seq_features = tempfile.NamedTemporaryFile(
+                mode="w+",
+                prefix="features_",
+                suffix=".tsv",
+                delete=False,
+                dir=self.tempdir.name
+            )
+            self.seq_features.close()
+            self.app.sp.seq_features_fname = self.seq_features.name
+
+            self.finalized_data = tempfile.NamedTemporaryFile(
+                mode="w+",
+                prefix="finalized_",
+                suffix=".csv",
+                delete=False,
+                dir=self.tempdir.name
+            )
+            self.finalized_data.close()
+            self.app.sp.finalized_fname = self.finalized_data.name
+
             # delimit the species
-            self.app.sp.delimit_species(external=True)
+            print("DELIMITING SPECIES...")
+            try:
+                # TODO make external true
+                self.app.sp.delimit_species(method, external=False)
+            except (ChildProcessError, FileNotFoundError, IndexError):
+                self.app.dlib.dialog(
+                    messagebox.showerror,
+                    "DELIM_ERR",
+                    parent=self
+                )
+                on_finish()
+                return
+
+            status_cb("Generating species features \
+(This will take some time)...")
+            print("GENERATING FEATURES...")
+            try:
+                self.app.sp.generate_features(external=False)
+            except (ChildProcessError, FileNotFoundError):
+                self.app.dlib.dialog(
+                    messagebox.showerror,
+                    "FEATURE_GEN_ERR",
+                    parent=self
+                )
+                on_finish()
+                return
 
             status_cb(
                 "Looking up known species statuses \
 (this will take some time)...")
-
+            print("EXECUTING STATUS LOOKUP...")
             # get statuses
-            self.app.sp.ref_geo = self.data_sec.ref_geo_select.get()
-            self.app.sp.lookup_status()
+            try:
+                self.app.sp.ref_geo = self.data_sec.ref_geo_select.get()
+                self.app.sp.lookup_status()
+            except ChildProcessError:
+                self.app.dlib.dialog(
+                    messagebox.showerror,
+                    "GEO_LOOKUP_ERR",
+                    parent=self
+                )
+                on_finish()
+                return
 
-            n_classified = self.util.get_data(
-                self.sequence_filtered.name).count()["final_status"]
-
-            # next steps here
+            final = self.util.get_data(self.finalized_data.name)
+            n_classified = final.count()["final_status"]
+            n_classes = final["final_status"].nunique()
 
             self.data_sec.final_save_button["state"] = tk.ACTIVE
             self.data_sec.final_load_button["state"] = tk.ACTIVE
+            self.data_sec.use_data_button["state"] = tk.ACTIVE
+            self.data_sec.tree_sec.enable_buttons()
 
-            # TODO change this threshold to something that makes sense
-            if n_classified < 500:
+            if n_classes < 2:
+                self.app.dlib.dialog(
+                    messagebox.showwarning,
+                    "NOT_ENOUGH_CLASSES",
+                    parent=self
+                )
+            elif n_classified < 100:
                 self.app.dlib.dialog(
                     messagebox.showwarning,
                     "LOW_CLASS_COUNT",
                     form=(n_classified,),
                     parent=self
                 )
-            self.app.dlib.dialog(
-                messagebox.showinfo,
-                "DATA_PREP_COMPLETE",
-                form=(n_classified,),
-                parent=self
-            )
+            else:
+                self.app.dlib.dialog(
+                    messagebox.showinfo,
+                    "DATA_PREP_COMPLETE",
+                    form=(n_classified,),
+                    parent=self
+                )
 
             on_finish()
         # ----- end threaded function -----
@@ -474,16 +680,21 @@ class DataPreparationTool(tk.Toplevel):
                 self.app.sp.retrieve_sequence_data()
             except requests.exceptions.RequestException:
                 self.app.dlib.dialog(
-                    messagebox.showerror, "BOLD_SEARCH_ERROR", parent=self)
+                    messagebox.showerror, "BOLD_SEARCH_ERR", parent=self)
                 on_finish()
                 return
 
             # check if file downloaded properly (parses successfully)
             try:
                 nlines = self.util.get_data(self.sequence_raw.name).shape[0]
-            except pd.errors.ParserError:
+            except ParserError:
                 self.app.dlib.dialog(
-                    messagebox.showerror, "BOLD_FILE_ERROR", parent=self)
+                    messagebox.showerror, "BOLD_FILE_ERR", parent=self)
+                on_finish()
+                return
+            except EmptyDataError:
+                self.app.dlib.dialog(
+                    messagebox.showerror, "BOLD_NO_OBSERVATIONS", parent=self)
                 on_finish()
                 return
 
@@ -491,11 +702,24 @@ class DataPreparationTool(tk.Toplevel):
             if self.user_sequence_raw is not None:
                 self.get_data_sec.merge_button.config(state=tk.ACTIVE)
 
-            self.data_sec.align_button["state"] = tk.ACTIVE
+            self.data_sec.filter_button["state"] = tk.ACTIVE
             self.get_data_sec.save_bold_button["state"] = tk.ACTIVE
             if (self.merged_raw is not None
                     or self.sequence_previous is not None):
                 self.get_data_sec.merge_bold_button["state"] = tk.ACTIVE
+
+            # disable buttons
+            self.data_sec.align_button["state"] = tk.DISABLED
+            self.data_sec.align_load_button["state"] = tk.DISABLED
+            self.data_sec.align_save_button["state"] = tk.DISABLED
+            self.data_sec.data_prep["state"] = tk.DISABLED
+            self.data_sec.use_data_button["state"] = tk.DISABLED
+            self.data_sec.final_load_button["state"] = tk.DISABLED
+            self.data_sec.final_save_button["state"] = tk.DISABLED
+            self.data_sec.use_data_button["state"] = tk.DISABLED
+            self.data_sec.fasta_sec.disable_buttons()
+            self.data_sec.filtered_sec.disable_buttons()
+            self.data_sec.tree_sec.disable_buttons()
 
             on_finish()
 
@@ -510,7 +734,11 @@ class DataPreparationTool(tk.Toplevel):
 
             # tell user it worked/how many lines downloaded
             self.app.dlib.dialog(
-                messagebox.showinfo, "BOLD_SEARCH_COMPLETE", parent=self)
+                messagebox.showinfo,
+                "BOLD_SEARCH_COMPLETE",
+                parent=self,
+                form=(nlines,)
+            )
         # ----- end threaded function -----
 
         self.app.sp.geo = self.get_data_sec.geo_input.get()
@@ -541,3 +769,7 @@ class DataPreparationTool(tk.Toplevel):
         )
 
         _retrieve_seq_data(progress_popup.complete)
+
+    def transfer_prepared_data(self):
+        """Transfer prepared data to the classifier tool's data handling."""
+        self.app.get_data_file(internal=self.finalized_data.name)

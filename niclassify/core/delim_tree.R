@@ -1,4 +1,4 @@
-# SCRIPT EXPECTS 2 ARGUMENTS: FNAME_IN, FNAME_OUT
+# SCRIPT EXPECTS 3 ARGUMENTS: FNAME_IN, FNAME_TREE_OUT, FNAME_OUT
 # I have yet to figure out error handling, so please be gentle.
 
 library(ape)
@@ -18,13 +18,17 @@ infasta <- read.FASTA(args[1], type = "DNA")
 # str(na.omit(infasta))
 
 # Make a distance matrix from the alignment
-Dist <- dist.dna(infasta)
+Dist <- dist.hamming(infasta)
 
 # make a UPGMA Tree
 UPGMA <- upgma(Dist)
 
-# Run splits to delimit species
-GMYC <- gmyc(UPGMA)
+# Write tree to file
+write.tree(UPGMA, file = args[2])
 
-# Save results to given file
-write.csv(spec.list(GMYC), args[2], row.names = FALSE)
+if (length(args) > 2) {
+    # Run splits to delimit species
+    GMYC <- gmyc(UPGMA)
+    # Save results to given file
+    write_delim(spec.list(GMYC), args[3], delim = "\t")
+}

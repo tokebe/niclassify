@@ -34,5 +34,13 @@
     "EXISTING_MERGE_USER": {
         "title": "Existing Merged Data",
         "message": "Merged data already exists. \nDo you wish to merge additional data? Selecting 'No' will Merge current user data with BOLD data, overwriting any curerntly merged data."
+    },
+    "TRAIN_COMPLETE": {
+        "title": "Classifier Training Complete",
+        "message": "The classifier has finished training.\nPlease review the report and confusion matrix to verify the applicability of this model."
+    },
+    "PREDICT_COMPLETE": {
+        "title": "Prediction Complete",
+        "message": "The classifier has finished making predictions on the data."
     }
 }

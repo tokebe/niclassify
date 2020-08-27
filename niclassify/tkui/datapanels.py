@@ -129,9 +129,18 @@ class PreparationPanel(ttk.LabelFrame):
 
         self.app = app
 
+        self.filter_button = tk.Button(
+            self,
+            text="Filter Sequences",
+            command=self.app.filter_seq_data,
+            pady=5,
+            state=tk.DISABLED
+        )
+        self.filter_button.pack(expand=True, fill=tk.X, padx=1, pady=1)
+
         self.align_button = tk.Button(
             self,
-            text="Filter and Align Sequences",
+            text="Align Sequences",
             command=self.app.align_seq_data,
             pady=5,
             state=tk.DISABLED
@@ -197,8 +206,8 @@ class PreparationPanel(ttk.LabelFrame):
             state="readonly",
             # textvariable=self.app.known_column
         )
-        self.method_select["values"] = ("GMYC", "PTP")
-        self.method_select.set("GMYC")
+        self.method_select["values"] = ("GMYC", "bPTP")
+        self.method_select.set("bPTP")
         self.method_select.pack(fill=tk.X)
 
         self.reference_geo_label = tk.Label(
@@ -232,7 +241,7 @@ class PreparationPanel(ttk.LabelFrame):
         self.final_save_button = tk.Button(
             self.finalized_edit_sec,
             text="Save Prepared Data",
-            command=lambda: self.app.app.save_item("filtered_data"),
+            command=lambda: self.app.app.save_item("finalized"),
             pady=5,
             state=tk.DISABLED
         )
@@ -242,7 +251,7 @@ class PreparationPanel(ttk.LabelFrame):
         self.final_load_button = tk.Button(
             self.finalized_edit_sec,
             text="Load Edited Data",
-            command=lambda: self.app.load_item("filtered"),
+            command=lambda: self.app.load_item("finalized"),
             pady=5,
             state=tk.DISABLED
         )
@@ -252,31 +261,20 @@ class PreparationPanel(ttk.LabelFrame):
         self.row2 = tk.Frame(self)
         self.row2.pack(expand=True, fill=tk.X)
 
-        self.matrix_sec = VS_Pair(
+        self.tree_sec = VS_Pair(
             self.row2,
             self.app,
-            lambda: print("user wants to view matrix!"),
-            lambda: print("user wants to save matrix!"),
-            text="Distance Matrix",
+            lambda: self.app.app.view_item(self.app.tree.name),
+            lambda: self.app.app.save_item("tree"),
+            text="Phylogenetic Tree",
             labelanchor=tk.N
         )
-        self.matrix_sec.pack(side=tk.LEFT, expand=True, fill=tk.X)
-
-        self.final_sec = VS_Pair(
-            self.row2,
-            self.app,
-            lambda: print("user wants to view final!"),
-            lambda: print("user wants to save final!"),
-            text="Finalized Data",
-            labelanchor=tk.N
-        )
-        self.final_sec.pack(side=tk.RIGHT, expand=True, fill=tk.X)
+        self.tree_sec.pack(side=tk.LEFT, expand=True, fill=tk.X)
 
         self.use_data_button = tk.Button(
             self,
             text="Use Prepared Data",
-            command=lambda: print(
-                "self.app._get_data_file(self.app.<something>)"),
+            command=self.app.transfer_prepared_data,
             pady=5,
             state=tk.DISABLED
         )

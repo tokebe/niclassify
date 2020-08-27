@@ -23,6 +23,9 @@ from .threadwrap import threaded
 from .dialogs.dialog import DialogLibrary
 
 
+# TODO fix apparent problem with cm image generation not being ready in time?
+# this would appear to cause crashes
+
 class ClassifierTool(tk.Frame):
     """
     The gui application class.
@@ -52,14 +55,23 @@ class ClassifierTool(tk.Frame):
 
         # set up error handling for uncaught exceptions
         self.parent.report_callback_exception = self.uncaught_exception
+        self.report_callback_exception = self.uncaught_exception
 
         # set up the inner-layer program and prep log, etc
         self.sp = standard_program(classifier())
         self.util = utilities
         self.logname = self.sp.boilerplate()
         self.data_win = None
-        self.dlib = DialogLibrary(
-            os.path.join(self.util.MAIN_PATH, "niclassify/tkui/dialogs"))
+        try:
+            self.dlib = DialogLibrary(
+                os.path.join(self.util.MAIN_PATH, "niclassify/tkui/dialogs"))
+        except json.JSONDecodeError:
+            messagebox.showerror(
+                title="Dialog Library Read Error",
+                message="Unable to read dialog lib, likely due to a formatting\
+ error.\nProgram will exit."
+            )
+            exit(-1)
 
         # set nans in sp
         self.sp.nans = self.util.NANS
@@ -164,7 +176,7 @@ class ClassifierTool(tk.Frame):
         self.sp.class_column = self.train_sec.known_select.get()
         self.train_sec.train_button.config(state=tk.ACTIVE)
 
-    def get_data_file(self):
+    def get_data_file(self, internal=None):
         """
         Prompt the user for a file and update contents appropriately.
 
@@ -289,25 +301,28 @@ class ClassifierTool(tk.Frame):
 
         self.status_bar.set_status("Awaiting user file selection...")
 
-        # prompt user for file
-        data_file = filedialog.askopenfilename(
-            title="Open Data File",
-            initialdir=os.path.realpath(
-                os.path.join(self.util.MAIN_PATH, "data/")),
-            filetypes=[
-                ("All Files", ".*"),
-                ("Excel file", ".xlsx .xlsm .xlsb .xltx .xltm .xls .xlt .xml"),
-                ("Comma-separated values", ".csv .txt"),
-                ("Tab-separated values", ".tsv .txt"),
-                ("Standard deliniated text file", ".txt")
-            ]
-        )
-        # if user cancels don't try to open nothing
-        if len(data_file) <= 0:
-            # self.status_bar.progress.stop()
-            # self.status_bar.progress.config(mode="determinate")
-            self.status_bar.set_status("Awaiting user input.")
-            return
+        if internal is None:
+            # prompt user for file
+            data_file = filedialog.askopenfilename(
+                title="Open Data File",
+                initialdir=os.path.realpath(
+                    os.path.join(self.util.MAIN_PATH, "data/")),
+                filetypes=[
+                    ("All Files", ".*"),
+                    ("Excel file", ".xlsx .xlsm .xlsb .xltx .xltm .xls .xlt .xml"),
+                    ("Comma-separated values", ".csv .txt"),
+                    ("Tab-separated values", ".tsv .txt"),
+                    ("Standard deliniated text file", ".txt")
+                ]
+            )
+            # if user cancels don't try to open nothing
+            if len(data_file) <= 0:
+                # self.status_bar.progress.stop()
+                # self.status_bar.progress.config(mode="determinate")
+                self.status_bar.set_status("Awaiting user input.")
+                return
+        else:
+            data_file = internal
 
         # assuming user chooses a proper file:
         # reset things
@@ -445,6 +460,8 @@ class ClassifierTool(tk.Frame):
                 self.status_bar.set_status("Awaiting user input.")
                 self.predict_sec.classifier_load["state"] = tk.ACTIVE
                 return
+            except (OSError, IOError):
+                self.dlib.dialog(messagebox.showerror, "FILE_READ_ERR")
 
             # reset controls and conditionally enable steps
             self.reset_controls(clf=True)
@@ -691,6 +708,11 @@ class ClassifierTool(tk.Frame):
             self.status_bar.progress["value"] = 0
             self.status_bar.set_status("Awaiting user input.")
 
+            self.dlib.dialog(
+                messagebox.showinfo,
+                "PREDICT_COMPLETE"
+            )
+
             # call finisher function
             on_finish()
         # ----- end threaded function -----
@@ -731,6 +753,9 @@ class ClassifierTool(tk.Frame):
 
     def open_data_tool(self):
         """Open the data preparation tool."""
+        # make sure multiple instances can't open
+        self.data_sec.retrieve_data_button["state"] = tk.DISABLED
+        # open new data tool
         self.data_win = DataPreparationTool(
             self, self, self.tempdir, self.util)
 
@@ -837,7 +862,9 @@ class ClassifierTool(tk.Frame):
             "merged_results": "Merged Data",
             "filtered_data": "Filtered Data",
             "raw_fasta": "Unaligned Fasta",
-            "fasta_align": "Aligned Fasta"
+            "fasta_align": "Aligned Fasta",
+            "tree": "Phylogenetic Tree",
+            "finalized": "Prepared Sequence Data"
         }
         graphtypes = [("Portable Network Graphics image", ".png")]
         reportypes = [("Plain text file", ".txt")]
@@ -847,6 +874,7 @@ class ClassifierTool(tk.Frame):
             ("All Files", ".*"),
         ]
         fastatypes = [("FASTA formatted sequence data", ".fasta")]
+        treetypes = [("Newick-formatted Tree", ".tre")]
         types = {
             "cm": graphtypes,
             "pairplot": graphtypes,
@@ -856,7 +884,9 @@ class ClassifierTool(tk.Frame):
             "merged_results": outputtypes,
             "filtered_data": outputtypes,
             "raw_fasta": fastatypes,
-            "fasta_align": fastatypes
+            "fasta_align": fastatypes,
+            "tree": treetypes,
+            "finalized": outputtypes
         }
         default_extensions = {
             "cm": ".png",
@@ -867,7 +897,9 @@ class ClassifierTool(tk.Frame):
             "merged_results": ".csv",
             "filtered_data": ".csv",
             "raw_fasta": ".fasta",
-            "fasta_align": ".fasta"
+            "fasta_align": ".fasta",
+            "tree": ".tree",
+            "finalized": ".csv"
         }
         buttons = {
             "cm": self.train_sec.cm_sec.button_save,
@@ -878,7 +910,9 @@ class ClassifierTool(tk.Frame):
             "merged_results": self.data_win.get_data_sec.save_merge_button,
             "filtered_data": self.data_win.data_sec.filtered_sec.button_save,
             "raw_fasta": self.data_win.data_sec.fasta_sec.button_save,
-            "fasta_align": self.data_win.data_sec.align_save_button
+            "fasta_align": self.data_win.data_sec.align_save_button,
+            "tree": self.data_win.data_sec.tree_sec.button_save,
+            "finalized": self.data_win.data_sec.final_save_button
         }
         tempfiles = {
             "cm": self.cm,
@@ -889,7 +923,9 @@ class ClassifierTool(tk.Frame):
             "merged_results": self.data_win.merged_raw,
             "filtered_data": self.data_win.sequence_filtered,
             "raw_fasta": self.data_win.fasta,
-            "fasta_align": self.data_win.fasta_align
+            "fasta_align": self.data_win.fasta_align,
+            "tree": self.data_win.tree,
+            "finalized": self.data_win.finalized_data
         }
 
         # ----- threaded function -----
@@ -906,18 +942,24 @@ class ClassifierTool(tk.Frame):
             in_ext = os.path.splitext(tempfiles[item].name)[1]
             out_ext = os.path.splitext(location)[1]
             if (in_ext != out_ext) and (out_ext in (".csv", ".tsv")):
-                self.util.get_data(tempfiles[item].name).to_csv(
-                    location,
-                    sep=('\t' if out_ext == ".tsv" else ","),
-                    index=False
-                )
+                try:
+                    self.util.get_data(tempfiles[item].name).to_csv(
+                        location,
+                        sep=('\t' if out_ext == ".tsv" else ","),
+                        index=False
+                    )
+                except (OSError, IOError):
+                    self.dlib.dialog(messagebox.showerror, "FILE_WRITE_ERR")
             else:
                 # if user chose some other extension, just give them csv
                 # because I can't be bothered to infer atypical delimitation
                 # standards
 
                 # otherwise, copy the appropriate file
-                shutil.copy(tempfiles[item].name, location)
+                try:
+                    shutil.copy(tempfiles[item].name, location)
+                except (OSError, IOError):
+                    self.dlib.dialog(messagebox.showerror, "FILE_WRITE_ERR")
 
             # reset buttons and status
             buttons[item]["state"] = tk.ACTIVE
@@ -1016,6 +1058,14 @@ class ClassifierTool(tk.Frame):
             features_known, metadata_known = self.util.get_known(
                 features, metadata, self.sp.class_column)
 
+            if len(metadata_known[self.sp.class_column].unique()) < 2:
+                self.dlib.dialog(
+                    messagebox.showerror,
+                    "CANNOT_TRAIN"
+                )
+                on_finish()
+                return
+
             self.status_bar.progress.step(20)
             self.status_bar.set_status("Training classifier...")
 
@@ -1039,6 +1089,11 @@ class ClassifierTool(tk.Frame):
             self.train_sec.classifier_save.config(state=tk.ACTIVE)
             self.train_sec.enable_outputs()
             self.check_enable_predictions()
+
+            self.dlib.dialog(
+                messagebox.showinfo,
+                "TRAIN_COMPLETE"
+            )
 
             # finish up
             on_finish()

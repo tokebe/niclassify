@@ -17,18 +17,26 @@ from core.StandardProgram import StandardProgram
 from core.classifiers import RandomForestAC
 from tkui.clftool import ClassifierTool
 
+
 matplotlib.use('Agg')  # this makes threading not break
 
 # NOW
-# TODO look for everywhere a file is interacted with and add failure warnings]
-# TODO additionally go bak and make all raised exceptions more descriptive
-# TODO do the same for web requests
-# TODO see if you can increase timeout time for requests
-# TODO misc. todo's throughout files
+# TODO use Jeremy's test files. Ensure that undelimited species are ignored.
+# TODO add checks after each stage of data preparation to ensure it worked
+# add appropriate warnings for failures, for instance alignment failures
+# when generating measures
 
 # LATER
-# TODO implement matrix and measures generation
-# TODO implement backend for PTP
+# TODO ask about joining species status by delimitation rather than noted name
+# this could give us significantly more samples with a status, but is at the
+# mercy of the delimitation's performance
+# overall it would be rather difficult to measure the effects on 'true' BA
+# oversplitting would actually be better in this case, as fewer groups would
+# contain multiple species, though oversplitting also hurts our ability to get
+# intraspecies similarity information, which is rather key to have
+# that said, some information might be regained in comparison between
+# min distance and median distance, etc - for that reason
+# we may wish to favor oversplitting rather than overlumping
 
 # FIXES & MINOR FEATURES
 # TODO go searching for problems, unexpected behaviors, etc

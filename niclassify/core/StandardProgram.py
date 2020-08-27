@@ -124,6 +124,9 @@ class StandardProgram:
         self.fasta_fname = None
         self.fasta_align_fname = None
         self.delim_fname = None
+        self.tree_fname = None
+        self.seq_features_fname = None
+        self.finalized_fname = None
 
         # stored variables for classification program
         self.data_file = None
@@ -135,7 +138,7 @@ class StandardProgram:
         self.output_filename = None
         self.nans = None
 
-    def align_fasta(self, external=None):
+    def align_fasta(self, external=False):
         """
         Align the fasta file.
 
@@ -145,6 +148,9 @@ class StandardProgram:
         """
         utilities.align_fasta(
             self.fasta_fname, self.fasta_align_fname, external)
+
+        if os.stat(self.fasta_align_fname).st_size == 0:
+            raise ChildProcessError("Sequence Alignment Failed")
 
     def boilerplate(self):
         """
@@ -330,7 +336,7 @@ class StandardProgram:
         # if it hasn't found a reason to call it native
         return "Introduced"  # this maybe should be NA
 
-    def delimit_species(self, method="GMYC", external=None):
+    def delimit_species(self, method="GMYC", external=False):
         """
         Delimit species by their nucleotide sequences.
 
@@ -340,22 +346,58 @@ class StandardProgram:
                 external console. Defaults to None.
         """
         if method == "GMYC":
-            utilities.delimit_species_GMYC(
-                self.fasta_align_fname, self.delim_fname, external)
+            delimit = utilities.delimit_species_GMYC
+        elif method == "bPTP":
+            delimit = utilities.delimit_species_bPTP
+        else:
+            raise KeyError("Specified delimitation method does not exist.")
 
+        delimit(
+            self.fasta_align_fname,
+            self.tree_fname,
+            self.delim_fname,
+            external
+        )
+
+        if os.stat(self.tree_fname).st_size == 0:
+            raise ChildProcessError("Species delimitation failed.")
+
+        if os.stat(self.delim_fname).st_size == 0:
+            raise ChildProcessError("Species delimitation failed.")
+
+        # merging in delimitation is now handled after feature generation
         # read in filtered sequence data and new delim file for combining
-        seq_filtered = utilities.get_data(self.filtered_fname)
+        # seq_filtered = utilities.get_data(self.filtered_fname)
 
-        delim = utilities.get_data(self.delim_fname)
+        # delim = utilities.get_data(self.delim_fname)
 
-        # rename sample_name to processid for merge
-        delim.rename(columns={"sample_name": "processid"}, inplace=True)
+        # # rename sample_name to processid for merge
+        # delim.rename(columns={"sample_name": "processid"}, inplace=True)
 
-        # left join gymc species back into filtered data
-        seq_filtered = pd.merge(
-            seq_filtered, delim, on="processid", how="left")
+        # # left join gymc species back into filtered data
+        # seq_filtered = pd.merge(
+        #     seq_filtered, delim, on="processid", how="left")
 
-        seq_filtered.to_csv(self.filtered_fname, sep="\t", index=False)
+        # seq_filtered.to_csv(self.finalized_fname,  index=False)
+
+    def generate_features(self, external=False):
+        utilities.generate_measures(
+            self.fasta_align_fname,
+            self.delim_fname,
+            self.seq_features_fname,
+            external=external
+        )
+
+        if os.stat(self.seq_features_fname).st_size == 0:
+            raise ChildProcessError("Feature generation failed.")
+
+        features = utilities.get_data(self.seq_features_fname)
+        meta = utilities.get_data(self.filtered_fname)
+
+        meta = pd.merge(
+            meta, features, on="processid", how="left")
+
+        meta.to_csv(self.finalized_fname, index=False)
 
     def get_args(self):
         """
@@ -451,7 +493,7 @@ class StandardProgram:
         # columns
 
         # get data
-        data = utilities.get_data(self.filtered_fname)
+        data = utilities.get_data(self.finalized_fname)
 
         # make a table of all unique species
         # this should somewhat reduce the number of lookups
@@ -490,7 +532,7 @@ class StandardProgram:
 
         # print("saving statuses...")
         # save changes
-        data.to_csv(self.filtered_fname, sep="\t", index=False)
+        data.to_csv(self.finalized_fname, index=False)
 
     def predict_AC(self, clf, feature_norm, status_cb=None):
         """
