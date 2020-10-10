@@ -21,25 +21,39 @@ from tkui.clftool import ClassifierTool
 matplotlib.use('Agg')  # this makes threading not break
 
 # NOW
-# TODO use Jeremy's test files. Ensure that undelimited species are ignored.
-# TODO add checks after each stage of data preparation to ensure it worked
-# add appropriate warnings for failures, for instance alignment failures
-# when generating measures
+# TODO there appears to be a species delimitation problem
+# some files getting to create_measures don't having any groupings
+# some delims fail because of max windows path length error
+# this leaves a non-zero size file with no actual delimitations
+# > need to investigate why/when it's failing
+# it's failing from max windows path length in bPTP, outside of my control
+# this is theoretically not 100% avoidable and so will have to be compensated
+# for somehow.
+# TODO check minor fixes/features in datatool.py
+# just count up on finding a dupe
+# Will have to ask Jeremy about this
+# TODO automate trimming sequences
+# TODO check for agreement of status in delimited species
+# TODO add new tool for merging prepared data
+# TODO test running on new system without running setup of bPTP
+# You'll probably have to make a contained python env with everything installed
 
 # LATER
-# TODO ask about joining species status by delimitation rather than noted name
-# this could give us significantly more samples with a status, but is at the
-# mercy of the delimitation's performance
-# overall it would be rather difficult to measure the effects on 'true' BA
-# oversplitting would actually be better in this case, as fewer groups would
-# contain multiple species, though oversplitting also hurts our ability to get
-# intraspecies similarity information, which is rather key to have
-# that said, some information might be regained in comparison between
-# min distance and median distance, etc - for that reason
-# we may wish to favor oversplitting rather than overlumping
+# TODO generate a requirements.txt
+# TODO options to split by lower taxon levels
+# TODO File import history for merging?
+# TODO use pGMYC
+
+# LATERER
+# TODO attempt to make an .exe file
+# TODO go back and implement TUI with support for linux+mac if possible
+# this will require minor changes to some utility functions for system checking
+# TODO create secondary scripts for checking what caused a failure
 
 # FIXES & MINOR FEATURES
 # TODO go searching for problems, unexpected behaviors, etc
+# TODO minor issues:
+# main progressbar freezes on certain errors, such as not enough labels
 
 
 def main():

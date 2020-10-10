@@ -1,54 +1,62 @@
 {
-    "OVERWRITE_CLF": {
-        "title": "Overwrite Warning",
-        "message": "This will delete unsaved classifier and results."
-    },
-    "NO_PAIRPLOT_OVERLOAD": {
-        "title": "Pairplot Overload",
-        "message": "Due to software limitations, a pairplot will not be generated."
-    },
-    "NO_PAIRPLOT_USELESS": {
-        "title": "Pairplot Size",
-        "message": "Due to the number of variables, a pairplot will not be generated."
-    },
-    "NO_COLUMNS_SELECTED": {
-        "title": "No Data Columns Selected",
-        "message": "Please select at least one feature column."
-    },
-    "PREDICTION_OVERWRITE": {
-        "title": "Overwrite Warning",
-        "message": "This will delete unsaved prediction results."
-    },
-    "ERR_OVERLAP_FEATURES_CLASS": {
-        "title": "Known Class And Feature Columns Overlap",
-        "message": "Class column must not be a selected feature column."
-    },
-    "SEQUENCE_OVERWRITE": {
-        "title": "Overwrite Warning",
-        "message": "You've already loaded custom sequence data. Are you sure?"
-    },
-    "INVALID_SEQUENCE_DATA": {
-        "title": "Invalid data file",
-        "message": "Selected data file does not contain required columns.\nPlease see help document for a list of required columns with exact names."
-    },
-    "LOW_CLASS_COUNT": {
-        "title": "Low Classification Count",
-        "message": "Only {} observations were succesfully classified by online search. This may result in an inaccurate classifier if used for training.\nAdditional manual classification, if possible, is recommended."
-    },
-    "BOLD_NO_OBSERVATIONS": {
-        "title": "No Observations Found",
-        "message": "No observations were found. Please check your search terms."
-    },
-    "MISSING_SEARCH_TERMS": {
-        "title": "Missing Search Term(s)",
-        "message": "Please fill in both search terms before requesting data."
-    },
-    "CANNOT_TRAIN": {
-        "title": "Not Enough Known Classes",
-        "message": "The data contains fewer than two classes, and cannot be used for training a classifier.\nDid you mean to use this data for prediction with a saved classifier?"
-    },
-    "NOT_ENOUGH_CLASSES": {
-        "title": "Not Enough Known Classes",
-        "message": "Automatic status lookup returned fewer than 2 status types (native, introduced).\nThis data will not be useable for training without manual status entry to ensure a minimum of 2 status types."
-    }
+  "OVERWRITE_CLF": {
+    "title": "Overwrite Warning",
+    "message": "This will delete unsaved classifier and results."
+  },
+  "NO_PAIRPLOT_OVERLOAD": {
+    "title": "Pairplot Overload",
+    "message": "Due to software limitations, a pairplot will not be generated."
+  },
+  "NO_PAIRPLOT_USELESS": {
+    "title": "Pairplot Size",
+    "message": "Due to the number of variables, a pairplot will not be generated."
+  },
+  "NO_COLUMNS_SELECTED": {
+    "title": "No Data Columns Selected",
+    "message": "Please select at least one feature column."
+  },
+  "PREDICTION_OVERWRITE": {
+    "title": "Overwrite Warning",
+    "message": "This will delete unsaved prediction results."
+  },
+  "ERR_OVERLAP_FEATURES_CLASS": {
+    "title": "Known Class And Feature Columns Overlap",
+    "message": "Class column must not be a selected feature column."
+  },
+  "SEQUENCE_OVERWRITE": {
+    "title": "Overwrite Warning",
+    "message": "You've already loaded custom sequence data. Are you sure?"
+  },
+  "INVALID_SEQUENCE_DATA": {
+    "title": "Invalid data file",
+    "message": "Selected data file does not contain required columns.\nPlease see help document for a list of required columns with exact names."
+  },
+  "LOW_CLASS_COUNT": {
+    "title": "Low Classification Count",
+    "message": "Only {} observations were succesfully classified by online search. This may result in an inaccurate classifier if used for training.\nAdditional manual classification, if possible, is recommended."
+  },
+  "BOLD_NO_OBSERVATIONS": {
+    "title": "No Observations Found",
+    "message": "No observations were found. Please check your search terms."
+  },
+  "MISSING_SEARCH_TERMS": {
+    "title": "Missing Search Term(s)",
+    "message": "Please fill in both search terms before requesting data."
+  },
+  "CANNOT_TRAIN": {
+    "title": "Not Enough Known Classes",
+    "message": "The data contains fewer than two classes, and cannot be used for training a classifier.\nDid you mean to use this data for prediction with a saved classifier?"
+  },
+  "NOT_ENOUGH_CLASSES": {
+    "title": "Not Enough Known Classes",
+    "message": "Automatic status lookup returned fewer than 2 status types (native, introduced).\nThis data will not be useable for training without manual status entry to ensure a minimum of 2 status types."
+  },
+  "ALIGN_MISMATCH": {
+    "title": "Alignment Item Mismatch",
+    "message": "The given alignment contains sequence processid's which are not present in the primary data file.\nPlease ensure you have selected the correct alignment for the current data.\nprocessids missing:\n{}"
+  },
+  "PID_NOT_UNIQUE": {
+    "title": "Non-Unique ProcessID",
+    "message": "The processid column of the data contains duplicates. The UPID column will be generated with suffixes to ensure unique IDs per row."
+  }
 }
