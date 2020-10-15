@@ -1,5 +1,3 @@
+import os
 
-ro.r("infasta <- read.FASTA('{}')".format(filename))
-ro.r("dist <- dist.dna(infasta)")
-ro.r("UPGMA <- upgma(dist)")
-ro.r("plot(UPGMA)")
+print(os.path.abspath(__file__))

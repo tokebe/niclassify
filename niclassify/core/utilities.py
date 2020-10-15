@@ -21,7 +21,6 @@ import pandas as pd
 import seaborn as sns
 
 from Bio.Align.Applications import MuscleCommandline
-from Bio.Phylo.Applications import RaxmlCommandline
 from Bio.Phylo.TreeConstruction import DistanceCalculator
 from Bio import AlignIO
 from sklearn import metrics

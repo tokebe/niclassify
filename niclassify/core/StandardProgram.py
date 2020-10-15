@@ -92,7 +92,6 @@ def mp_ftgen(arg):
     if os.stat(arg[3]).st_size == 0 or os.stat(arg[1]).st_size == 0:
         return
 
-    # TODO apply split-by-order and multiprocess as seen in delimit_species
     utilities.generate_measures(
         arg[1],  # alignment
         arg[3],  # delimitation
@@ -102,8 +101,6 @@ def mp_ftgen(arg):
 
     if os.stat(arg[4]).st_size == 0:
         raise ChildProcessError(arg[0])
-
-    # input()
 
 
 def run_on_subset(func, data_subset):
@@ -501,17 +498,11 @@ class StandardProgram:
         pool = Pool(len(pool_files))
         pool.map(mp_delim, pool_files)
 
-        # TODO problem just above here - during delimitation, sample_name
-        # it seems to be mixed up during the pool map
-
-        delims = []
-
         # merge resulting delimitations into one file and save
         delim_merge = pd.DataFrame()
         for files in pool_files:
             if os.stat(files[3]).st_size > 0:
                 delim = utilities.get_data(files[3])
-                delims.append(delim)
                 delim_merge = pd.concat(
                     (delim_merge, delim),
                     axis=0,

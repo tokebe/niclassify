@@ -1,0 +1,17 @@
+comp.delimit	comp.delimit
+compare	splits-defunct
+confset.gmyc	gmyc.support
+ddwtGap	ddwtGap
+dimReduct	dimReduct
+genRefdata	ddwtGap
+getWbarK	ddwtGap
+gmyc	gmyc
+gmyc.support	gmyc.support
+plot.gmyc	gmyc
+remove.terminal.zeros	gmyc
+spec.list	gmyc
+splits	splits-package
+splits-defunct	splits-defunct
+subsDiag	subsDiag
+summary.gmyc	gmyc
+test.tr	test.tr

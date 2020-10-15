@@ -23,9 +23,6 @@ from .threadwrap import threaded
 from .dialogs.dialog import DialogLibrary
 
 
-# TODO fix apparent problem with cm image generation not being ready in time?
-# this would appear to cause crashes
-
 class ClassifierTool(tk.Frame):
     """
     The gui application class.

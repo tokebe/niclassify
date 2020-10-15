@@ -32,11 +32,22 @@ matplotlib.use('Agg')  # this makes threading not break
 # TODO add new tool for merging prepared data
 
 # LATER
+# TODO configure setup file
+# this way you can remove the venv and let people install with setup.py install
+# and also can add an install script to do that for you
 # TODO options to split by lower taxon levels
 # TODO File import history for merging?
 # TODO use pGMYC?
 
 # LATERER
+# TODO restructure
+# break utilities into a few files
+# probably move multiprocess stuff into utilities
+# check through datatool and clftool and see if anything should be moved to
+# standardprogram
+# TODO support mac/linux
+# filedialog asking for paths to required executables (rscript, etc)
+# config file to keep these paths
 # TODO attempt to make an .exe file
 # TODO go back and implement TUI with support for linux+mac if possible
 # this will require minor changes to some utility functions for system checking

@@ -11,12 +11,10 @@ library(stringr) # string manipulation utilities
 library(reshape2) # data frame manipulation utilities
 library(tidyverse)
 
-# TODO replace sd of nan with 0
 # TODO get debug logging working
 
 # ### Debug output redirection ###
 # fs = 0
-# # TODO actually implement debug so it can work on any system
 # while (file.exists(paste("C:/Users/J C/Documents/Github/niclassify/output/r-debug/log", fs, ".txt", sep=""))) {
 #   fs = fs + 1
 # }

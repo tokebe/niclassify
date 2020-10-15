@@ -4,5 +4,4 @@ __pycache__
 data
 output
 testing
-bin
 .mypy_cache
