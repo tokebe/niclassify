@@ -8,6 +8,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import subprocess
 import sys
 import xlrd
@@ -54,6 +55,10 @@ required_folders = [
     os.path.join(MAIN_PATH, "output/"),
     os.path.join(MAIN_PATH, "output/classifiers/"),
     os.path.join(MAIN_PATH, "output/logs/"),
+    os.path.join(MAIN_PATH, "output/logs/delim"),
+    os.path.join(MAIN_PATH, "output/logs/delim/tree"),
+    os.path.join(MAIN_PATH, "output/logs/delim/delim"),
+    os.path.join(MAIN_PATH, "output/logs/ftgen/")
 ]
 
 
@@ -657,7 +662,7 @@ def write_fasta(data, filename):
             file.write("\n")
 
 
-def align_fasta(infname, outfname, external=False):
+def align_fasta(infname, outfname, debug=False):
     # TODO support for linux/mac
     """
     Generate an alignment for the given fasta file.
@@ -676,7 +681,7 @@ def align_fasta(infname, outfname, external=False):
 
     print(alignment_call.__str__())
 
-    if external:
+    if debug:
         subprocess.run(
             alignment_call.__str__(),
             creationflags=subprocess.CREATE_NEW_CONSOLE
@@ -700,7 +705,7 @@ def align_fasta(infname, outfname, external=False):
                 outfname
     )
 
-    if external:
+    if debug:
         subprocess.run(
             trim_call,
             creationflags=subprocess.CREATE_NEW_CONSOLE
@@ -722,7 +727,6 @@ def delimit_species_GMYC(infname, outtreefname, outfname, debug=False):
         outfname (str): Output file path.
         debug (bool, optional): Save script output to file.
     """
-    # TODO implement debug output
     # TODO support for linux/mac
     r_script_exe = os.path.realpath(
         os.path.join(
@@ -733,17 +737,29 @@ def delimit_species_GMYC(infname, outtreefname, outfname, debug=False):
             MAIN_PATH, "niclassify/core/delim_tree.R")
     )
 
+    fs = 0
+    lpath = os.path.join(
+        MAIN_PATH,
+        "output/logs/delim"
+    )
+    while os.path.isfile(os.path.join(lpath, "delim/log{}.txt".format(fs))):
+        fs += 1
+
     if debug:
-        subprocess.run(
-            '"{}" "{}" "{}" "{}" "{}"'.format(
-                r_script_exe,
-                r_script,
-                infname,
-                outtreefname,
-                outfname
-            ),
-            creationflags=subprocess.CREATE_NEW_CONSOLE
-        )
+        with open(
+                os.path.join(lpath, "delim/log{}.txt".format(fs)), "w"
+        ) as logfile:
+            subprocess.run(
+                '"{}" "{}" "{}" "{}" "{}"'.format(
+                    r_script_exe,
+                    r_script,
+                    infname,
+                    outtreefname,
+                    outfname
+                ),
+                stdout=logfile,
+                stderr=logfile
+            )
     else:
         subprocess.run(
             '"{}" "{}" "{}" "{}" "{}"'.format(
@@ -779,6 +795,21 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
             MAIN_PATH, "bin/PTP-master/bin/bPTP.py")
     )
 
+    # assign log number, guarantee that both logs have same number
+    fs = 0
+    lpath = os.path.join(
+        MAIN_PATH,
+        "output/logs/delim"
+    )
+    while os.path.isfile(os.path.join(lpath, "delim/log{}.txt".format(fs))):
+        fs += 1
+    delimlogfile = open(
+        os.path.join(lpath, "delim/log{}.txt".format(fs)), "w"
+    )
+    treelogfile = open(
+        os.path.join(lpath, "tree/log{}.txt".format(fs)), "w"
+    )
+
     # make tree
     if debug:
         subprocess.run(
@@ -787,7 +818,9 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
                 r_script,
                 infname,
                 outtreefname
-            )
+            ),
+            stdout=treelogfile,
+            stderr=treelogfile
         )
     else:
         subprocess.run(
@@ -804,34 +837,31 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
 
     # delimit species
     if debug:
-        fs = 0
-        lpath = "C:/Users/J C/Documents/Github/niclassify/output/delim-debug/"
-        while os.path.isfile("{}log{}.txt".format(lpath, fs)):
-            fs += 1
-        logfile = open("{}log{}.txt".format(lpath, fs), "w+")
         subprocess.run(
             '"python" "{}" -t "{}" -o "{}" -s 123'.format(
                 bPTP,
                 outtreefname,
-                os.path.dirname(outfname) + "delim",
+                outfname,
 
             ),
-            stdout=logfile,
-            stderr=logfile
+            stdout=delimlogfile,
+            stderr=delimlogfile
         )
     else:
         subprocess.run(
             '"python" "{}" -t "{}" -o "{}" -s 123'.format(
                 bPTP,
                 outtreefname,
-                os.path.dirname(outfname) + "delim",
+                outfname,
 
             )
         )
+    treelogfile.close()
+    delimlogfile.close()
 
     # read delimitation file and convert to .tsv
     with open(
-        os.path.dirname(outfname) + "delim.PTPMLPartition.txt",
+        outfname + ".PTPMLPartition.txt",
         "r"
     ) as dfile:
         # read lines of file
@@ -881,12 +911,24 @@ def generate_measures(fastafname, delimfname, outfname, debug=False):
         delimfname,
         outfname
     )
+    # assign log number
+    fs = 0
+    lpath = os.path.join(
+        MAIN_PATH,
+        "output/logs/ftgen"
+    )
+    while os.path.isfile(os.path.join(lpath, "log{}.txt".format(fs))):
+        fs += 1
+    logfile = open(
+        os.path.join(lpath, "log{}.txt".format(fs)), "w"
+    )
 
     # run script
     if debug:
         subprocess.run(
             ftgen_call,
-            creationflags=subprocess.CREATE_NEW_CONSOLE
+            stdout=logfile,
+            stderr=logfile
         )
     else:
         subprocess.run(ftgen_call)
@@ -1133,3 +1175,19 @@ def make_genetic_measures(infname, outfname=None):
     dm = calculator.get_distance(aln)
 
     print(dm)
+
+
+def clean_folder(path):
+    """Delete contents of a folder.
+    If supplied file, deletes the file.
+    The folder is removed and replaced.
+
+    Args:
+        path (str): folder pathname.
+    """
+    path = os.path.realpath(path)
+    if os.path.isfile(path):
+        os.remove(path)
+    else:
+        shutil.rmtree(path)
+        os.mkdir(path)

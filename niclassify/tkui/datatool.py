@@ -580,7 +580,7 @@ class DataPreparationTool(tk.Toplevel):
 (This will take some time)...")
             print("GENERATING FEATURES...")
             try:
-                self.app.sp.generate_features(debug=False)
+                self.app.sp.generate_features(debug=True)
             except (ChildProcessError, FileNotFoundError) as err:
                 self.app.dlib.dialog(
                     messagebox.showerror,

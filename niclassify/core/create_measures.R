@@ -11,15 +11,18 @@ library(stringr) # string manipulation utilities
 library(reshape2) # data frame manipulation utilities
 library(tidyverse)
 
-### Debug output redirection ###
-fs = 0
-# TODO actually implement debug so it can work on any system
-while (file.exists(paste("C:/Users/J C/Documents/Github/niclassify/output/r-debug/log", fs, ".txt", sep=""))) {
-  fs = fs + 1
-}
-logfile <- file(paste("C:/Users/J C/Documents/Github/niclassify/output/r-debug/log", fs, ".txt", sep=""))
-sink(logfile, append=TRUE)
-sink(logfile, append=TRUE, type="message")
+# TODO replace sd of nan with 0
+# TODO get debug logging working
+
+# ### Debug output redirection ###
+# fs = 0
+# # TODO actually implement debug so it can work on any system
+# while (file.exists(paste("C:/Users/J C/Documents/Github/niclassify/output/r-debug/log", fs, ".txt", sep=""))) {
+#   fs = fs + 1
+# }
+# logfile <- file(paste("C:/Users/J C/Documents/Github/niclassify/output/r-debug/log", fs, ".txt", sep=""))
+# sink(logfile, append=TRUE)
+# sink(logfile, append=TRUE, type="message")
 
 
 # read in command-line arguments
@@ -30,6 +33,8 @@ seq_alignment<-read.FASTA(args[1], type="DNA")
 
 ## Pull in Species Assignments from FNAME_SPECIES ##
 speciesNames <- read_tsv(args[2])
+
+print(speciesNames)
 
 # Make DNA distance matrix
 seqDNA_Dist<-dist.hamming(seq_alignment)
@@ -189,8 +194,8 @@ print(groups_metrics)
 groups_metrics %>%
   select(sample_name, species_group, everything()) %>%  # reorder data
   rename(UPID = sample_name) %>%
-  select_if(~ length(unique(na.omit(.))) > 1 | length(.) < 2) %>%  # drop columns with all same values
+  # select_if(~ length(unique(na.omit(.))) > 1 | length(.) < 2) %>%  # drop columns with all same values
   write_delim(args[3], delim = "\t")  # save one combined file
 
-sink()
-sink(type="message")
+# sink()
+# sink(type="message")

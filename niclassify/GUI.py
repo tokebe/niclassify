@@ -21,28 +21,18 @@ from tkui.clftool import ClassifierTool
 matplotlib.use('Agg')  # this makes threading not break
 
 # NOW
-# TODO there appears to be a species delimitation problem
-# some files getting to create_measures don't having any groupings
-# some delims fail because of max windows path length error
-# this leaves a non-zero size file with no actual delimitations
-# > need to investigate why/when it's failing
-# it's failing from max windows path length in bPTP, outside of my control
-# this is theoretically not 100% avoidable and so will have to be compensated
-# for somehow.
-# TODO check minor fixes/features in datatool.py
-# just count up on finding a dupe
-# Will have to ask Jeremy about this
-# TODO automate trimming sequences
+# TODO classifier metrics seem to be failing, along with model overfitting
+# conf matrix showed perfect when results weren't
+# perfect results also just shouldn't happen, see if there's a better
+# metric (consider/read about/test out-of-bag and F1)
+# TODO properly implement logging for most steps
 # TODO check for agreement of status in delimited species
 # TODO add new tool for merging prepared data
-# TODO test running on new system without running setup of bPTP
-# You'll probably have to make a contained python env with everything installed
 
 # LATER
-# TODO generate a requirements.txt
 # TODO options to split by lower taxon levels
 # TODO File import history for merging?
-# TODO use pGMYC
+# TODO use pGMYC?
 
 # LATERER
 # TODO attempt to make an .exe file

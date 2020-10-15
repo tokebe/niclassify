@@ -269,7 +269,6 @@ class StandardProgram:
         # check if filename exists
         if not os.path.exists(filename):
             raise ValueError("file {} does not exist.".format(filename))
-            return False  # this line likely unreachable.
 
         return True
 
@@ -394,6 +393,7 @@ class StandardProgram:
             taxon: data[data[taxon_split] == taxon]["UPID"].tolist()
             for taxon in data[taxon_split].unique()
         }
+        print(taxons.keys())
         # split alignment file according to taxon splits
         with open(self.fasta_align_fname, "r") as file:
             align = file.read()
@@ -409,6 +409,8 @@ class StandardProgram:
         # make temporary alignment and tree files, and write the alignments
         pool_files = []
         for taxon, pids in taxons.items():
+            print(taxon)
+            print("------------------------------")
             align_file = tempfile.NamedTemporaryFile(
                 mode="w+",
                 prefix="alignment_{}_".format(taxon),
@@ -418,7 +420,7 @@ class StandardProgram:
             )
 
             for pid in pids:
-                if pid in names:  # in case seq in align but not data
+                if pid in names:  # in case seq in data but not in align
                     align_file.write(">{}\n".format(pid))
                     align_file.write("{}\n".format(seqs[names.index(pid)]))
 
@@ -434,6 +436,7 @@ class StandardProgram:
             delim_file.close()
             # split off species delimitation if it exists
             if delims is not None:
+                print(delims[delims["sample_name"].isin(pids)])
                 delims[delims["sample_name"].isin(pids)].to_csv(
                     delim_file.name, sep="\t", index=False)
 
@@ -465,8 +468,6 @@ class StandardProgram:
                 ]
             )
 
-            # TODO break up delim if it's already been made, add features file
-
         return pool_files, pool_dir
 
     def delimit_species(self, method="GMYC", debug=False):
@@ -480,16 +481,37 @@ class StandardProgram:
         pool_files, pool_dir = self.split_by_taxon()
         pool_files = [f + [method] for f in pool_files]
 
+        # clean previous logs
+        paths = [
+            os.path.join(
+                utilities.MAIN_PATH,
+                "output/logs/delim/tree"
+            ),
+            os.path.join(
+                utilities.MAIN_PATH,
+                "output/logs/delim/delim"
+            )
+        ]
+
+        [utilities.clean_folder(path) for path in paths]
+
         # delimit species, separated by order
-        pool = Pool(
-            cpu_count() if cpu_count() > len(pool_files) else len(pool_files))
+        # pool = Pool(
+        #     cpu_count() if cpu_count() > len(pool_files) else len(pool_files))
+        pool = Pool(len(pool_files))
         pool.map(mp_delim, pool_files)
+
+        # TODO problem just above here - during delimitation, sample_name
+        # it seems to be mixed up during the pool map
+
+        delims = []
 
         # merge resulting delimitations into one file and save
         delim_merge = pd.DataFrame()
         for files in pool_files:
             if os.stat(files[3]).st_size > 0:
                 delim = utilities.get_data(files[3])
+                delims.append(delim)
                 delim_merge = pd.concat(
                     (delim_merge, delim),
                     axis=0,
@@ -507,6 +529,13 @@ class StandardProgram:
             debug (bool, optional): Save script output to file.
         """
         pool_files, pool_dir = self.split_by_taxon()
+
+        utilities.clean_folder(
+            os.path.join(
+                utilities.MAIN_PATH,
+                "output/logs/ftgen"
+            )
+        )
 
         pool = Pool(
             cpu_count() if cpu_count() > len(pool_files) else len(pool_files))
