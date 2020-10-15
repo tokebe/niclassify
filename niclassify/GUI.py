@@ -21,6 +21,8 @@ from tkui.clftool import ClassifierTool
 matplotlib.use('Agg')  # this makes threading not break
 
 # NOW
+# TODO add check for high inbalance of data
+# put this in datatool and in clftool
 # TODO classifier metrics seem to be failing, along with model overfitting
 # conf matrix showed perfect when results weren't
 # perfect results also just shouldn't happen, see if there's a better
@@ -38,7 +40,7 @@ matplotlib.use('Agg')  # this makes threading not break
 # TODO attempt to make an .exe file
 # TODO go back and implement TUI with support for linux+mac if possible
 # this will require minor changes to some utility functions for system checking
-# TODO create secondary scripts for checking what caused a failure
+# TODO create secondary scripts for checking what caused a failure?
 
 # FIXES & MINOR FEATURES
 # TODO go searching for problems, unexpected behaviors, etc

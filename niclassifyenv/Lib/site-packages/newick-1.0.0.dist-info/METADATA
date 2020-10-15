@@ -1,0 +1,86 @@
+Metadata-Version: 2.1
+Name: newick
+Version: 1.0.0
+Summary: A python module to read and write the Newick format
+Home-page: https://github.com/glottobank/python-newick
+Author: The Glottobank consortium
+Author-email: forkel@shh.mpg.de
+License: Apache 2
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Description-Content-Type: text/markdown
+Provides-Extra: dev
+Provides-Extra: test
+Provides-Extra: dev
+Requires-Dist: flake8; extra == 'dev'
+Requires-Dist: wheel; extra == 'dev'
+Requires-Dist: twine; extra == 'dev'
+Provides-Extra: test
+Requires-Dist: ddt; extra == 'test'
+Requires-Dist: pytest (>=3.1); extra == 'test'
+Requires-Dist: pytest-mock; extra == 'test'
+Requires-Dist: mock; extra == 'test'
+Requires-Dist: coverage (>=4.2); extra == 'test'
+Requires-Dist: pytest-cov; extra == 'test'
+
+# python-newick
+
+[![Build Status](https://travis-ci.org/glottobank/python-newick.svg?branch=master)](https://travis-ci.org/glottobank/python-newick)
+[![codecov.io](https://codecov.io/github/glottobank/python-newick/coverage.svg?branch=master)](https://codecov.io/github/glottobank/python-newick?branch=master)
+[![PyPI](https://badge.fury.io/py/newick.svg)](https://pypi.org/project/newick)
+
+
+python package to read and write the 
+[Newick format](https://en.wikipedia.org/wiki/Newick_format).
+
+
+## Reading Newick
+
+- From a string:
+```python
+>>> from newick import loads
+>>> trees = loads('(A,B,(C,D)E)F;')
+>>> trees[0].name
+u'F'
+>>> [n.name for n in trees[0].descendants]
+[u'A', u'B', u'E']
+```
+
+- From  a `file`-like object:
+```python
+>>> import io
+>>> from newick import load
+>>> with io.open('fname', encoding='utf8') as fp:
+...     trees = load(fp)
+```
+
+- From a file name:
+```python
+>>> from newick import read
+>>> trees = read('fname')
+```
+
+## Writing Newick
+
+In parallel to the read operations there are three functions to serialize a single `Node` object or a `list` of `Node`
+objects to Newick format:
+- `dumps(trees) -> str`
+- `dump(trees, fp)`
+- `write(trees, 'fname')`
+
+A tree may be assembled using the factory methods of the `Node` class:
+- `Node.__init__`
+- `Node.create`
+- `Node.add_descendant`
+
+

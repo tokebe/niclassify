@@ -1,0 +1,52 @@
+Metadata-Version: 2.1
+Name: clldutils
+Version: 3.5.4
+Summary: Utilities for clld apps
+Home-page: https://github.com/clld/clldutils
+Author: Robert Forkel
+Author-email: forkel@shh.mpg.de
+License: Apache 2.0
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Description-Content-Type: text/markdown
+Provides-Extra: dev
+Provides-Extra: test
+Requires-Dist: python-dateutil
+Requires-Dist: tabulate (>=0.7.7)
+Requires-Dist: colorlog
+Requires-Dist: attrs (>=18.1.0)
+Requires-Dist: csvw (>=1.0)
+Provides-Extra: dev
+Requires-Dist: flake8; extra == 'dev'
+Requires-Dist: wheel; extra == 'dev'
+Requires-Dist: twine; extra == 'dev'
+Provides-Extra: test
+Requires-Dist: mock; extra == 'test'
+Requires-Dist: pytest (>=5.4); extra == 'test'
+Requires-Dist: pytest-mock; extra == 'test'
+Requires-Dist: pytest-cov; extra == 'test'
+Requires-Dist: coverage (>=4.2); extra == 'test'
+
+# clldutils
+
+Utilities for clld apps without the overhead of requiring pyramid, rdflib et al.
+
+[![Build Status](https://travis-ci.org/clld/clldutils.svg?branch=master)](https://travis-ci.org/clld/clldutils)
+[![codecov.io](https://codecov.io/github/clld/clldutils/coverage.svg?branch=master)](https://codecov.io/github/clld/clldutils?branch=master)
+[![Requirements Status](https://requires.io/github/clld/clldutils/requirements.svg?branch=master)](https://requires.io/github/clld/clldutils/requirements/?branch=master)
+[![PyPI](https://img.shields.io/pypi/v/clldutils.svg)](https://pypi.python.org/pypi/clldutils)
+
+
+## Manipulating "Standard Format" (SFM, a.k.a. toolbox) files
+
+- [`clldutils.sfm`](clldutils/sfm.py)
+
+

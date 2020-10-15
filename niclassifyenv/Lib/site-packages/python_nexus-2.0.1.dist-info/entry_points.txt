@@ -1,0 +1,3 @@
+[console_scripts]
+nexus = nexus.__main__:main
+
