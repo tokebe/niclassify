@@ -1,6 +1,6 @@
 # niclassify
 
-A program for automatically retreiving, cleaning, and classifing genetic data using inter- and intra- species similarity/distance metrics.
+A program for automatically retreiving, cleaning, and classifing genetic data as native or introduced using inter- and intra- species similarity/distance metrics.
 
 # Install
 
