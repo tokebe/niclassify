@@ -1,5 +1,29 @@
+import subprocess
 from os import path
-from setuptools import setup, find_packages
+import sys
+
+from setuptools import find_packages, setup
+from setuptools.command.install import install
+
+# install bPTP - cwd changes directory for install
+# (bPTP install must happen from inside its directory)
+
+
+class InstallbPTP(install):
+    def run(self):
+        install.run(self)
+        python_path = sys.executable
+        subprocess.run(
+            '"{}" "{}" install'.format(
+                python_path,
+                path.join(path.dirname(path.abspath(__file__)),
+                          "bin/PTP-master/setup.py")
+            ),
+            cwd=path.join(path.dirname(
+                path.abspath((__file__))), "bin/PTP-master"),
+            shell=True
+        )
+
 
 setup(
     name='niclassify',  # TODO rename this project at some point please
@@ -10,67 +34,30 @@ setup(
     url='https://github.com/jackson-callaghan',
     packages=find_packages(include=['niclassify']),
     install_requires=[
-        'atomicwrites==1.4.0',
-        'attrs==20.2.0',
-        'biopython==1.78',
-        'certifi==2020.6.20',
-        'chardet==3.0.4',
-        'clldutils==3.5.4',
-        'colorama==0.4.3',
-        'colorlog==4.4.0',
-        'csvw==1.8.0',
-        'cycler==0.10.0',
-        'docutils==0.16',
-        'ete3==3.1.2',
-        'flake8==3.8.4',
-        'idna==2.10',
-        'iniconfig==1.0.1',
-        'isodate==0.6.0',
-        'joblib==0.17.0',
-        'kiwisolver==1.2.0',
-        'lxml==4.5.2',
-        'matplotlib==3.3.2',
-        'mccabe==0.6.1',
-        'newick==1.0.0',
-        'numpy==1.19.2',
-        'packaging==20.4',
-        'pandas==1.1.3',
-        'Pillow==7.2.0',
-        'pluggy==0.13.1',
-        'prompt-toolkit==1.0.14',
-        'py==1.9.0',
-        'pycodestyle==2.6.0',
-        'pyflakes==2.2.0',
-        'Pygments==2.7.1',
-        'PyInquirer==1.0.3',
-        'pyparsing==2.4.7',
-        'PyQt5==5.15.1',
-        'PyQt5-sip==12.8.1',
-        'pytest==6.1.1',
-        'python-dateutil==2.8.1',
-        'python-nexus==2.0.1',
-        'pytz==2020.1',
-        'regex==2020.9.27',
-        'requests==2.24.0',
-        'rfc3986==1.4.0',
-        'scikit-learn==0.23.2',
-        'scipy==1.5.2',
-        'seaborn==0.11.0',
-        'six==1.15.0',
-        'tabulate==0.8.7',
-        'termcolor==1.1.0',
-        'threadpoolctl==2.1.0',
-        'toml==0.10.1',
-        'uritemplate==3.0.1',
-        'urllib3==1.25.10',
-        'wcwidth==0.2.5',
-        'xlrd==1.2.0'
+        "biopython",
+        "docutils",
+        "ete3",
+        "flake8",
+        "lxml",
+        "pyinquirer",
+        "pyqt5",
+        "pytest",
+        "python-nexus",
+        "requests",
+        "scikit-learn",
+        "seaborn",
+        "xlrd",
+        "pandas",
+        "joblib",
+        "matplotlib",
+        "numpy",
+        "scipy",
     ],
-    dependency_links=[
-        ''.join([
-            'file:\\',
-            path.join(path.dirname(path.abspath(__file__)), "bin/PTP-master")
-        ])
-    ]
+    cmdclass={'install': InstallbPTP},
+    # entry_points={
+    #     'console_scripts': [
+    #         'niclassify-gui = gui:main'
+    #     ]
+    # }
     # TODO implement entry_points
 )

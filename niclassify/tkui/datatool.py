@@ -6,6 +6,7 @@ functions such as access to the inner-layer StandardProgram.
 """
 import csv
 import os
+from os.path import normcase
 import re
 import requests
 import shutil
@@ -611,6 +612,8 @@ class DataPreparationTool(tk.Toplevel):
             final = self.util.get_data(self.finalized_data.name)
             n_classified = final.count()["final_status"]
             n_classes = final["final_status"].nunique()
+            class_std = final["final_status"].value_counts(
+                normalize=True).std()
 
             self.data_sec.final_save_button["state"] = tk.ACTIVE
             self.data_sec.final_load_button["state"] = tk.ACTIVE
@@ -622,14 +625,22 @@ class DataPreparationTool(tk.Toplevel):
                     "NOT_ENOUGH_CLASSES",
                     parent=self
                 )
-            elif n_classified < 100:
-                self.app.dlib.dialog(
-                    messagebox.showwarning,
-                    "LOW_CLASS_COUNT",
-                    form=(n_classified,),
-                    parent=self
-                )
             else:
+                if n_classified < 100:
+                    self.app.dlib.dialog(
+                        messagebox.showwarning,
+                        "LOW_CLASS_COUNT",
+                        form=(n_classified,),
+                        parent=self
+                    )
+                # check for extreme known class imbalance
+                # using stdev as a very rough heuristic
+                if class_std > 0.35:
+                    self.dlib.dialog(
+                        messagebox.showwarning,
+                        "HIGH_IMBALANCE"
+                    )
+
                 self.app.dlib.dialog(
                     messagebox.showinfo,
                     "DATA_PREP_COMPLETE",

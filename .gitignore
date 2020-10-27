@@ -5,3 +5,7 @@ data
 output
 testing
 .mypy_cache
+*.egg-info
+niclassifyenv
+dist
+build

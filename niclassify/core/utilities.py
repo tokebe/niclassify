@@ -175,7 +175,7 @@ def get_data(filename, excel_sheet=None):
             engine="python"
         )
 
-    # using txt; must figure out delmiter
+    # using txt; must figure out delimiter
     elif ".txt" in os.path.splitext(filename)[1]:
         raw_data = pd.read_csv(
             filename,
@@ -683,8 +683,7 @@ def align_fasta(infname, outfname, debug=False):
     if debug:
         subprocess.run(
             alignment_call.__str__(),
-            creationflags=subprocess.CREATE_NEW_CONSOLE
-        )
+            creationflags=subprocess.CREATE_NEW_CONSOLE)
     else:
         subprocess.run(alignment_call.__str__())
 
@@ -707,8 +706,7 @@ def align_fasta(infname, outfname, debug=False):
     if debug:
         subprocess.run(
             trim_call,
-            creationflags=subprocess.CREATE_NEW_CONSOLE
-        )
+            creationflags=subprocess.CREATE_NEW_CONSOLE)
     else:
         subprocess.run(trim_call)
 
@@ -789,6 +787,7 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
         os.path.join(
             MAIN_PATH, "niclassify/core/delim_tree.R")
     )
+    python_path = sys.executable
     bPTP = os.path.realpath(
         os.path.join(
             MAIN_PATH, "bin/PTP-master/bin/bPTP.py")
@@ -837,7 +836,8 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
     # delimit species
     if debug:
         subprocess.run(
-            '"python" "{}" -t "{}" -o "{}" -s 123'.format(
+            '"{}" "{}" -t "{}" -o "{}" -s 123'.format(
+                python_path,
                 bPTP,
                 outtreefname,
                 outfname,
@@ -848,7 +848,8 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
         )
     else:
         subprocess.run(
-            '"python" "{}" -t "{}" -o "{}" -s 123'.format(
+            '"{}" "{}" -t "{}" -o "{}" -s 123'.format(
+                python_path,
                 bPTP,
                 outtreefname,
                 outfname,

@@ -57,6 +57,10 @@
   },
   "PID_NOT_UNIQUE": {
     "title": "Non-Unique ProcessID",
-    "message": "The processid column of the data contains duplicates. The UPID column will be generated with suffixes to ensure unique IDs per row."
+    "message": "The processid column of the data contains duplicates.\nThe UPID column will be generated with suffixes to ensure unique IDs per row."
+  },
+  "HIGH_IMBALANCE": {
+    "title": "High Known Class Imbalance",
+    "message": "The data's known classifications have an extreme imbalance that may result in extreme classifier bias.\nIt is recommended that more known classifications are added. Train at your own risk."
   }
 }

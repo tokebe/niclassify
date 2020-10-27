@@ -21,8 +21,6 @@ from tkui.clftool import ClassifierTool
 matplotlib.use('Agg')  # this makes threading not break
 
 # NOW
-# TODO add check for high inbalance of data
-# put this in datatool and in clftool
 # TODO classifier metrics seem to be failing, along with model overfitting
 # conf matrix showed perfect when results weren't
 # perfect results also just shouldn't happen, see if there's a better
@@ -32,9 +30,7 @@ matplotlib.use('Agg')  # this makes threading not break
 # TODO add new tool for merging prepared data
 
 # LATER
-# TODO configure setup file
-# this way you can remove the venv and let people install with setup.py install
-# and also can add an install script to do that for you
+# TODO implement commandline version, use for tests
 # TODO options to split by lower taxon levels
 # TODO File import history for merging?
 # TODO use pGMYC?
