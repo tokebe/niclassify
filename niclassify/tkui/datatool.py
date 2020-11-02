@@ -25,11 +25,6 @@ from .datapanels import RetrievalPanel, PreparationPanel
 from .smallwindows import ProgressPopup
 from .threadwrap import threaded
 
-# TODO data sent to clftool doesn't match data saved?
-# TODO thread alignment loading with progress window
-# TODO redo merge behavior entirely
-# two-column selector in new window with button to merge data
-
 
 class DataPreparationTool(tk.Toplevel):
     """A window for retrieving data from BOLD."""
@@ -260,7 +255,8 @@ class DataPreparationTool(tk.Toplevel):
         }
         # ----- threaded function -----
 
-        def _load_alignment(alignfname):
+        @threaded
+        def _load_alignment(alignfname, on_finish, status_cb):
             # load raw data to check alignment against
             data = self.util.get_data(self.sequence_filtered.name)
 
@@ -274,6 +270,8 @@ class DataPreparationTool(tk.Toplevel):
                 # print(names)
 
                 names_not_found = []
+
+                status_cb("Checking sample UPIDs...")
 
                 for name in names:
                     if name not in data["UPID"].unique():
@@ -292,6 +290,8 @@ class DataPreparationTool(tk.Toplevel):
             shutil.copy(alignfname, tempfiles[item])
             self.data_sec.align_load_button["state"] = tk.ACTIVE
             self.data_sec.data_prep["state"] = tk.ACTIVE
+
+            on_finish()
 
         # ----- end threaded function -----
         self.app.status_bar.set_status("Awaiting user file selection...")
@@ -312,8 +312,15 @@ class DataPreparationTool(tk.Toplevel):
 
         if item == "alignment":
             self.data_sec.align_load_button["state"] = tk.DISABLED
+
+            progress = ProgressPopup(
+                self,
+                "Reading Alignment",
+                "Reading file..."
+            )
+
             # enable next step
-            _load_alignment(file)
+            _load_alignment(file, progress.complete, progress.set_status)
         else:
             # overwrite the alignment file
             shutil.copy(file, tempfiles[item])
@@ -422,7 +429,6 @@ class DataPreparationTool(tk.Toplevel):
         # ----- threaded function -----
         @threaded
         def _merge_sequence_data(on_finish):
-            # TODO redo this behavior with new merge tool
             if self.merged_raw is not None:
                 if bold:
                     answer = self.app.dlib.dialog(
@@ -636,7 +642,7 @@ class DataPreparationTool(tk.Toplevel):
                 # check for extreme known class imbalance
                 # using stdev as a very rough heuristic
                 if class_std > 0.35:
-                    self.dlib.dialog(
+                    self.app.dlib.dialog(
                         messagebox.showwarning,
                         "HIGH_IMBALANCE"
                     )

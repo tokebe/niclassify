@@ -232,7 +232,7 @@ class AutoClassifier:
             self.best_model,
             self.best_x_train,
             self.best_y_train,
-            metrics.make_scorer(self.score_method),
+            scorer=metrics.make_scorer(self.score_method),
             n_jobs=-1
         )
 
