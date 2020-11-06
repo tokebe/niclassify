@@ -241,7 +241,7 @@ class PreparationPanel(ttk.LabelFrame):
             "Phylum",
             "Class",
             "Order",
-            # "Family",
+            # "Family",  # These three disabled because they simply break
             # "Subfamily",
             # "Genus"
         )
