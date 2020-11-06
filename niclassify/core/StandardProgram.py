@@ -386,11 +386,21 @@ class StandardProgram:
 
         # get each order and its corresponding samples
         data = utilities.get_data(self.filtered_fname)
+        # checks either taxon match or isna if taxon level is na
+        # essentially just makes sure all taxons are handled
         taxons = {
-            taxon: data[data[taxon_split] == taxon]["UPID"].tolist()
+            str(taxon): (data[data[taxon_split] == taxon]
+                         if not pd.isnull(taxon)
+                         else data[data[taxon_split].isna()])
+            ["UPID"].tolist()
             for taxon in data[taxon_split].unique()
         }
-        print(taxons.keys())
+
+        for taxon, pids in taxons.items():
+            print("{}: {}".format(taxon, len(pids)))
+        print()
+        # print(taxons.keys())
+        
         # split alignment file according to taxon splits
         with open(self.fasta_align_fname, "r") as file:
             align = file.read()

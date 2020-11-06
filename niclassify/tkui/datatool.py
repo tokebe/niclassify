@@ -13,7 +13,7 @@ import shutil
 
 import tempfile
 
-
+import numpy as np
 import pandas as pd
 import tkinter as tk
 
@@ -537,6 +537,16 @@ class DataPreparationTool(tk.Toplevel):
         # ----- threaded function -----
         @threaded
         def _prep_sequence_data(on_finish, status_cb):
+
+            data = self.util.get_data(self.sequence_filtered.name)
+
+            if data[self.taxon_level].isna().any():
+                self.app.dlib.dialog(
+                    messagebox.askokcancel,
+                    "NAN_TAXON",
+                    form=(self.taxon_level_name,),
+                    parent=self
+                )
 
             method = self.data_sec.method_select.get()
 

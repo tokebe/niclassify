@@ -21,26 +21,27 @@ from tkui.clftool import ClassifierTool
 matplotlib.use('Agg')  # this makes threading not break
 
 # NOW
+# TODO check if having split sizes of 1 causes delim errors
+# create warning after splits if so
 # TODO classifier metrics seem to be failing, along with model overfitting
 # conf matrix showed perfect when results weren't
 # perfect results also just shouldn't happen, see if there's a better
 # metric (consider/read about/test out-of-bag and F1)
-# TODO properly implement logging for most steps
 # TODO check for agreement of status in delimited species
-# TODO add new tool for merging prepared data
 
 # LATER
-# TODO implement commandline version, use for tests
-# TODO options to split by lower taxon levels
-# TODO File import history for merging?
-# TODO use pGMYC?
-
-# LATERER
+# TODO properly implement logging for most steps
 # TODO restructure
 # break utilities into a few files
 # probably move multiprocess stuff into utilities
 # check through datatool and clftool and see if anything should be moved to
 # standardprogram
+# TODO implement commandline version, use for tests
+# TODO File import history for merging?
+# TODO use pGMYC?
+
+# LATERER
+# TODO add new tool for merging prepared data
 # TODO support mac/linux
 # filedialog asking for paths to required executables (rscript, etc)
 # config file to keep these paths

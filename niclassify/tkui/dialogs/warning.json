@@ -62,5 +62,9 @@
   "HIGH_IMBALANCE": {
     "title": "High Known Class Imbalance",
     "message": "The data's known classifications have an extreme imbalance that may result in extreme classifier bias.\nIt is recommended that more known classifications are added. Train at your own risk."
+  },
+  "NAN_TAXON": {
+    "title": "Unknown Taxonomy",
+    "message": "The data contains blank entries in the specified Taxonomic Split Level ({}).\nThis may result in poor feature generation or other unexpected data behavior for those samples.\nProceed?"
   }
 }
