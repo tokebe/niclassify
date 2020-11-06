@@ -47,6 +47,9 @@ class DataPreparationTool(tk.Toplevel):
 
         self.report_callback_exception = self.app.uncaught_exception
 
+        self.taxon_level_name = "Order"
+        self.taxon_level = "order_name"
+
         # tempdir for tempfiles
         self.tempdir = tempdir
         # tempfiles
@@ -572,12 +575,13 @@ class DataPreparationTool(tk.Toplevel):
             print("DELIMITING SPECIES...")
             try:
                 # TODO disable debug
-                self.app.sp.delimit_species(method, debug=True)
+                self.app.sp.delimit_species(
+                    method, tax=self.taxon_level, debug=True)
             except (ChildProcessError, FileNotFoundError, IndexError) as err:
                 self.app.dlib.dialog(
                     messagebox.showerror,
                     "DELIM_ERR",
-                    form=("order", str(err)),
+                    form=(self.taxon_level_name, str(err)),
                     parent=self
                 )
                 on_finish()
@@ -587,12 +591,12 @@ class DataPreparationTool(tk.Toplevel):
 (This will take some time)...")
             print("GENERATING FEATURES...")
             try:
-                self.app.sp.generate_features(debug=True)
+                self.app.sp.generate_features(tax=self.taxon_level, debug=True)
             except (ChildProcessError, FileNotFoundError) as err:
                 self.app.dlib.dialog(
                     messagebox.showerror,
                     "FEATURE_GEN_ERR",
-                    form=("order", str(err)),
+                    form=(self.taxon_level_name, str(err)),
                     parent=self
                 )
                 on_finish()
@@ -789,6 +793,19 @@ class DataPreparationTool(tk.Toplevel):
 
         _retrieve_seq_data(progress_popup.complete)
 
+    def set_taxon_level(self, event):
+        levels = {
+            "Phylum": "phylum_name",
+            "Class": "class_name",
+            "Order": "order_name",
+            "Family": "family_name",
+            "Subfamily": "subfamily_name",
+            "Genus": "genus_name"
+        }
+
+        self.taxon_level_name = self.data_sec.taxon_split_selector.get()
+        self.taxon_level = levels[self.taxon_level_name]
+
     def transfer_prepared_data(self):
         """Transfer prepared data to the classifier tool's data handling."""
         # drop extra columns to avoid confusion
@@ -806,6 +823,7 @@ class DataPreparationTool(tk.Toplevel):
         cols = [
             "UPID",
             "processid",
+            "phylum_name",
             "order_name",
             "family_name",
             "subfamily_name",

@@ -226,6 +226,31 @@ class PreparationPanel(ttk.LabelFrame):
         self.ref_geo_select.set("Continental US")
         self.ref_geo_select.pack(fill=tk.X)
 
+        self.taxon_split_label = tk.Label(
+            self,
+            text="Taxonomic Split Level:"
+        )
+        self.taxon_split_label.pack(anchor=tk.W)
+
+        self.taxon_split_selector = ttk.Combobox(
+            self,
+            height=10,
+            state="readonly"
+        )
+        self.taxon_split_selector["values"] = (
+            "Phylum",
+            "Class",
+            "Order",
+            # "Family",
+            # "Subfamily",
+            # "Genus"
+        )
+        self.taxon_split_selector.set("Order")
+        self.taxon_split_selector.pack(fill=tk.X)
+
+        self.taxon_split_selector.bind(
+            "<<ComboboxSelected>>", self.app.set_taxon_level)
+
         self.data_prep = tk.Button(
             self,
             text="Prepare Data",

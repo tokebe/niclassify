@@ -467,15 +467,17 @@ class StandardProgram:
 
         return pool_files, pool_dir
 
-    def delimit_species(self, method="GMYC", debug=False):
+    def delimit_species(self, method="GMYC", tax="order_name", debug=False):
         """
         Delimit species by their nucleotide sequences.
 
         Args:
             method (str, optional): Delimitation method. Defaults to "GMYC".
+            tax (str, optional): Taxonomic level to split by prior to
+                delimitation.
             debug (bool, optional): Save script output to file.
         """
-        pool_files, pool_dir = self.split_by_taxon()
+        pool_files, pool_dir = self.split_by_taxon(taxon_split=tax)
         pool_files = [f + [method] for f in pool_files]
 
         # clean previous logs
@@ -513,13 +515,13 @@ class StandardProgram:
 
         pool_dir.cleanup()
 
-    def generate_features(self, debug=False):
+    def generate_features(self, tax="order_name", debug=False):
         """Generate features for use in classification.
 
         Args:
             debug (bool, optional): Save script output to file.
         """
-        pool_files, pool_dir = self.split_by_taxon()
+        pool_files, pool_dir = self.split_by_taxon(taxon_split=tax)
 
         utilities.clean_folder(
             os.path.join(
