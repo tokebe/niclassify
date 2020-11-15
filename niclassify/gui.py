@@ -21,8 +21,6 @@ from tkui.clftool import ClassifierTool
 matplotlib.use('Agg')  # this makes threading not break
 
 # NOW
-# TODO check if having split sizes of 1 causes delim errors
-# create warning after splits if so
 # TODO classifier metrics seem to be failing, along with model overfitting
 # conf matrix showed perfect when results weren't
 # perfect results also just shouldn't happen, see if there's a better

@@ -66,5 +66,9 @@
   "NAN_TAXON": {
     "title": "Unknown Taxonomy",
     "message": "The data contains blank entries in the specified Taxonomic Split Level ({}).\nThis may result in poor feature generation or other unexpected data behavior for those samples.\nProceed?"
+  },
+  "SINGLE_SPLIT": {
+      "title": "Single-length split",
+      "message": "Splitting this data by {} will result in one or more subsets with only one sample.\nThe program cannot operate on sets of 1. It is recommended that you cancel operation and choose a broader taxonomic level.\nIf you wish to continue, subsets of 1 will be ignored (no features will be generated for those samples).\nSelect 'ok' to continue and ignore subsets of 1, or 'cancel' to cancel."
   }
 }

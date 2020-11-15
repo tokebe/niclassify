@@ -241,9 +241,9 @@ class PreparationPanel(ttk.LabelFrame):
             "Phylum",
             "Class",
             "Order",
-            # "Family",  # disabled as they generally result in too-small splits
-            # "Subfamily",
-            # "Genus"
+            "Family",  # disabled as they generally result in too-small splits
+            "Subfamily",
+            "Genus"
         )
         self.taxon_split_selector.set("Order")
         self.taxon_split_selector.pack(fill=tk.X)

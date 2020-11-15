@@ -540,13 +540,26 @@ class DataPreparationTool(tk.Toplevel):
 
             data = self.util.get_data(self.sequence_filtered.name)
 
+            # TODO add actual cancelling functionality to these two
             if data[self.taxon_level].isna().any():
-                self.app.dlib.dialog(
+                if not self.app.dlib.dialog(
                     messagebox.askokcancel,
                     "NAN_TAXON",
                     form=(self.taxon_level_name,),
                     parent=self
-                )
+                ):
+                    on_finish()
+                    return
+
+            if 1 in data[self.taxon_level].value_counts(dropna=False).values:
+                if not self.app.dlib.dialog(
+                    messagebox.askokcancel,
+                    "SINGLE_SPLIT",
+                    form=(self.taxon_level_name,),
+                    parent=self
+                ):
+                    on_finish()
+                    return
 
             method = self.data_sec.method_select.get()
 

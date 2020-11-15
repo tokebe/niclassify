@@ -66,7 +66,7 @@ def mp_delim(arg):
     elif arg[5] == "bPTP":
         delimit = utilities.delimit_species_bPTP
     else:
-        raise KeyError("Specified delimitation method does not exist.")
+        raise KeyError("Specified delimitation method not found.")
 
     delimit(
         arg[1],  # alignment
@@ -400,7 +400,7 @@ class StandardProgram:
             print("{}: {}".format(taxon, len(pids)))
         print()
         # print(taxons.keys())
-        
+
         # split alignment file according to taxon splits
         with open(self.fasta_align_fname, "r") as file:
             align = file.read()
@@ -416,8 +416,13 @@ class StandardProgram:
         # make temporary alignment and tree files, and write the alignments
         pool_files = []
         for taxon, pids in taxons.items():
+            # ignore subsets of length 1
             print(taxon)
             print("------------------------------")
+            if len(pids) < 2:
+                print("({}: subset of 1 ignored)".format(taxon))
+                continue
+
             align_file = tempfile.NamedTemporaryFile(
                 mode="w+",
                 prefix="alignment_{}_".format(taxon),
@@ -477,12 +482,12 @@ class StandardProgram:
 
         return pool_files, pool_dir
 
-    def delimit_species(self, method="GMYC", tax="order_name", debug=False):
+    def delimit_species(self, method="bPTP", tax="order_name", debug=False):
         """
         Delimit species by their nucleotide sequences.
 
         Args:
-            method (str, optional): Delimitation method. Defaults to "GMYC".
+            method (str, optional): Delimitation method. Defaults to "bPTP".
             tax (str, optional): Taxonomic level to split by prior to
                 delimitation.
             debug (bool, optional): Save script output to file.
@@ -505,8 +510,6 @@ class StandardProgram:
         [utilities.clean_folder(path) for path in paths]
 
         # delimit species, separated by order
-        # pool = Pool(
-        #     cpu_count() if cpu_count() > len(pool_files) else len(pool_files))
         pool = Pool(len(pool_files))
         pool.map(mp_delim, pool_files)
 
