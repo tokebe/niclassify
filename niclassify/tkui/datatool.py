@@ -540,7 +540,6 @@ class DataPreparationTool(tk.Toplevel):
 
             data = self.util.get_data(self.sequence_filtered.name)
 
-            # TODO add actual cancelling functionality to these two
             if data[self.taxon_level].isna().any():
                 if not self.app.dlib.dialog(
                     messagebox.askokcancel,

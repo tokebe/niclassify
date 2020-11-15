@@ -690,6 +690,10 @@ class StandardProgram:
             elif (pd.isnull(row["gbif_status"])
                   and pd.notnull(row["itis_status"])):
                 return row["itis_status"]
+            elif ((row["itis_status"] != row["gbif_status"])
+                  and (pd.notnull(row["itis_status"])
+                       and pd.notnull(row["gbif_status"]))):
+                return "unknown"  # unknown strictly means conflicting answers
             else:
                 return np.NaN
 
@@ -699,6 +703,28 @@ class StandardProgram:
 
         # merge species table back in
         data = pd.merge(data, species, on="species_name", how="left")
+
+        # check delimited species status agreement and update
+        # use majority consensus
+        for sg in data["species_group"].unique():
+            statuses = data[data["species_group"] == sg]["final_status"]
+            votes = statuses.value_counts(dropna=False)
+            _nat = 0 if "Native" not in votes else votes["Native"]
+            _int = 0 if "Introduced" not in votes else votes["Introduced"]
+            _unk = 0 if "unknown" not in votes else votes["unknown"]
+            # this one may need fixing
+            _nan = statuses.isnull().sum()
+            winner = ""
+            if _nat > _int + _unk:
+                winner = "Native"
+            elif _int > _nat + _unk:
+                winner = "Introduced"
+            elif _unk > _nan:
+                winner = "unknown"
+            else:
+                winner = np.nan
+
+            data.loc[data["species_group"] == sg, "final_status"] = winner
 
         # print("saving statuses...")
         # save changes
