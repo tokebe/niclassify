@@ -28,7 +28,7 @@ class ClassifierTool(tk.Frame):
     The gui application class.
 
     Defines most of the buttons and functions to be used, with the rest in
-    tkui.
+    tkgui.
     """
 
     def __init__(
@@ -61,7 +61,7 @@ class ClassifierTool(tk.Frame):
         self.data_win = None
         try:
             self.dlib = DialogLibrary(
-                os.path.join(self.util.MAIN_PATH, "niclassify/tkui/dialogs"))
+                os.path.join(self.util.MAIN_PATH, "niclassify/tkgui/dialogs"))
         except json.JSONDecodeError:
             messagebox.showerror(
                 title="Dialog Library Read Error",
@@ -1024,8 +1024,11 @@ class ClassifierTool(tk.Frame):
             """Save the NaN values to nans.json in a thread."""
             nans = {"nans": self.sp.nans}
             try:
-                with open(os.path.join(
-                    self.util.MAIN_PATH, "niclassify/core/config/nans.json"),
+                with open(
+                    os.path.join(
+                        self.util.MAIN_PATH,
+                        "niclassify/core/utilities/config/nans.json"
+                    ),
                     "w"
                 ) as nansfile:
                     json.dump(nans, nansfile)

@@ -17,10 +17,10 @@ class InstallbPTP(install):
             '"{}" "{}" install'.format(
                 python_path,
                 path.join(path.dirname(path.abspath(__file__)),
-                          "bin/PTP-master/setup.py")
+                          "niclassify/bin/PTP-master/setup.py")
             ),
             cwd=path.join(path.dirname(
-                path.abspath((__file__))), "bin/PTP-master"),
+                path.abspath((__file__))), "niclassify/bin/PTP-master"),
             shell=True
         )
 

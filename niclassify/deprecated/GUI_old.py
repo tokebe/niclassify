@@ -18,8 +18,8 @@ from tkinter import ttk
 from xlrd import XLRDError
 
 from core import utilities
-from tkui.elements import DataPanel, TrainPanel, PredictPanel, StatusBar
-from tkui.utilities import view_open_file
+from tkgui.elements import DataPanel, TrainPanel, PredictPanel, StatusBar
+from tkgui.utilities import view_open_file
 
 
 class MainApp(tk.Frame):
@@ -520,13 +520,13 @@ class MainApp(tk.Frame):
         g = self.cm if graph == "cm" else self.pairplot
         g_img = self.cm_img if graph == "cm" else self.pairplot_img
         i = 0
-        while os.path.exists("tkui/temp/temp{}.png".format(i)):
+        while os.path.exists("tkgui/temp/temp{}.png".format(i)):
             i += 1
         if g_img is None:
             if graph == "cm":
-                self.cm_img = "tkui/temp/temp{}.png".format(i)
+                self.cm_img = "tkgui/temp/temp{}.png".format(i)
             else:
-                self.pairplot_img = "tkui/temp/temp{}.png".format(i)
+                self.pairplot_img = "tkgui/temp/temp{}.png".format(i)
             g.savefig(self.cm_img if graph == "cm" else self.pairplot_img)
             g_img = self.cm_img if graph == "cm" else self.pairplot_img
 

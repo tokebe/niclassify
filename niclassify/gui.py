@@ -15,7 +15,7 @@ from tkinter import ttk
 from core import utilities
 from core.StandardProgram import StandardProgram
 from core.classifiers import RandomForestAC
-from tkui.clftool import ClassifierTool
+from tkgui.clftool import ClassifierTool
 
 
 matplotlib.use('Agg')  # this makes threading not break
@@ -25,10 +25,9 @@ matplotlib.use('Agg')  # this makes threading not break
 
 # LATER
 # TODO restructure
-# break utilities into a few files
-# probably move multiprocess stuff into utilities
-# check through datatool and clftool and see if anything should be moved to
-# standardprogram
+# move checks (like inbalance check) to appropriate util, and add wrapper in
+# standardprogram. call sp.check_thing(func) with func if check failed
+# then sp.check_thing returns results of func.
 # TODO properly implement logging for most steps
 # TODO implement commandline version, use for tests
 # TODO File import history for merging?

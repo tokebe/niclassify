@@ -672,7 +672,7 @@ def align_fasta(infname, outfname, debug=False):
     """
     alignment_call = MuscleCommandline(
         os.path.realpath(
-            os.path.join(MAIN_PATH, "bin/muscle3.8.31_i86win32.exe")
+            os.path.join(MAIN_PATH, "niclassify/bin/muscle3.8.31_i86win32.exe")
         ),
         input=os.path.realpath(infname),
         out=os.path.realpath(outfname)
@@ -689,7 +689,7 @@ def align_fasta(infname, outfname, debug=False):
 
     r_script_exe = os.path.realpath(
         os.path.join(
-            MAIN_PATH, "bin/R/R-Portable/App/R-Portable/bin/Rscript.exe")
+            MAIN_PATH, "niclassify/bin/R/R-Portable/App/R-Portable/bin/Rscript.exe")
     )
     r_script = os.path.realpath(
         os.path.join(
@@ -727,7 +727,7 @@ def delimit_species_GMYC(infname, outtreefname, outfname, debug=False):
     # TODO support for linux/mac
     r_script_exe = os.path.realpath(
         os.path.join(
-            MAIN_PATH, "bin/R/R-Portable/App/R-Portable/bin/Rscript.exe")
+            MAIN_PATH, "niclassify/bin/R/R-Portable/App/R-Portable/bin/Rscript.exe")
     )
     r_script = os.path.realpath(
         os.path.join(
@@ -781,7 +781,7 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
     """
     r_script_exe = os.path.realpath(
         os.path.join(
-            MAIN_PATH, "bin/R/R-Portable/App/R-Portable/bin/Rscript.exe")
+            MAIN_PATH, "niclassify/bin/R/R-Portable/App/R-Portable/bin/Rscript.exe")
     )
     r_script = os.path.realpath(
         os.path.join(
@@ -790,7 +790,7 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
     python_path = sys.executable
     bPTP = os.path.realpath(
         os.path.join(
-            MAIN_PATH, "bin/PTP-master/bin/bPTP.py")
+            MAIN_PATH, "niclassify/bin/PTP-master/bin/bPTP.py")
     )
 
     # assign log number, guarantee that both logs have same number
@@ -898,11 +898,11 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
 def generate_measures(fastafname, delimfname, outfname, debug=False):
     r_script_exe = os.path.realpath(
         os.path.join(
-            MAIN_PATH, "bin/R/R-Portable/App/R-Portable/bin/Rscript.exe")
+            MAIN_PATH, "niclassify/bin/R/R-Portable/App/R-Portable/bin/Rscript.exe")
     )
     r_script = os.path.realpath(
         os.path.join(
-            MAIN_PATH, "niclassify/core/create_measures.R")
+            MAIN_PATH, "niclassify/core/scripts/create_measures.R")
     )
     ftgen_call = '"{}" "{}" "{}" "{}" "{}"'.format(
         r_script_exe,
@@ -976,7 +976,7 @@ getITISTermsFromScientificName?srchKey="
     )
     jurisdiction_link = (
         "http://www.itis.gov/ITISWebService/services/ITISService/\
-            getJurisdictionalOriginFromTSN?tsn="
+getJurisdictionalOriginFromTSN?tsn="
     )
 
     print("making request...")
