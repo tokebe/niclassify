@@ -167,9 +167,9 @@ class StandardChecks:
             Bool: True if number of classes is greater than 2, otherwise false.
         """
         if isinstance(data, pd.Series):
-            test = data.unique() < 2
+            test = len(data.unique()) < 2
         else:
-            test = data[self.sp.class_column].unique() < 2
+            test = len(data[self.sp.class_column].unique()) < 2
 
         if test:
             if cb is not None:
@@ -240,7 +240,7 @@ class StandardChecks:
         if isinstance(data, pd.Series):
             test = data.value_counts(normalize=True).std() > 0.35
         else:
-            test = data[self.sp.class_colum].value_counts(
+            test = data[self.sp.class_column].value_counts(
                 normalize=True).std() > 0.35
 
         if test:
@@ -271,7 +271,7 @@ class StandardChecks:
         else:
             return True
 
-    def check_required_colums(self, data, cb=None):
+    def check_required_columns(self, data, cb=None):
         """
         Check if the data has the required columns.
 

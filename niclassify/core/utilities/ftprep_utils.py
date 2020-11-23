@@ -411,7 +411,7 @@ def get_geographies():
 
     """
     with open(os.path.join(
-            MAIN_PATH, "niclassify/core/config/regions.json"), "r") as regions:
+            MAIN_PATH, "niclassify/core/utilities/config/regions.json"), "r") as regions:
         hierarchy = json.load(regions)
 
     # print(hierarchy)
@@ -566,7 +566,7 @@ def get_ref_hierarchy(ref_geo):
 
     """
     with open(os.path.join(
-            MAIN_PATH, "niclassify/core/config/regions.json"), "r") as regions:
+            MAIN_PATH, "niclassify/core/utilities/config/regions.json"), "r") as regions:
         geos = json.load(regions)
 
     def find_geo(level, ref):

@@ -551,9 +551,9 @@ class DataPreparationTool(tk.Toplevel):
                 on_finish()
                 return
 
-            if not self.app.sp.check.check_nan_taxon(
+            if not self.app.sp.check.check_single_split(
                 data,
-                self.app.dlib.dialog(
+                lambda: self.app.dlib.dialog(
                     messagebox.askokcancel,
                     "SINGLE_SPLIT",
                     form=(self.taxon_level_name,),

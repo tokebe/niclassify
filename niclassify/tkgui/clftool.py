@@ -1092,6 +1092,7 @@ class ClassifierTool(tk.Frame):
 
             # make sure there are at least 2 classes
             if not self.sp.check.check_enough_classes(
+                metadata_known,
                 lambda: self.dlib.dialog(
                     messagebox.showerror,
                     "CANNOT_TRAIN"
