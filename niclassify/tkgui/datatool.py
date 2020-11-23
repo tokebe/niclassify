@@ -49,6 +49,7 @@ class DataPreparationTool(tk.Toplevel):
 
         self.taxon_level_name = "Order"
         self.taxon_level = "order_name"
+        self.app.sp.taxon_split = "order_name"
 
         # tempdir for tempfiles
         self.tempdir = tempdir
@@ -383,14 +384,12 @@ class DataPreparationTool(tk.Toplevel):
             )
             return
 
-        if not all(
-            r in data.columns.values.tolist()
-                if not isinstance(r, list)
-                else any(s in data.columns.values.tolist() for s in r)
-            for r in req_cols
-        ):
-            self.app.dlib.dialog(
+        # check if sequence data has required columns
+        if not self.app.sp.check.check_required_columns(
+            data,
+            lambda: self.app.dlib.dialog(
                 messagebox.showwarning, "INVALID_SEQUENCE_DATA", parent=self)
+        ):
             self.app.status_bar.set_status("Awaiting user input.")
             return
         # # check if processid is unique, warn user if not (fix in filtering)
@@ -540,25 +539,29 @@ class DataPreparationTool(tk.Toplevel):
 
             data = self.util.get_data(self.sequence_filtered.name)
 
-            if data[self.taxon_level].isna().any():
-                if not self.app.dlib.dialog(
+            if not self.app.sp.check.check_nan_taxon(
+                data,
+                lambda: self.app.dlib.dialog(
                     messagebox.askokcancel,
                     "NAN_TAXON",
                     form=(self.taxon_level_name,),
                     parent=self
-                ):
-                    on_finish()
-                    return
+                )
+            ):
+                on_finish()
+                return
 
-            if 1 in data[self.taxon_level].value_counts(dropna=False).values:
-                if not self.app.dlib.dialog(
+            if not self.app.sp.check.check_nan_taxon(
+                data,
+                self.app.dlib.dialog(
                     messagebox.askokcancel,
                     "SINGLE_SPLIT",
                     form=(self.taxon_level_name,),
                     parent=self
-                ):
-                    on_finish()
-                    return
+                )
+            ):
+                on_finish()
+                return
 
             method = self.data_sec.method_select.get()
 
@@ -643,36 +646,41 @@ class DataPreparationTool(tk.Toplevel):
 
             final = self.util.get_data(self.finalized_data.name)
             n_classified = final.count()["final_status"]
-            n_classes = final["final_status"].nunique()
-            class_std = final["final_status"].value_counts(
-                normalize=True).std()
 
             self.data_sec.final_save_button["state"] = tk.ACTIVE
             self.data_sec.final_load_button["state"] = tk.ACTIVE
             self.data_sec.use_data_button["state"] = tk.ACTIVE
 
-            if n_classes < 2:
-                self.app.dlib.dialog(
+            # check if there are at least 2 classes
+            if self.app.sp.check.check_enough_classes(
+                final["final_status"],
+                lambda: self.app.dlib.dialog(
                     messagebox.showwarning,
                     "NOT_ENOUGH_CLASSES",
                     parent=self
                 )
-            else:
-                if n_classified < 100:
-                    self.app.dlib.dialog(
+            ):
+                # check that enough samples were classified
+                self.app.sp.check.check_enough_classified(
+                    final["final_status"],
+                    lambda: self.app.dlib.dialog(
                         messagebox.showwarning,
                         "LOW_CLASS_COUNT",
                         form=(n_classified,),
                         parent=self
                     )
-                # check for extreme known class imbalance
-                # using stdev as a very rough heuristic
-                if class_std > 0.35:
-                    self.app.dlib.dialog(
+                )
+
+                # check for extreme inbalance using stdev as a heuristic
+                self.app.sp.check.check_inbalance(
+                    final["final_status"],
+                    lambda: self.app.dlib.dialog(
                         messagebox.showwarning,
                         "HIGH_IMBALANCE"
                     )
+                )
 
+                # notify of completion
                 self.app.dlib.dialog(
                     messagebox.showinfo,
                     "DATA_PREP_COMPLETE",
@@ -827,6 +835,7 @@ class DataPreparationTool(tk.Toplevel):
 
         self.taxon_level_name = self.data_sec.taxon_split_selector.get()
         self.taxon_level = levels[self.taxon_level_name]
+        self.app.sp.taxon_split = self.taxon_level
 
     def transfer_prepared_data(self):
         """Transfer prepared data to the classifier tool's data handling."""

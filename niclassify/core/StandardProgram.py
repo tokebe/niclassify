@@ -134,6 +134,189 @@ def parallelize_on_rows(data, func, n_cores=None):
     return parallelize(data, partial(run_on_subset, func), n_cores)
 
 
+class StandardChecks:
+    """
+    A number of functions which check various conditions for the data.
+
+    Each check executes a passed in function if the check fails. Some checks
+    may return a specified value regardless of the function given, while others
+    will attempt to return the result of the function given.
+    """
+
+    def __init__(self, parent):
+        """
+        Instantiate the class.
+
+        Args:
+            parent (StandardProgram): The parent StandardProgram, for access to
+                any required data/stored arguments.
+        """
+        self.sp = parent  # access to parent StandardProgram for data
+
+    def check_enough_classes(self, data, cb=None):
+        """
+        Check if two or more classes exist in given data.
+
+        If number of classes is < 2, cb is called.
+
+        Args:
+            data (DataFrame/Series): The data to check.
+            cd (function, optional): Function to call if check fails.
+
+        Returns:
+            Bool: True if number of classes is greater than 2, otherwise false.
+        """
+        if isinstance(data, pd.Series):
+            test = data.unique() < 2
+        else:
+            test = data[self.sp.class_column].unique() < 2
+
+        if test:
+            if cb is not None:
+                cb()
+            return False
+        else:
+            return True
+
+    def check_enough_classified(self, data, cb=None):
+        """
+        Check if enough values have a label.
+
+        Args:
+            data (Series): Data to check.
+            cb (function, optional): Function to call if check fails.
+                Defaults to None.
+
+        Returns:
+            Bool: True if check passes, otherwise False.
+        """
+        if data.count() < 100:
+            if cb is not None:
+                cb()
+            return False
+        else:
+            return True
+
+    def check_file_exists(self, filename, cb=None):
+        """
+        Check if the given filename exists in the system directory.
+
+        Args:
+            filename (str): A filename.
+            cb (function, optional): Function to call if check fails.
+
+        Raises:
+            ValueError: If the file does not exist.
+
+        Returns:
+            Bool: True if file exists.
+
+        """
+        # convert filename to proper path
+        if not os.path.isabs(filename):
+            filename = os.path.join(utilities.MAIN_PATH, filename)
+
+        # check if filename exists
+        if not os.path.exists(filename):
+            if cb is not None:
+                cb()
+            else:
+                raise ValueError("file {} does not exist.".format(filename))
+
+        return True
+
+    def check_inbalance(self, data, cb=None):
+        """
+        Check if the given data has a high class inbalance.
+        Standard Deviation is used as a rough heuristic for inbalance.
+
+        If the a high inbalance exists, cb is called, and its result is
+            returned.
+
+        Args:
+            data (DataFrame/Series): Data to check.
+            cb (function, optional): Function to call if check fails.
+        """
+        if isinstance(data, pd.Series):
+            test = data.value_counts(normalize=True).std() > 0.35
+        else:
+            test = data[self.sp.class_colum].value_counts(
+                normalize=True).std() > 0.35
+
+        if test:
+            if cb is not None:
+                return cb()
+            return False
+        else:
+            return True
+
+    def check_nan_taxon(self, data, cb=None):
+        """
+        Check if the given data null values in a given taxon split level.
+
+        Calls cb if null values are found.
+
+        Args:
+            data (DataFrame): Data to check.
+            cb (function, optional): Function to call if check fails.
+                Defaults to None.
+
+        Returns:
+            [type]: [description]
+        """
+        if data[self.sp.taxon_split].isna().any():
+            if cb is not None:
+                return cb()
+            return False
+        else:
+            return True
+
+    def check_required_colums(self, data, cb=None):
+        """
+        Check if the data has the required columns.
+
+        Calls cb if not.
+
+        Args:
+            data (DataFrame): Data to check.
+            cb (function, optional): Function to call if check fails.
+
+        Returns:
+            Bool: True if check passes, False otherwise.
+        """
+        if not all(
+            r in data.columns.values.tolist()
+                if not isinstance(r, list)
+                else any(s in data.columns.values.tolist() for s in r)
+                for r in self.sp.req_cols
+        ):
+            if cb is not None:
+                cb()
+            return False
+        else:
+            return True
+
+    def check_single_split(self, data, cb=None):
+        """
+        Check if splitting data by taxon split level would return subsets of
+        length 1.
+
+        Args:
+            data (DataFrame): Data to check.
+            cb (function, optional): Function to call if check fails.
+                Defaults to None.
+
+        Returns:
+            Bool: True if check passes, otherwise false (or return of cb).
+        """
+        if 1 in data[self.sp.taxon_split].value_counts(dropna=False).values:
+            if cb is not None:
+                return cb()
+            return False
+        else:
+            return True
+
+
 class StandardProgram:
     """
     A standard template for the classifier program.
@@ -171,6 +354,7 @@ class StandardProgram:
         self.filtered_fname = None
         self.fasta_fname = None
         self.fasta_align_fname = None
+        self.taxon_split = None
         self.delim_fname = None
         self.seq_features_fname = None
         self.finalized_fname = None
@@ -184,6 +368,17 @@ class StandardProgram:
         self.classifier_file = None
         self.output_filename = None
         self.nans = None
+
+        # check class
+        self.check = StandardChecks(self)
+
+        # reference information
+        self.req_cols = [
+            ["processid", "UPID"],  # can have one or the other
+            "nucleotides",
+            "marker_codes",
+            "species_name"
+        ]
 
     def align_fasta(self, debug=False):
         """
@@ -244,30 +439,6 @@ class StandardProgram:
         )
 
         return logname
-
-    def check_file_exists(self, filename):
-        """
-        Check if the given filename exists in the system directory.
-
-        Args:
-            filename (str): A filename.
-
-        Raises:
-            ValueError: If the file does not exist.
-
-        Returns:
-            Bool: True if file exists.
-
-        """
-        # convert filename to proper path
-        if not os.path.isabs(filename):
-            filename = os.path.join(utilities.MAIN_PATH, filename)
-
-        # check if filename exists
-        if not os.path.exists(filename):
-            raise ValueError("file {} does not exist.".format(filename))
-
-        return True
 
     def check_native_gbif(self, row):
         """
@@ -381,7 +552,9 @@ class StandardProgram:
         # if it hasn't found a reason to call it native
         return "Introduced"  # this maybe should be NA
 
-    def split_by_taxon(self, taxon_split="order_name"):
+    def split_by_taxon(self, taxon_split=None):
+        if taxon_split is None:
+            taxon_split = self.taxon_split
         pool_dir = tempfile.TemporaryDirectory()
 
         # get each order and its corresponding samples
@@ -482,7 +655,7 @@ class StandardProgram:
 
         return pool_files, pool_dir
 
-    def delimit_species(self, method="bPTP", tax="order_name", debug=False):
+    def delimit_species(self, method="bPTP", tax=None, debug=False):
         """
         Delimit species by their nucleotide sequences.
 
@@ -528,7 +701,7 @@ class StandardProgram:
 
         pool_dir.cleanup()
 
-    def generate_features(self, tax="order_name", debug=False):
+    def generate_features(self, tax=None, debug=False):
         """Generate features for use in classification.
 
         Args:

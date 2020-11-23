@@ -24,10 +24,6 @@ matplotlib.use('Agg')  # this makes threading not break
 # TODO metric (consider/read about/test out-of-bag and F1)
 
 # LATER
-# TODO restructure
-# move checks (like inbalance check) to appropriate util, and add wrapper in
-# standardprogram. call sp.check_thing(func) with func if check failed
-# then sp.check_thing returns results of func.
 # TODO properly implement logging for most steps
 # TODO implement commandline version, use for tests
 # TODO File import history for merging?

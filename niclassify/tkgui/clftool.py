@@ -536,6 +536,7 @@ class ClassifierTool(tk.Frame):
         # capture log output for report
         capture = False
         captured_lines = []
+        loglines = ""
         try:
             with open(self.logname, "r") as log:
                 loglines = log.readlines()
@@ -1090,25 +1091,25 @@ class ClassifierTool(tk.Frame):
                 features, metadata, self.sp.class_column)
 
             # make sure there are at least 2 classes
-            if len(metadata_known[self.sp.class_column].unique()) < 2:
-                self.dlib.dialog(
+            if not self.sp.check.check_enough_classes(
+                lambda: self.dlib.dialog(
                     messagebox.showerror,
                     "CANNOT_TRAIN"
                 )
+            ):
                 on_finish()
                 return
 
             # check for extreme known class imbalance
             # using stdev as a very rough heuristic
-            if metadata_known[self.sp.class_column].value_counts(
-                normalize=True
-            ).std() > 0.35:
-                if not self.dlib.dialog(
+            if not self.sp.check.check_inbalance(
+                lambda: self.dlib.dialog(
                     messagebox.askokcancel,
                     "HIGH_IMBALANCE"
-                ):
-                    on_finish()
-                    return
+                )
+            ):
+                on_finish()
+                return
 
             self.status_bar.progress.step(20)
             self.status_bar.set_status("Training classifier...")
