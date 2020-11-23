@@ -1104,6 +1104,7 @@ class ClassifierTool(tk.Frame):
             # check for extreme known class imbalance
             # using stdev as a very rough heuristic
             if not self.sp.check.check_inbalance(
+                metadata_known,
                 lambda: self.dlib.dialog(
                     messagebox.askokcancel,
                     "HIGH_IMBALANCE"
