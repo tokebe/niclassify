@@ -1001,7 +1001,7 @@ class ClassifierTool(tk.Frame):
         location = tk.filedialog.asksaveasfilename(
             title="Save {}".format(
                 titles[item]),
-            initialdir=os.path.join(self.util.MAIN_PATH, "output/"),
+            initialdir=self.util.MAIN_PATH,
             defaultextension=default_extensions[item],
             filetypes=types[item]
         )
