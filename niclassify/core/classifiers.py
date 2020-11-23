@@ -4,6 +4,9 @@ Module containing AutoClassifier class and a prefab subclass.
 AutoClassifier may be used to create new auto-training classifiers with
 relative ease.
 """
+from numpy.lib.function_base import average
+
+
 try:
     import logging
 
@@ -398,5 +401,7 @@ class RandomForestAC(AutoClassifier):
                 'min_samples_split': list(np.arange(0.05, 0.5, 0.05))
             },
             hp_method=RandomizedSearchCV,
-            score_method=metrics.balanced_accuracy_score,
+            # score_method=metrics.balanced_accuracy_score,
+            score_method=lambda true, pred: metrics.f1_score(
+                true, pred, average='weighted'),
         )
