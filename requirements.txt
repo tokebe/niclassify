@@ -1,6 +1,7 @@
+numpy==1.19.3
+ete3
 biopython
 docutils
-ete3
 flake8
 lxml
 pyinquirer
@@ -14,5 +15,4 @@ xlrd
 pandas
 joblib
 matplotlib
-numpy
 scipy

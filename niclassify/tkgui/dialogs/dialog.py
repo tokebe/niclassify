@@ -1,6 +1,12 @@
 """Handler for generating dialogs from json files."""
 import json
 import os
+import sys
+
+
+import importlib.resources as pkg_resources
+
+from . import messages
 
 
 class DialogLibrary:
@@ -10,7 +16,7 @@ class DialogLibrary:
     Contains function for generating dialog with given contents.
     """
 
-    def __init__(self, dialogs_folder):
+    def __init__(self):
         """
         Initialize the library.
 
@@ -18,17 +24,30 @@ class DialogLibrary:
             dialogs_folder (str): Path to the folder containing dialog jsons.
         """
         self.items = {}
-        for file in [
-            f
-            for f in os.listdir(dialogs_folder)
-            if os.path.isfile(os.path.join(dialogs_folder, f))
-        ]:
-            print(os.path.splitext(file))
-            if os.path.splitext(file)[1] == ".json":
-                print("json file found")
-                with open(os.path.join(dialogs_folder, file)) as dialog_file:
+        files = ["message.json", "warning.json", "error.json"]
+        try:
+            for file in files:
+                with pkg_resources.open_text(messages, file) as msg_file:
                     self.items[os.path.splitext(file)[0]] = json.load(
-                        dialog_file)
+                        msg_file)
+        except FileNotFoundError:
+            for file in files:
+                with open(
+                    os.path.join(sys._MEIPASS, "dialogs/{}".format(file))
+                ) as msg_file:
+                    self.items[os.path.splitext(file)[0]] = json.load(
+                        msg_file)
+        # for file in [
+        #     f
+        #     for f in os.listdir(dialogs_folder)
+        #     if os.path.isfile(os.path.join(dialogs_folder, f))
+        # ]:
+        #     print(os.path.splitext(file))
+        #     if os.path.splitext(file)[1] == ".json":
+        #         print("json file found")
+        #         with open(os.path.join(dialogs_folder, file)) as dialog_file:
+        #             self.items[os.path.splitext(file)[0]] = json.load(
+        #                 dialog_file)
 
     def __str__(self):
         """

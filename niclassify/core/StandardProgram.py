@@ -32,6 +32,123 @@ from . import utilities
 from . import classifiers
 
 
+class NativeChecker:
+    def __init__(self, ref_geo):
+        self.ref_geo = ref_geo
+
+    def check_native_gbif(self, row):
+        """
+        Check if a given species is native according to gbif.
+
+        Args:
+            row (df row): A DataFrame row with a column "species_name".
+
+        Returns:
+            str or np.NaN: Native, Introduced, or np.NaN if unknown.
+
+        """
+        if pd.isna(row["species_name"]):
+            return np.NaN
+        elif len(row["species_name"]) == 0:
+            return np.NaN
+
+        # check GBIF native ranges
+        try:
+            nranges = utilities.get_native_ranges(row["species_name"])
+        except RequestException:
+            return np.NaN
+
+        # no rate limit provided, so we'll just wait a bit to be safe
+        sleep(0.01)
+
+        if nranges is None:
+            return np.NaN
+
+        crypto = False
+
+        for nrange in nranges:
+            if nrange == "Cosmopolitan, Cryptogenic":
+                print("  {}: cryptogenic".format(row["species_name"]))
+                crypto = True
+                continue
+            if nrange == "Pantropical, Circumtropical":
+                print("  {}:".format(row["species_name"]))
+                ref_hierarchy = utilities.get_ref_hierarchy(self.ref_geo)
+                if ref_hierarchy["Pantropical"] is True:
+                    return "Native"
+                else:
+                    continue
+            if nrange == "Subtropics":
+                print("  {}: subtropics".format(row["species_name"]))
+                ref_hierarchy = utilities.get_ref_hierarchy(self.ref_geo)
+                if ref_hierarchy["Subtropics"] is True:
+                    return "Native"
+                else:
+                    continue
+
+            if nrange == self.ref_geo:
+                print("  {}: direct native to ref".format(row["species_name"]))
+                return "Native"
+            elif (utilities.geo_contains(self.ref_geo, nrange)
+                  or utilities.geo_contains(nrange, self.ref_geo)):
+                print("  {}: {} <=> {}".format(
+                    row["species_name"], self.ref_geo, nrange))
+                return "Native"
+            else:
+                print("  {}: {} <!=> {}".format(
+                    row["species_name"], self.ref_geo, nrange))
+
+        # if it hasn't found a reason to call it native
+        return "Introduced" if not crypto else np.NaN
+
+    def check_native_itis(self, row):
+        """
+        Check if a given species is native according to itis.
+
+        Args:
+            row (df row): A DataFrame row with a column "species_name".
+
+        Returns:
+            str or np.NaN: Native, Introduced, or np.NaN if unknown.
+
+        """
+        if pd.isna(row["species_name"]):
+            return np.NaN
+        elif len(row["species_name"]) == 0:
+            return np.NaN
+
+        # check ITIS jurisdictions
+        try:
+            jurisdictions = utilities.get_jurisdictions(row["species_name"])
+        except RequestException:
+            return np.NaN
+
+        # no rate limit provided, so we'll just wait a bit to be safe
+        sleep(0.01)
+
+        if jurisdictions is None:
+            print("  no jurisdiction(s) returned")
+            return np.NaN
+
+        # simple first: check if jurisdiction is just current reference geo
+        for jurisdiction, status in jurisdictions.items():
+            print("{}, {}".format(jurisdiction, status))
+            if jurisdiction == self.ref_geo:
+                return status if status != "Native&Introduced" else np.NaN
+            # otherwise if one contains the other it's native
+            elif (utilities.geo_contains(self.ref_geo, jurisdiction)
+                  or utilities.geo_contains(jurisdiction, self.ref_geo)):
+                print("{}: {} <=> {}".format(
+                    row["species_name"], self.ref_geo, jurisdiction))
+                return status if status != "Native&Introduced" else np.NaN
+            else:
+                print("{}: {} <!=> {}".format(
+                    row["species_name"], self.ref_geo, jurisdiction))
+
+        # if it hasn't found a reason to call it native
+        return "Introduced"  # this maybe should be NA
+
+
 def parallelize(df, func, n_cores=None):
     """
     Parallelize applying a function to a DataFrame.
@@ -68,12 +185,15 @@ def mp_delim(arg):
     else:
         raise KeyError("Specified delimitation method not found.")
 
-    delimit(
-        arg[1],  # alignment
-        arg[2],  # tree output
-        arg[3],  # delim output
-        debug=True
-    )
+    try:
+        delimit(
+            arg[1],  # alignment
+            arg[2],  # tree output
+            arg[3],  # delim output
+            debug=True
+        )
+    except ChildProcessError:
+        raise ChildProcessError(arg[0] + " (tree generation)")
 
     if os.stat(arg[2]).st_size == 0:
         raise ChildProcessError(arg[0])
@@ -214,7 +334,7 @@ class StandardChecks:
         """
         # convert filename to proper path
         if not os.path.isabs(filename):
-            filename = os.path.join(utilities.MAIN_PATH, filename)
+            filename = os.path.join(utilities.USER_PATH, filename)
 
         # check if filename exists
         if not os.path.exists(filename):
@@ -406,26 +526,23 @@ class StandardProgram:
         # set seaborn theme/format
         sns.set()
 
-        # ensure required folders exist
-        utilities.assure_path()
-
         # # set log filename
         # i = 0
         # while os.path.exists(
         #     os.path.join(
-        #         utilities.MAIN_PATH,
-        #         "output/logs/rf-auto{}.log".format(i)
+        #         utilities.USER_PATH,
+        #         "logs/rf-auto{}.log".format(i)
         #     )
         # ):
         #     i += 1
         # logname = os.path.join(
-        #     utilities.MAIN_PATH,
-        #     "output/logs/rf-auto{}.log".format(i)
+        #     utilities.USER_PATH,
+        #     "logs/rf-auto{}.log".format(i)
         # )
         # set log filename (overwriting previous)
         logname = os.path.join(
-            utilities.MAIN_PATH,
-            "output/logs/rf-auto{}.log".format(0)
+            utilities.USER_PATH,
+            "logs/rf-auto.log".format()
         )
 
         # set up logging
@@ -439,118 +556,6 @@ class StandardProgram:
         )
 
         return logname
-
-    def check_native_gbif(self, row):
-        """
-        Check if a given species is native according to gbif.
-
-        Args:
-            row (df row): A DataFrame row with a column "species_name".
-
-        Returns:
-            str or np.NaN: Native, Introduced, or np.NaN if unknown.
-
-        """
-        if pd.isna(row["species_name"]):
-            return np.NaN
-        elif len(row["species_name"]) == 0:
-            return np.NaN
-
-        # check GBIF native ranges
-        try:
-            nranges = utilities.get_native_ranges(row["species_name"])
-        except RequestException:
-            return np.NaN
-
-        # no rate limit provided, so we'll just wait a bit to be safe
-        sleep(0.01)
-
-        if nranges is None:
-            return np.NaN
-
-        crypto = False
-
-        for nrange in nranges:
-            if nrange == "Cosmopolitan, Cryptogenic":
-                print("  {}: cryptogenic".format(row["species_name"]))
-                crypto = True
-                continue
-            if nrange == "Pantropical, Circumtropical":
-                print("  {}:".format(row["species_name"]))
-                ref_hierarchy = utilities.get_ref_hierarchy(self.ref_geo)
-                if ref_hierarchy["Pantropical"] is True:
-                    return "Native"
-                else:
-                    continue
-            if nrange == "Subtropics":
-                print("  {}: subtropics".format(row["species_name"]))
-                ref_hierarchy = utilities.get_ref_hierarchy(self.ref_geo)
-                if ref_hierarchy["Subtropics"] is True:
-                    return "Native"
-                else:
-                    continue
-
-            if nrange == self.ref_geo:
-                print("  {}: direct native to ref".format(row["species_name"]))
-                return "Native"
-            elif (utilities.geo_contains(self.ref_geo, nrange)
-                  or utilities.geo_contains(nrange, self.ref_geo)):
-                print("  {}: {} <=> {}".format(
-                    row["species_name"], self.ref_geo, nrange))
-                return "Native"
-            else:
-                print("  {}: {} <!=> {}".format(
-                    row["species_name"], self.ref_geo, nrange))
-
-        # if it hasn't found a reason to call it native
-        return "Introduced" if not crypto else np.NaN
-
-    def check_native_itis(self, row):
-        """
-        Check if a given species is native according to itis.
-
-        Args:
-            row (df row): A DataFrame row with a column "species_name".
-
-        Returns:
-            str or np.NaN: Native, Introduced, or np.NaN if unknown.
-
-        """
-        if pd.isna(row["species_name"]):
-            return np.NaN
-        elif len(row["species_name"]) == 0:
-            return np.NaN
-
-        # check ITIS jurisdictions
-        try:
-            jurisdictions = utilities.get_jurisdictions(row["species_name"])
-        except RequestException:
-            return np.NaN
-
-        # no rate limit provided, so we'll just wait a bit to be safe
-        sleep(0.01)
-
-        if jurisdictions is None:
-            print("  no jurisdiction(s) returned")
-            return np.NaN
-
-        # simple first: check if jurisdiction is just current reference geo
-        for jurisdiction, status in jurisdictions.items():
-            print("{}, {}".format(jurisdiction, status))
-            if jurisdiction == self.ref_geo:
-                return status if status != "Native&Introduced" else np.NaN
-            # otherwise if one contains the other it's native
-            elif (utilities.geo_contains(self.ref_geo, jurisdiction)
-                  or utilities.geo_contains(jurisdiction, self.ref_geo)):
-                print("{}: {} <=> {}".format(
-                    row["species_name"], self.ref_geo, jurisdiction))
-                return status if status != "Native&Introduced" else np.NaN
-            else:
-                print("{}: {} <!=> {}".format(
-                    row["species_name"], self.ref_geo, jurisdiction))
-
-        # if it hasn't found a reason to call it native
-        return "Introduced"  # this maybe should be NA
 
     def split_by_taxon(self, taxon_split=None):
         if taxon_split is None:
@@ -671,12 +676,12 @@ class StandardProgram:
         # clean previous logs
         paths = [
             os.path.join(
-                utilities.MAIN_PATH,
-                "output/logs/delim/tree"
+                utilities.USER_PATH,
+                "logs/delim/tree"
             ),
             os.path.join(
-                utilities.MAIN_PATH,
-                "output/logs/delim/delim"
+                utilities.USER_PATH,
+                "logs/delim/delim"
             )
         ]
 
@@ -711,8 +716,8 @@ class StandardProgram:
 
         utilities.clean_folder(
             os.path.join(
-                utilities.MAIN_PATH,
-                "output/logs/ftgen"
+                utilities.USER_PATH,
+                "logs/ftgen"
             )
         )
 
@@ -844,14 +849,15 @@ class StandardProgram:
 
         # lookup statuses and create columns
         print("Getting gbif statuses...")
+        checker = NativeChecker(self.ref_geo)
         # data["gbif_status"] = data.apply(self.check_native_gbif, axis=1)
         species["gbif_status"] = parallelize_on_rows(
-            species, self.check_native_gbif)
+            species, checker.check_native_gbif)
 
         # print("Getting itis statuses...")
         # data["itis_status"] = data.apply(self.check_native_itis, axis=1)
         species["itis_status"] = parallelize_on_rows(
-            species, self.check_native_itis)
+            species, checker.check_native_itis)
 
         def combine_status(row):
             """Combine given GBIF and ITIS statuses."""

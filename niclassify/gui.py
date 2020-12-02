@@ -4,6 +4,8 @@ Technically extensible by subclassing and copying the main() function.
 If you have to do that, I'm sorry. It probably won't be fun.
 """
 import matplotlib
+import multiprocessing
+import sys
 import threading
 
 import tkinter as tk
@@ -21,11 +23,13 @@ from tkgui.clftool import ClassifierTool
 matplotlib.use('Agg')  # this makes threading not break
 
 # NOW
-# TODO metric (consider/read about/test out-of-bag and F1)
+# TODO implement onefile compilation
+# need to create new folders in user documents directory
+# and user config files using userpaths
+# TODO implement commandline version, use for tests
 
 # LATER
 # TODO properly implement logging for most steps
-# TODO implement commandline version, use for tests
 # TODO File import history for merging?
 # TODO use pGMYC?
 
@@ -47,7 +51,6 @@ matplotlib.use('Agg')  # this makes threading not break
 
 def main():
     """Run the GUI."""
-    utilities.assure_path()
 
     root = tk.Tk()
 
@@ -77,4 +80,7 @@ def main():
 
 
 if __name__ == "__main__":
+    # TODO figure out how the hell onefile support works for mp
+    if getattr(sys, 'frozen', False):  # required for pyinstaller mp
+        multiprocessing.freeze_support()
     main()

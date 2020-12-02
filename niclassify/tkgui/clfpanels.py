@@ -266,7 +266,7 @@ class DataPanel(tk.LabelFrame):
 
         self.output_open = tk.Button(
             self,
-            text="Open Output Folder",
+            text="Open NIClassify Folder",
             command=self.app.open_output_folder
         )
         self.output_open.pack(side=tk.LEFT, anchor=tk.NW, padx=1, pady=1)
@@ -274,7 +274,7 @@ class DataPanel(tk.LabelFrame):
         # button to open window allowing NaN values to be edited
         self.nan_check = tk.Button(
             self,
-            text="Check Recognized NaN values",
+            text="Edit Recognized NaN values",
             command=self.app.open_nans
         )
         self.nan_check.pack(side=tk.LEFT, anchor=tk.NW, padx=1, pady=1)

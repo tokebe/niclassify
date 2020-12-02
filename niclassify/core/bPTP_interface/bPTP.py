@@ -1,22 +1,23 @@
-#! /usr/bin/env python
+"""
+A mildly edited version of zhangjiajie's bPTP script, for internal usage.
+
+Many thanks to https://github.com/zhangjiajie
+"""
 import sys
 import math
 import random
 import argparse
 import os
 
-from ete3 import Tree
-from nexus import NexusReader
-from summary import partitionparser
-from ptp.ptpllh import lh_ratio_test, exp_distribution, species_setting, exponential_mixture
-
 import matplotlib.pyplot as plt
 
-# except ImportError:
-#print("Please install the matplotlib and other dependent package first.")
-#print("If your OS is ubuntu or has apt installed, you can try the following:")
-#print(" sudo apt-get install python-setuptools python-numpy python-qt4 python-scipy python-mysqldb python-lxml python-matplotlib")
-# sys.exit()
+from ete3 import Tree
+from nexus import NexusReader
+from ptp.ptpllh import (lh_ratio_test, exp_distribution,
+                        species_setting, exponential_mixture)
+
+
+from .summary import partitionparser
 
 
 class ptpmcmc:
@@ -78,7 +79,12 @@ class ptpmcmc:
             newspenodes.append(node)
         newspenodes.extend(chosen_anode.get_children())
         self.current_setting = species_setting(
-            spe_nodes=newspenodes, root=self.tree, sp_rate=0, fix_sp_rate=False, minbr=self.min_br)
+            spe_nodes=newspenodes,
+            root=self.tree,
+            sp_rate=0,
+            fix_sp_rate=False,
+            minbr=self.min_br
+        )
         self.current_logl = self.current_setting.get_log_l()
 
     def merge(self, chosen_anode):
@@ -86,10 +92,15 @@ class ptpmcmc:
         mnodes = chosen_anode.get_children()
         newspenodes = []
         for node in self.current_setting.spe_nodes:
-            if not node in mnodes:
+            if node not in mnodes:
                 newspenodes.append(node)
         self.current_setting = species_setting(
-            spe_nodes=newspenodes, root=self.tree, sp_rate=0, fix_sp_rate=False, minbr=self.min_br)
+            spe_nodes=newspenodes,
+            root=self.tree,
+            sp_rate=0,
+            fix_sp_rate=False,
+            minbr=self.min_br
+        )
         self.current_logl = self.current_setting.get_log_l()
 
     def mcmc(self):
@@ -118,8 +129,10 @@ class ptpmcmc:
                     if xpinverse > 0:
                         newlogl = self.current_logl
                         oldlogl = self.last_logl
-                        acceptance = math.exp(
-                            newlogl - oldlogl) * float(xinverse)/float(xpinverse)
+                        acceptance = (
+                            math.exp(newlogl - oldlogl)
+                            * float(xinverse)/float(xpinverse)
+                        )
                         if newlogl > self.maxllh:
                             self.maxllh = newlogl
                             to, spe = self.current_setting.output_species(
@@ -137,8 +150,10 @@ class ptpmcmc:
                     if xpinverse > 0:
                         newlogl = self.current_logl
                         oldlogl = self.last_logl
-                        acceptance = math.exp(
-                            newlogl - oldlogl) * float(xinverse)/float(xpinverse)
+                        acceptance = (
+                            math.exp(newlogl - oldlogl)
+                            * float(xinverse)/float(xpinverse)
+                        )
                         if newlogl > self.maxllh:
                             self.maxllh = newlogl
                             to, spe = self.current_setting.output_species(
@@ -183,7 +198,19 @@ class ptpmcmc:
 class bayesianptp:
     """Run MCMC on multiple trees"""
 
-    def __init__(self, filename, ftype="nexus", reroot=False, method="H1", seed=1234, thinning=100, sampling=10000, burnin=0.1, firstktrees=0, taxa_order=[]):
+    def __init__(
+        self,
+        filename,
+        ftype="nexus",
+        reroot=False,
+        method="H1",
+        seed=1234,
+        thinning=100,
+        sampling=10000,
+        burnin=0.1,
+        firstktrees=0,
+        taxa_order=[]
+    ):
         self.method = method
         self.seed = seed
         self.thinning = thinning
@@ -249,8 +276,17 @@ class bayesianptp:
         for tree in self.trees:
             print("Running MCMC sampling on tree " + repr(cnt) + ":")
             cnt = cnt + 1
-            mcptp = ptpmcmc(tree=tree, reroot=self.reroot, startmethod=self.method, min_br=0.0001,
-                            seed=self.seed, thinning=self.thinning, sampling=self.sampling, burning=self.burnin, taxa_order=self.taxa_order)
+            mcptp = ptpmcmc(
+                tree=tree,
+                reroot=self.reroot,
+                startmethod=self.method,
+                min_br=0.0001,
+                seed=self.seed,
+                thinning=self.thinning,
+                sampling=self.sampling,
+                burning=self.burnin,
+                taxa_order=self.taxa_order
+            )
             pars, lhs, settings = mcptp.mcmc()
             self.maxhhlpar = mcptp.maxpar
             self.maxhhlsetting = mcptp.max_setting
@@ -364,52 +400,49 @@ Version 0.51 released by Jiajie Zhang on 17-02-2014.""",
 
 def print_run_info(args, num_tree):
     print("bPTP finished running with the following parameters:")
-    print(" Input tree:.....................%s" % args.trees)
-    print(" MCMC iterations:................%d" % args.nmcmc)
-    print(" MCMC sampling interval:.........%d" % args.imcmc)
-    print(" MCMC burn-in:...................{0:.2f}".format(args.burnin))
-    print(" MCMC seed:......................%d" % args.seed)
+    print(" Input tree:.....................%s" % args.get("trees"))
+    print(" MCMC iterations:................%d" % args.get("nmcmc"))
+    print(" MCMC sampling interval:.........%d" % args.get("imcmc"))
+    print(
+        " MCMC burn-in:...................{0:.2f}".format(args.get("burnin")))
+    print(" MCMC seed:......................%d" % args.get("seed"))
     print("")
     print(" MCMC samples written to:")
-    print("  "+args.output + ".PTPPartitions.txt")
+    print("  "+args.get("output") + ".PTPPartitions.txt")
     print("")
     print(" Posterial LLH written to:")
-    print("  "+args.output + ".PTPllh.txt")
+    print("  "+args.get("output") + ".PTPllh.txt")
     print("")
     print(" Posterial LLH plot:")
-    print("  "+args.output + ".llh.pdf")
+    print("  "+args.get("output") + ".llh.pdf")
     print("")
     print(" Posterial Prob. of partitions written to:")
-    print("  "+args.output + ".PTPPartitonSummary.txt")
+    print("  "+args.get("output") + ".PTPPartitonSummary.txt")
     print("")
     print(" Highest posterial Prob. supported partition written to:")
-    print("  "+args.output + ".PTPhSupportPartition.txt")
+    print("  "+args.get("output") + ".PTPhSupportPartition.txt")
     print("  Tree plot written to:")
-    print("  "+args.output + ".PTPhSupportPartition.txt.png")
-    print("  "+args.output + ".PTPhSupportPartition.txt.svg")
-    if args.nmi:
+    print("  "+args.get("output") + ".PTPhSupportPartition.txt.png")
+    print("  "+args.get("output") + ".PTPhSupportPartition.txt.svg")
+    if args.get("nmi"):
         print("")
         print(" MAX NMI partition written to:")
-        print("  "+args.output + ".PTPhNMIPartition.txt")
+        print("  "+args.get("output") + ".PTPhNMIPartition.txt")
     if num_tree == 1:
         print("")
         print(" Max LLH partition written to:")
-        print("  "+args.output + ".PTPMLPartition.txt")
+        print("  "+args.get("output") + ".PTPMLPartition.txt")
         print("  Tree plot written to:")
-        print("  "+args.output + ".PTPMLPartition.txt.png")
-        print("  "+args.output + ".PTPMLPartition.txt.svg")
+        print("  "+args.get("output") + ".PTPMLPartition.txt.png")
+        print("  "+args.get("output") + ".PTPMLPartition.txt.svg")
 
 
-if __name__ == "__main__":
-    if len(sys.argv) == 1:
-        sys.argv.append("-h")
-    args = parse_arguments()
-
-    if not os.path.exists(args.trees):
-        print("Input tree file does not exists: %s" % args.trees)
+def main_routine(**kwargs):
+    if not os.path.exists(kwargs.get("trees")):
+        print("Input tree file does not exists: %s" % kwargs.get("trees"))
         sys.exit()
 
-    with open(args.trees) as treetest:
+    with open(kwargs.get("trees")) as treetest:
         l1 = treetest.readline()
 
     inputformat = "nexus"
@@ -418,37 +451,42 @@ if __name__ == "__main__":
     else:
         inputformat = "raxml"
 
-    bbptp = bayesianptp(filename=args.trees,
+    bbptp = bayesianptp(filename=kwargs.get("trees"),
                         ftype=inputformat,
-                        reroot=args.reroot,
-                        method=args.method,
-                        seed=args.seed,
-                        thinning=args.imcmc,
-                        sampling=args.nmcmc,
-                        burnin=args.burnin,
-                        firstktrees=args.num_trees)
+                        reroot=kwargs.get("reroot"),
+                        method=kwargs.get("method"),
+                        seed=kwargs.get("seed"),
+                        thinning=kwargs.get("imcmc"),
+                        sampling=kwargs.get("nmcmc"),
+                        burnin=kwargs.get("burnin"),
+                        firstktrees=kwargs.get("num_trees"))
 
-    if args.outgroups != None and len(args.outgroups) > 0:
+    if (kwargs.get("outgroups") is not None
+            and len(kwargs.get("outgroups")) > 0):
         bbptp.remove_outgroups(
-            args.outgroups, remove=args.delete, output=args.trees + ".NoOutgroups")
+            kwargs.get("outgroups"),
+            remove=kwargs.get("delete"),
+            output=kwargs.get("trees") + ".NoOutgroups"
+        )
 
     pars, llhs, settings = bbptp.delimit()
 
     pp = partitionparser(taxa_order=bbptp.taxa_order,
-                         partitions=pars, llhs=llhs, scale=args.scale)
+                         partitions=pars, llhs=llhs, scale=kwargs.get("scale"))
 
     if bbptp.numtrees == 1:
-        pp.summary(fout=args.output,
-                   bnmi=args.nmi,
+        pp.summary(fout=kwargs.get("output"),
+                   bnmi=kwargs.get("nmi"),
                    ML_par=bbptp.get_maxhhl_partition(),
                    ml_spe_setting=bbptp.maxhhlsetting,
                    sp_setting=settings)
     else:
-        pp.summary(fout=args.output, bnmi=args.nmi, sp_setting=settings)
+        pp.summary(fout=kwargs.get("output"),
+                   bnmi=kwargs.get("nmi"), sp_setting=settings)
 
     min_no_p, max_no_p, mean_no_p = pp.hpd_numpartitions()
     print("Estimated number of species is between " +
           repr(min_no_p) + " and " + repr(max_no_p))
     print("Mean: " + "{0:.2f}".format(mean_no_p))
     print("")
-    print_run_info(args, bbptp.numtrees)
+    print_run_info(kwargs, bbptp.numtrees)

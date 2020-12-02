@@ -304,7 +304,7 @@ class DataPreparationTool(tk.Toplevel):
         file = filedialog.askopenfilename(
             title="Open Edited Alignment",
             initialdir=os.path.realpath(
-                os.path.join(self.util.MAIN_PATH, "data/")),
+                os.path.join(self.util.USER_PATH, "data/")),
             filetypes=filetypes[item],
             parent=self
         )
@@ -358,7 +358,7 @@ class DataPreparationTool(tk.Toplevel):
         file = filedialog.askopenfilename(
             title="Open Data File",
             initialdir=os.path.realpath(
-                os.path.join(self.util.MAIN_PATH, "data/")),
+                os.path.join(self.util.USER_PATH, "data/")),
             filetypes=[
                 ("Standard deliniated text file", ".txt .tsv .csv"),
                 ("Excel file", ".xlsx .xlsm .xlsb .xltx .xltm .xls .xlt .xml"),

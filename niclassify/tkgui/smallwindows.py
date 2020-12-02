@@ -2,6 +2,7 @@
 import ast
 
 import tkinter as tk
+import tkinter.simpledialog
 
 from tkinter import ttk
 
@@ -70,7 +71,7 @@ class NaNEditor(tk.Toplevel):
 
     def additem(self):
         """Open a string dialog to add a recognized value."""
-        val = tk.simpledialog.askstring(
+        val = tkinter.simpledialog.askstring(
             parent=self,
             title="New NaN value",
             prompt="Please input a string to be recognized as NaN",

@@ -21,7 +21,8 @@ from Bio.Phylo.TreeConstruction import DistanceCalculator
 from Bio import AlignIO
 from xml.etree import ElementTree
 
-from .general_utils import MAIN_PATH
+from .general_utils import MAIN_PATH, REGIONS
+from ..bPTP_interface import bPTP
 
 
 def align_fasta(infname, outfname, debug=False):
@@ -100,16 +101,16 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
             MAIN_PATH, "niclassify/core/scripts/delim_tree.R")
     )
     python_path = sys.executable
-    bPTP = os.path.realpath(
-        os.path.join(
-            MAIN_PATH, "niclassify/bin/PTP-master/bin/bPTP.py")
-    )
+    # bPTP = os.path.realpath(
+    #     os.path.join(
+    #         MAIN_PATH, "niclassify/bin/PTP-master/bin/bPTP.py")
+    # )
 
     # assign log number, guarantee that both logs have same number
     fs = 0
     lpath = os.path.join(
         MAIN_PATH,
-        "output/logs/delim"
+        "logs/delim"
     )
     while os.path.isfile(os.path.join(lpath, "delim/log{}.txt".format(fs))):
         fs += 1
@@ -146,28 +147,42 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
         raise ChildProcessError("bPTP Delimitation: Tree gen failed.")
 
     # delimit species
-    if debug:
-        subprocess.run(
-            '"{}" "{}" -t "{}" -o "{}" -s 123'.format(
-                python_path,
-                bPTP,
-                outtreefname,
-                outfname,
+    bPTP.main_routine(
+        trees=outtreefname,
+        output=outfname,
+        seed=123,
+        reroot=False,
+        delete=False,
+        method="H1",
+        nmcmc=10000,
+        imcmc=100,
+        burnin=0.1,
+        num_trees=0,
+        nmi=False,
+        scale=500
+    )
+    # if debug:
+    #     subprocess.run(
+    #         '"{}" "{}" -t "{}" -o "{}" -s 123'.format(
+    #             python_path,
+    #             bPTP,
+    #             outtreefname,
+    #             outfname,
 
-            ),
-            stdout=delimlogfile,
-            stderr=delimlogfile
-        )
-    else:
-        subprocess.run(
-            '"{}" "{}" -t "{}" -o "{}" -s 123'.format(
-                python_path,
-                bPTP,
-                outtreefname,
-                outfname,
+    #         ),
+    #         stdout=delimlogfile,
+    #         stderr=delimlogfile
+    #     )
+    # else:
+    #     subprocess.run(
+    #         '"{}" "{}" -t "{}" -o "{}" -s 123'.format(
+    #             python_path,
+    #             bPTP,
+    #             outtreefname,
+    #             outfname,
 
-            )
-        )
+    #         )
+    #     )
     treelogfile.close()
     delimlogfile.close()
 
@@ -232,7 +247,7 @@ def delimit_species_GMYC(infname, outtreefname, outfname, debug=False):
     fs = 0
     lpath = os.path.join(
         MAIN_PATH,
-        "output/logs/delim"
+        "logs/delim"
     )
     while os.path.isfile(os.path.join(lpath, "delim/log{}.txt".format(fs))):
         fs += 1
@@ -288,7 +303,7 @@ def generate_measures(fastafname, delimfname, outfname, debug=False):
     fs = 0
     lpath = os.path.join(
         MAIN_PATH,
-        "output/logs/ftgen"
+        "logs/ftgen"
     )
     while os.path.isfile(os.path.join(lpath, "log{}.txt".format(fs))):
         fs += 1
@@ -410,12 +425,6 @@ def get_geographies():
         list: All geography names as str.
 
     """
-    with open(os.path.join(
-            MAIN_PATH, "niclassify/core/utilities/config/regions.json"), "r") as regions:
-        hierarchy = json.load(regions)
-
-    # print(hierarchy)
-
     def getlist(section):
         items = []
         for name, sub in section.items():
@@ -424,7 +433,7 @@ def get_geographies():
                 items.extend(getlist(sub["Contains"]))
         return items
 
-    return getlist(hierarchy)
+    return getlist(REGIONS)
 
 
 def get_jurisdictions(species_name):
@@ -565,10 +574,6 @@ def get_ref_hierarchy(ref_geo):
         dict: The hierarchy contained in the reference geography.
 
     """
-    with open(os.path.join(
-            MAIN_PATH, "niclassify/core/utilities/config/regions.json"), "r") as regions:
-        geos = json.load(regions)
-
     def find_geo(level, ref):
         if level is None:
             return None
@@ -583,7 +588,7 @@ def get_ref_hierarchy(ref_geo):
 
         return result
 
-    return find_geo(geos, ref_geo)
+    return find_geo(REGIONS, ref_geo)
 
 
 def make_genetic_measures(infname, outfname=None):

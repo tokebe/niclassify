@@ -11,6 +11,7 @@ import traceback
 import pandas as pd
 import tkinter as tk
 
+import importlib.resources as pkg_resources
 from joblib import dump
 from tkinter import filedialog
 from tkinter import messagebox
@@ -60,8 +61,7 @@ class ClassifierTool(tk.Frame):
         self.logname = self.sp.boilerplate()
         self.data_win = None
         try:
-            self.dlib = DialogLibrary(
-                os.path.join(self.util.MAIN_PATH, "niclassify/tkgui/dialogs"))
+            self.dlib = DialogLibrary()
         except json.JSONDecodeError:
             messagebox.showerror(
                 title="Dialog Library Read Error",
@@ -302,8 +302,7 @@ class ClassifierTool(tk.Frame):
             # prompt user for file
             data_file = filedialog.askopenfilename(
                 title="Open Data File",
-                initialdir=os.path.realpath(
-                    os.path.join(self.util.MAIN_PATH, "data/")),
+                initialdir=os.path.join(self.util.USER_PATH, "data"),
                 filetypes=[
                     ("All Files", ".*"),
                     ("Excel file",
@@ -480,7 +479,7 @@ class ClassifierTool(tk.Frame):
         clf_file = filedialog.askopenfilename(
             title="Open Saved Classifier",
             initialdir=os.path.realpath(
-                os.path.join(self.util.MAIN_PATH, "output/classifiers/")),
+                os.path.join(self.util.USER_PATH, "output/classifiers/")),
             filetypes=[
                 ("Classifier archive file", ".gz .joblib .pickle")
             ]
@@ -770,7 +769,7 @@ class ClassifierTool(tk.Frame):
 
         Doesn't open user-defined save locations.
         """
-        self.util.view_open_file(os.path.join(self.util.MAIN_PATH, "output/"))
+        self.util.view_open_file(os.path.join(self.util.USER_PATH))
 
     def reset_controls(self, clf=False):
         """
@@ -807,7 +806,7 @@ class ClassifierTool(tk.Frame):
         """
         Save the current classifier to a location the user chooses.
 
-        Like all others, initialdir is calculated using self.util MAIN_PATH
+        Like all others, initialdir is calculated using self.util USER_PATH
         """
         # ----- threaded function -----
         @threaded
@@ -830,7 +829,7 @@ class ClassifierTool(tk.Frame):
         location = tk.filedialog.asksaveasfilename(
             title="Save Classifier",
             initialdir=os.path.realpath(
-                os.path.join(self.util.MAIN_PATH, "output/")),
+                os.path.join(self.util.USER_PATH, "output/")),
             defaultextension=".gz",
             filetypes=[("GNU zipped archive", ".gz")]
         )
@@ -1001,7 +1000,7 @@ class ClassifierTool(tk.Frame):
         location = tk.filedialog.asksaveasfilename(
             title="Save {}".format(
                 titles[item]),
-            initialdir=self.util.MAIN_PATH,
+            initialdir=self.util.USER_PATH,
             defaultextension=default_extensions[item],
             filetypes=types[item]
         )
@@ -1023,12 +1022,12 @@ class ClassifierTool(tk.Frame):
         @threaded
         def _save_nans():
             """Save the NaN values to nans.json in a thread."""
-            nans = {"nans": self.sp.nans}
+            nans = self.sp.nans
             try:
                 with open(
                     os.path.join(
-                        self.util.MAIN_PATH,
-                        "niclassify/core/utilities/config/nans.json"
+                        self.util.USER_PATH,
+                        "config/nans.json"
                     ),
                     "w"
                 ) as nansfile:

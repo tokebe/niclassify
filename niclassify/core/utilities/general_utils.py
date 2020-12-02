@@ -10,6 +10,7 @@ import os
 import shutil
 import subprocess
 import sys
+import userpaths
 import xlrd
 
 import pandas as pd
@@ -18,35 +19,63 @@ import importlib.resources as pkg_resources
 from . import config
 
 
-# possible null values to be converted to np.nan
-with pkg_resources.open_text(config, "nans.json") as nansfile:
-    NANS = json.load(nansfile)["nans"]
+# get nans config and main path
+# should work either in dev or PyInstaller
+if getattr(sys, 'frozen', False):  # pyinstaller
+    with open(os.path.join(sys._MEIPASS, "config/nans.json"), "r") as nansfile:
+        NANS = json.load(nansfile)
+    MAIN_PATH = sys._MEIPASS
+    with open(
+            os.path.join(sys._MEIPASS, "config/regions.json"), "r") as regions:
+        REGIONS = json.load(regions)
+else:  # dev
+    with pkg_resources.open_text(config, "nans.json") as nansfile:
+        NANS = json.load(nansfile)
+        MAIN_PATH = os.path.join(
+            os.path.dirname(__file__),
+            "../../../"
+        )
+    with pkg_resources.open_text(config, "regions.json") as regions:
+        REGIONS = json.load(regions)
 
-MAIN_PATH = os.path.join(
-    os.path.dirname(__file__),
-    "../../../"
-)
+USER_PATH = os.path.join(userpaths.get_my_documents(), "niclassify")
 
-required_folders = [
-    os.path.join(MAIN_PATH, "output/"),
-    os.path.join(MAIN_PATH, "output/classifiers/"),
-    os.path.join(MAIN_PATH, "output/logs/"),
-    os.path.join(MAIN_PATH, "output/logs/delim"),
-    os.path.join(MAIN_PATH, "output/logs/delim/tree"),
-    os.path.join(MAIN_PATH, "output/logs/delim/delim"),
-    os.path.join(MAIN_PATH, "output/logs/ftgen/")
+_required_folders = [
+    os.path.join(USER_PATH),
+    os.path.join(USER_PATH, "config"),
+    os.path.join(USER_PATH, "output"),
+    os.path.join(USER_PATH, "data"),
+    os.path.join(USER_PATH, "output/classifiers"),
+    os.path.join(USER_PATH, "logs"),
+    os.path.join(USER_PATH, "logs/delim"),
+    os.path.join(USER_PATH, "logs/delim/tree"),
+    os.path.join(USER_PATH, "logs/delim/delim"),
+    os.path.join(USER_PATH, "logs/ftgen")
 ]
 
-
-def assure_path():
-    """
-    Assure that all required folders exist.
-
-    Creates required folders if they do not.
-    """
-    for f in required_folders:
-        if not os.path.exists(f):
-            os.makedirs(f)
+# make sure required folders exist and get/prepare user config
+for i, f in enumerate(_required_folders):
+    if not os.path.exists(f):
+        os.makedirs(f)
+        if i == 1:  # config folder
+            # copy over config files for user config
+            with open(os.path.join(f, "nans.json"), "w") as user_nans:
+                json.dump(NANS, user_nans)
+            with open(os.path.join(f, "regions.json"), "w") as user_regions:
+                json.dump(REGIONS, user_regions)
+    elif i == 1:  # user configs (may) already exist
+        try:  # user nans exist, load
+            with open(os.path.join(f, "nans.json")) as nansfile:
+                NANS = json.load(nansfile)
+        except(FileNotFoundError, KeyError):  # nans do not exist, copy
+            with open(os.path.join(f, "nans.json"), "w") as user_nans:
+                json.dump(NANS, user_nans)
+        try:  # user regions exist, load
+            with open(os.path.join(f, "regions.json")) as regions:
+                REGIONS = json.load(regions)
+        except (FileNotFoundError, KeyError):  # regions do not exist, copy
+            with open(os.path.join(f, "regions.json"), "w") as user_regions:
+                json.dump(REGIONS, user_regions)
 
 
 def clean_folder(path):
@@ -163,6 +192,25 @@ def keyboardInterruptHandler(signal, frame):
     Likely to go unused, but good to have.
     """
     exit(0)
+
+
+def resource_path(relative_path):
+    """
+    Get absolute path for resource, works for dev or PyInstaller.
+
+    Args:
+        relative_path (str): A relative path.
+
+    Returns:
+        str: Working absolute path.
+    """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 
 def view_open_file(filename):

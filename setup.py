@@ -1,9 +1,11 @@
 import subprocess
 from os import path
 import sys
+import PyInstaller.__main__
 
 from setuptools import find_packages, setup
 from setuptools.command.install import install
+from setuptools import Command
 
 # install bPTP - cwd changes directory for install
 # (bPTP install must happen from inside its directory)
@@ -25,6 +27,27 @@ class InstallbPTP(install):
         )
 
 
+class buildEXE(Command):
+    """Build an executable version"""
+    description = "build GUI executable"
+
+    user_options = [
+        ('override-options', 'o', 'override pyinstaller options')
+    ]
+
+    def initialize_options(self):
+        None
+
+    def finalize_options(self):
+        None
+
+    def run(self):
+        subprocess.run(
+            ".\\scripts\\make_exe.bat",
+            shell=True
+        )
+
+
 setup(
     name='niclassify',  # TODO rename this project at some point please
     version='0.2.0a1',
@@ -34,6 +57,7 @@ setup(
     url='https://github.com/jackson-callaghan',
     packages=find_packages(include=['niclassify']),
     install_requires=[
+        "numpy",
         "biopython",
         "docutils",
         "ete3",
@@ -50,10 +74,13 @@ setup(
         "pandas",
         "joblib",
         "matplotlib",
-        "numpy",
         "scipy",
+        "pyinstaller"
     ],
-    cmdclass={'install': InstallbPTP},
+    cmdclass={
+        'install': InstallbPTP,
+        'build': buildEXE
+    },
     # entry_points={
     #     'console_scripts': [
     #         'niclassify-gui = gui:main'
