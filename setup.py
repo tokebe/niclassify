@@ -27,7 +27,7 @@ class InstallbPTP(install):
         )
 
 
-class buildEXE(Command):
+class BuildEXE(Command):
     """Build an executable version"""
     description = "build GUI executable"
 
@@ -44,6 +44,27 @@ class buildEXE(Command):
     def run(self):
         subprocess.run(
             ".\\scripts\\make_exe.bat",
+            shell=True
+        )
+
+
+class MakeInnoInstaller(Command):
+    """Build an executable version"""
+    description = "build GUI executable"
+
+    user_options = [
+        ('override-options', 'o', 'override pyinstaller options')
+    ]
+
+    def initialize_options(self):
+        None
+
+    def finalize_options(self):
+        None
+
+    def run(self):
+        subprocess.run(
+            '"%programfiles(x86)%\\Inno Setup 6\\ISCC.exe" .\\scripts\\installer.iss',
             shell=True
         )
 
@@ -79,7 +100,8 @@ setup(
     ],
     cmdclass={
         'install': InstallbPTP,
-        'build': buildEXE
+        'build': BuildEXE,
+        'pack': MakeInnoInstaller
     },
     # entry_points={
     #     'console_scripts': [
