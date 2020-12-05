@@ -82,7 +82,8 @@ class ClassifierTool(tk.Frame):
         self.output = None
 
         # set up elements of main window
-        parent.title("Random Forest Classifier Tool")
+        parent.title(
+            "{} Classifier Tool".format(self.sp.clf.clf.__class__.__name__))
         # panel for most controls, so statusbar stays on bottom
         self.panels = tk.Frame(
             self.parent
@@ -756,6 +757,10 @@ class ClassifierTool(tk.Frame):
         # open new data tool
         self.data_win = DataPreparationTool(
             self, self, self.tempdir, self.util)
+
+    def open_help(self):
+        """Open User Manual document"""
+        self.util.view_open_file(self.util.HELP_DOC)
 
     def open_nans(self):
         """Open a window to view and edit NaN values."""

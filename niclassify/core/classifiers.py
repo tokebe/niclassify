@@ -402,6 +402,8 @@ class RandomForestAC(AutoClassifier):
             },
             hp_method=RandomizedSearchCV,
             # score_method=metrics.balanced_accuracy_score,
-            score_method=lambda true, pred: metrics.f1_score(
-                true, pred, average='weighted'),
+            score_method=self.f1_score
         )
+
+    def f1_score(self, true, pred):
+        return metrics.f1_score(true, pred, average='weighted')

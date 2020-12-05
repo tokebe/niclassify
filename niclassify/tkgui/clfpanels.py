@@ -282,7 +282,9 @@ class DataPanel(tk.LabelFrame):
         # button to open helpfile
         self.help_button = tk.Button(
             self,
-            text="Help")
+            text="Help",
+            command=self.app.open_help
+        )
         self.help_button.pack(side=tk.LEFT, anchor=tk.NW, padx=1, pady=1)
 
 

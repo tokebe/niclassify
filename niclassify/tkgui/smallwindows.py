@@ -25,6 +25,8 @@ class NaNEditor(tk.Toplevel):
         self.parent = parent
         self.app = app
 
+        self.iconbitmap(self.parent.util.PROGRAM_ICON)
+
         self.protocol("WM_DELETE_WINDOW", self.wm_exit)
 
         self.title("NaN Value Editor")

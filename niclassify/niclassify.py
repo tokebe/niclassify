@@ -3,29 +3,12 @@
 Technically extensible by subclassing and copying the main() function.
 If you have to do that, I'm sorry. It probably won't be fun.
 """
-import matplotlib
-import multiprocessing
-import sys
-import threading
 
-import tkinter as tk
-
-import matplotlib.pyplot as plt
-
-from tkinter import ttk
-
-from core import utilities
-from core.StandardProgram import StandardProgram
-from core.classifiers import RandomForestAC
-from tkgui.clftool import ClassifierTool
-
-
-matplotlib.use('Agg')  # this makes threading not break
 
 # NOW
-# TODO implement onefile compilation
-# need to create new folders in user documents directory
-# and user config files using userpaths
+# TODO fix multiprocessing error in classifier training
+# problem centers entirely around sklearn
+# TODO add check for UPID uniqueness
 # TODO implement commandline version, use for tests
 
 # LATER
@@ -58,6 +41,7 @@ def main():
     app = ClassifierTool(root, StandardProgram, RandomForestAC, utilities)
     root.update()
     root.minsize(root.winfo_width(), root.winfo_height())
+    root.iconbitmap(utilities.PROGRAM_ICON)
 
     def graceful_exit():
         """
@@ -80,7 +64,25 @@ def main():
 
 
 if __name__ == "__main__":
-    # TODO figure out how the hell onefile support works for mp
+    import sys
+    import multiprocessing
     if getattr(sys, 'frozen', False):  # required for pyinstaller mp
         multiprocessing.freeze_support()
+
+    import matplotlib
+    import threading
+
+    import tkinter as tk
+
+    import matplotlib.pyplot as plt
+
+    from tkinter import ttk
+
+    from core import utilities
+    from core.StandardProgram import StandardProgram
+    from core.classifiers import RandomForestAC
+    from tkgui.clftool import ClassifierTool
+    matplotlib.use('Agg')  # this makes threading not break
     main()
+
+# TODO try excludes=['sklearn.externals.joblib'] in freeze_support

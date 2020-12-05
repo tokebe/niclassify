@@ -384,6 +384,9 @@ class StandardChecks:
         Returns:
             [type]: [description]
         """
+        # check if 'no split' has been selected
+        if self.sp.taxon_split == 0:
+            return True
         if data[self.sp.taxon_split].isna().any():
             if cb is not None:
                 return cb()
@@ -429,6 +432,8 @@ class StandardChecks:
         Returns:
             Bool: True if check passes, otherwise false (or return of cb).
         """
+        if self.sp.taxon_split == 0:
+            return True
         if 1 in data[self.sp.taxon_split].value_counts(dropna=False).values:
             if cb is not None:
                 return cb()
@@ -560,19 +565,25 @@ class StandardProgram:
     def split_by_taxon(self, taxon_split=None):
         if taxon_split is None:
             taxon_split = self.taxon_split
+
         pool_dir = tempfile.TemporaryDirectory()
 
         # get each order and its corresponding samples
         data = utilities.get_data(self.filtered_fname)
-        # checks either taxon match or isna if taxon level is na
-        # essentially just makes sure all taxons are handled
-        taxons = {
-            str(taxon): (data[data[taxon_split] == taxon]
-                         if not pd.isnull(taxon)
-                         else data[data[taxon_split].isna()])
-            ["UPID"].tolist()
-            for taxon in data[taxon_split].unique()
-        }
+
+        # don't split if there is no split is selected
+        if taxon_split == 0:
+            taxons = {"all": data["UPID"].tolist()}
+        else:
+            # checks either taxon match or isna if taxon level is na
+            # essentially just makes sure all taxons are handled
+            taxons = {
+                str(taxon): (data[data[taxon_split] == taxon]
+                             if not pd.isnull(taxon)
+                             else data[data[taxon_split].isna()])
+                ["UPID"].tolist()
+                for taxon in data[taxon_split].unique()
+            }
 
         for taxon, pids in taxons.items():
             print("{}: {}".format(taxon, len(pids)))

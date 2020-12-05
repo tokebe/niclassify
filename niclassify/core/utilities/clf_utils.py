@@ -20,7 +20,7 @@ from sklearn import preprocessing
 from sklearn.impute import SimpleImputer
 
 from ..classifiers import AutoClassifier
-from .general_utils import MAIN_PATH
+from .general_utils import USER_PATH
 
 sns.set()
 
@@ -100,7 +100,7 @@ def load_classifier(filename):
 
     """
     if not os.path.isabs(filename):
-        filename = os.path.join(MAIN_PATH, "output/classifiers/", filename)
+        filename = os.path.join(USER_PATH, "output/classifiers/", filename)
 
     # check if filename exists
     if not os.path.exists(filename):
@@ -188,7 +188,7 @@ def save_clf(clf):
     i = 0
     while os.path.exists(
         os.path.join(
-            MAIN_PATH,
+            USER_PATH,
             "output/classifiers/{}{}.gz".format(
                 clf.__class__.__name__, i)
         )
@@ -197,7 +197,7 @@ def save_clf(clf):
     dump(
         clf,
         os.path.join(
-            MAIN_PATH,
+            USER_PATH,
             "output/classifiers/{}{}.gz".format(
                 clf.__class__.__name__, i)
         )
@@ -243,7 +243,7 @@ def save_confm(clf, features_known, class_labels, out):
 
     fig = make_confm(clf.clf, features_known, class_labels)
     if not os.path.isabs(out):
-        out = os.path.join(MAIN_PATH, "output/" + out)
+        out = os.path.join(USER_PATH, "output/" + out)
     fig.savefig("{}.cm.png".format(out))
 
 
@@ -264,7 +264,7 @@ def save_pairplot(data, predict, outfname):
     out = make_pairplot(data, predict)
     # save pairplot
     if not os.path.isabs(outfname):
-        outfname = os.path.join(MAIN_PATH, "output/" + outfname)
+        outfname = os.path.join(USER_PATH, "output/" + outfname)
     out.savefig("{}.png".format(outfname))
 
 
@@ -300,7 +300,7 @@ def save_predictions(metadata, predict, feature_norm, out, predict_prob=None):
         df = pd.concat([metadata, predict, feature_norm], axis=1)
     try:
         if not os.path.isabs(out):
-            out = os.path.join(MAIN_PATH, "output/" + out)
+            out = os.path.join(USER_PATH, "output/" + out)
 
         output_path = os.path.join(
             "/".join(out.replace("\\", "/").split("/")[:-1]))

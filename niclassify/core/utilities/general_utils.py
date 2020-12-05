@@ -28,6 +28,8 @@ if getattr(sys, 'frozen', False):  # pyinstaller
     with open(
             os.path.join(sys._MEIPASS, "config/regions.json"), "r") as regions:
         REGIONS = json.load(regions)
+    HELP_DOC = os.path.join(sys._MEIPASS, "config/user-manual.pdf")
+    PROGRAM_ICON = os.path.join(sys._MEIPASS, "config/NI.ico")
 else:  # dev
     with pkg_resources.open_text(config, "nans.json") as nansfile:
         NANS = json.load(nansfile)
@@ -37,6 +39,10 @@ else:  # dev
         )
     with pkg_resources.open_text(config, "regions.json") as regions:
         REGIONS = json.load(regions)
+    with pkg_resources.path(config, "user-manual.pdf") as p:
+        HELP_DOC = str(p)
+    with pkg_resources.path(config, "NI.ico") as p:
+        PROGRAM_ICON = str(p)
 
 USER_PATH = os.path.join(userpaths.get_my_documents(), "niclassify")
 
@@ -50,7 +56,9 @@ _required_folders = [
     os.path.join(USER_PATH, "logs/delim"),
     os.path.join(USER_PATH, "logs/delim/tree"),
     os.path.join(USER_PATH, "logs/delim/delim"),
-    os.path.join(USER_PATH, "logs/ftgen")
+    os.path.join(USER_PATH, "logs/ftgen"),
+    os.path.join(MAIN_PATH, "data"),
+    os.path.join(MAIN_PATH, "data/unprepared")
 ]
 
 # make sure required folders exist and get/prepare user config

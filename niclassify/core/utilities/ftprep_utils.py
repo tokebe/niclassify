@@ -21,7 +21,7 @@ from Bio.Phylo.TreeConstruction import DistanceCalculator
 from Bio import AlignIO
 from xml.etree import ElementTree
 
-from .general_utils import MAIN_PATH, REGIONS
+from .general_utils import MAIN_PATH, USER_PATH, REGIONS
 from ..bPTP_interface import bPTP
 
 
@@ -109,16 +109,16 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
     # assign log number, guarantee that both logs have same number
     fs = 0
     lpath = os.path.join(
-        MAIN_PATH,
+        USER_PATH,
         "logs/delim"
     )
-    while os.path.isfile(os.path.join(lpath, "delim/log{}.txt".format(fs))):
+    while os.path.isfile(os.path.join(lpath, "log{}.txt".format(fs))):
         fs += 1
     delimlogfile = open(
-        os.path.join(lpath, "delim/log{}.txt".format(fs)), "w"
+        os.path.join(lpath, "log{}.txt".format(fs)), "w"
     )
     treelogfile = open(
-        os.path.join(lpath, "tree/log{}.txt".format(fs)), "w"
+        os.path.join(lpath, "log{}.txt".format(fs)), "w"
     )
 
     # make tree
@@ -246,15 +246,15 @@ def delimit_species_GMYC(infname, outtreefname, outfname, debug=False):
 
     fs = 0
     lpath = os.path.join(
-        MAIN_PATH,
+        USER_PATH,
         "logs/delim"
     )
-    while os.path.isfile(os.path.join(lpath, "delim/log{}.txt".format(fs))):
+    while os.path.isfile(os.path.join(lpath, "log{}.txt".format(fs))):
         fs += 1
 
     if debug:
         with open(
-                os.path.join(lpath, "delim/log{}.txt".format(fs)), "w"
+                os.path.join(lpath, "log{}.txt".format(fs)), "w"
         ) as logfile:
             subprocess.run(
                 '"{}" "{}" "{}" "{}" "{}"'.format(
@@ -302,7 +302,7 @@ def generate_measures(fastafname, delimfname, outfname, debug=False):
     # assign log number
     fs = 0
     lpath = os.path.join(
-        MAIN_PATH,
+        USER_PATH,
         "logs/ftgen"
     )
     while os.path.isfile(os.path.join(lpath, "log{}.txt".format(fs))):

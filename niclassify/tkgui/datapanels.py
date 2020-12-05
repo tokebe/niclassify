@@ -238,6 +238,7 @@ class PreparationPanel(ttk.LabelFrame):
             state="readonly"
         )
         self.taxon_split_selector["values"] = (
+            "No Split",
             "Phylum",
             "Class",
             "Order",

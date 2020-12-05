@@ -38,9 +38,13 @@ class DataPreparationTool(tk.Toplevel):
             app (MainApp): Generally the MainApp for easy method access.
         """
         super().__init__(parent, *args, **kwargs)
+
         self.parent = parent
         self.app = app
         self.util = utilities
+
+        # set window icon
+        self.iconbitmap(self.util.PROGRAM_ICON)
 
         # filepath for most recent data for keeping selection up to date
         self.last_entered_data = None
@@ -825,6 +829,7 @@ class DataPreparationTool(tk.Toplevel):
 
     def set_taxon_level(self, event):
         levels = {
+            "No Split": 0,
             "Phylum": "phylum_name",
             "Class": "class_name",
             "Order": "order_name",
