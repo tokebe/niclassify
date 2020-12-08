@@ -1,5 +1,6 @@
 @echo off
 :: Check if we're using 'python'  or 'py'
+:beginScript
 py -3 --version >nul 2>nul && set "pyLaunch=py" || set "pyLaunch=python"
 %pyLaunch% --version >nul 2>nul && goto:checkVersion || goto:errorNoPython
 
@@ -31,9 +32,9 @@ if "%pyLaunch%" == "py" (
 ) else (
     %pyLaunch% -m venv niclassifyenv
 )
+call niclassifyenv\Scripts\python.exe -m pip install --upgrade pip
 call niclassifyenv\Scripts\python.exe setup.py install
 goto:launchProgram
-goto:eof
 
 :: we can launch the program
 :launchProgram
@@ -43,16 +44,15 @@ goto:eof
 
 :: notify user python is not installed
 :errorNoPython
-wscript "scripts\message.vbs" "Python is not installed. Please install Python 3.7.x - 3.8.x https://www.python.org/downloads/release/python-386/"
-echo Python is not installed. Please install Python 3.7.x - 3.8.x https://www.python.org/downloads/release/python-386/
+wscript "scripts\message.vbs" "Python is not installed. Please install Python 3.7.x - 3.8.x and then click 'ok'."
+echo Python is not installed. Please install Python 3.7.x - 3.8.x. https://www.python.org/downloads/release/python-386/
 start "" https://www.python.org/downloads/release/python-386/
-pause
+goto:beginScript
 goto:eof
 
 :: notify user wrong version of python is installed
 :errorWrongPython
-wscript "scripts\message.vbs" "The wrong version of Python is installed. Please ensure you have a version of Python 3 between 3.7.x and 3.8.x."
-echo The wrong version of Python is installed. Please ensure you have a version of Python between 3.7.x and 3.8.x.
+wscript "scripts\message.vbs" "The wrong version of Python is installed. Please ensure you have a version of Python 3 between 3.7.x and 3.8.x and try again."
+echo The wrong version of Python is installed. Please ensure you have a version of Python between 3.7.x and 3.8.x. https://www.python.org/downloads/release/python-386/
 start "" https://www.python.org/downloads/release/python-386/
-pause
 goto:eof
