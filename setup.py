@@ -71,10 +71,10 @@ setup(
         "python-nexus",
         "requests",
         "scikit-learn",
+        "matplotlib",
         "seaborn",
         "xlrd",
         "pandas",
-        "matplotlib",
         "scipy",
         "userpaths"
     ],
