@@ -18,9 +18,10 @@ if "%pyLaunch%" == "py" (
 :pythonInstalled
 echo Checking virtual environment...
 if exist "%~dp0\niclassifyenv\Scripts\activate.bat" (
-    "%~dp0\niclassifyenv\Scripts\python.exe" "%~dp0\scripts\testvenv.py" && goto:launchProgram || goto:corruptVenv
+    "%~dp0\niclassifyenv\Scripts\python.exe" "%~dp0\scripts\testvenv.py" >nul 2>nul && goto:launchProgram || goto:corruptVenv
 
 ) else (
+    wscript "%~dp0\scripts\message.vbs" "Executing First time setup. Please do not close the Console Window."
     echo Executing First time setup. Please do not close the Console Window...
     goto:makeVenv
 )
@@ -33,7 +34,6 @@ goto:makeVenv
 
 :: venv isn't set up, we must run initial setup
 :makeVenv
-wscript "%~dp0\scripts\message.vbs" "Executing First time setup. Please do not close the Console Window."
 echo Setting up virtual environment...
 if exist "%~dp0\niclassifyenv" rmdir /S /q "%~dp0\niclassifyenv"
 if "%pyLaunch%" == "py" (
