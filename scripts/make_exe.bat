@@ -11,4 +11,4 @@ pyinstaller ^
     --add-data="niclassify\core\scripts;niclassify\core\scripts" ^
     --add-data="niclassifyenv\Lib\site-packages\Bio\Align\substitution_matrices\data;Bio\Align\substitution_matrices\data" ^
     --add-data="niclassify\bin;niclassify\bin" ^
-"./niclassify/niclassify.py"
+"./niclassify/niclassify.pyw"

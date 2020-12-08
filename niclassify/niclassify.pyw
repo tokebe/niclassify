@@ -6,9 +6,8 @@ If you have to do that, I'm sorry. It probably won't be fun.
 
 
 # NOW
-# TODO fix multiprocessing error in classifier training
-# problem centers entirely around sklearn
 # TODO add check for UPID uniqueness
+# TODO look into batch to exe, or py2exe
 # TODO implement commandline version, use for tests
 
 # LATER
@@ -67,6 +66,7 @@ if __name__ == "__main__":
     import sys
     import multiprocessing
     if getattr(sys, 'frozen', False):  # required for pyinstaller mp
+        multiprocessing.set_start_method('forkserver', force=True)
         multiprocessing.freeze_support()
 
     import matplotlib
@@ -84,5 +84,3 @@ if __name__ == "__main__":
     from tkgui.clftool import ClassifierTool
     matplotlib.use('Agg')  # this makes threading not break
     main()
-
-# TODO try excludes=['sklearn.externals.joblib'] in freeze_support

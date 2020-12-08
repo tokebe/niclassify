@@ -1,7 +1,6 @@
 import subprocess
 from os import path
 import sys
-import PyInstaller.__main__
 
 from setuptools import find_packages, setup
 from setuptools.command.install import install
@@ -11,62 +10,43 @@ from setuptools import Command
 # (bPTP install must happen from inside its directory)
 
 
-class InstallbPTP(install):
-    def run(self):
-        install.run(self)
-        python_path = sys.executable
-        subprocess.run(
-            '"{}" "{}" install'.format(
-                python_path,
-                path.join(path.dirname(path.abspath(__file__)),
-                          "niclassify/bin/PTP-master/setup.py")
-            ),
-            cwd=path.join(path.dirname(
-                path.abspath((__file__))), "niclassify/bin/PTP-master"),
-            shell=True
-        )
+# class BuildEXE(Command):
+#     """Build an executable version"""
+#     description = "build GUI executable"
 
+#     user_options = [
+#     ]
 
-class BuildEXE(Command):
-    """Build an executable version"""
-    description = "build GUI executable"
+#     def initialize_options(self):
+#         None
 
-    user_options = [
-        ('override-options', 'o', 'override pyinstaller options')
-    ]
+#     def finalize_options(self):
+#         None
 
-    def initialize_options(self):
-        None
+#     def run(self):
+#         subprocess.run(
+#             ".\\scripts\\make_exe.bat",
+#             shell=True
+#         )
 
-    def finalize_options(self):
-        None
+# class MakeInnoInstaller(Command):
+#     """Build an executable version"""
+#     description = "build GUI executable"
 
-    def run(self):
-        subprocess.run(
-            ".\\scripts\\make_exe.bat",
-            shell=True
-        )
+#     user_options = [
+#     ]
 
+#     def initialize_options(self):
+#         None
 
-class MakeInnoInstaller(Command):
-    """Build an executable version"""
-    description = "build GUI executable"
+#     def finalize_options(self):
+#         None
 
-    user_options = [
-        ('override-options', 'o', 'override pyinstaller options')
-    ]
-
-    def initialize_options(self):
-        None
-
-    def finalize_options(self):
-        None
-
-    def run(self):
-        subprocess.run(
-            '"%programfiles(x86)%\\Inno Setup 6\\ISCC.exe" .\\scripts\\installer.iss',
-            shell=True
-        )
+#     def run(self):
+#         subprocess.run(
+#             '"%programfiles(x86)%\\Inno Setup 6\\ISCC.exe" .\\scripts\\installer.iss',
+#             shell=True
+#         )
 
 
 setup(
@@ -78,7 +58,8 @@ setup(
     url='https://github.com/jackson-callaghan',
     packages=find_packages(include=['niclassify']),
     install_requires=[
-        "numpy",
+        "joblib==0.11",
+        "numpy==1.19.3",
         "biopython",
         "docutils",
         "ete3",
@@ -93,16 +74,13 @@ setup(
         "seaborn",
         "xlrd",
         "pandas",
-        "joblib",
         "matplotlib",
         "scipy",
-        "pyinstaller"
+        "userpaths"
     ],
-    cmdclass={
-        'install': InstallbPTP,
-        'build': BuildEXE,
-        'pack': MakeInnoInstaller
-    },
+    # cmdclass={
+    #     'install': InstallbPTP,
+    # },
     # entry_points={
     #     'console_scripts': [
     #         'niclassify-gui = gui:main'
@@ -110,3 +88,16 @@ setup(
     # }
     # TODO implement entry_points
 )
+
+if sys.argv[1] == "install":
+    python_path = sys.executable
+    subprocess.run(
+        'cd "{}" && "{}" setup.py install'.format(
+            path.join(path.dirname(path.abspath(__file__)),
+                      "niclassify/bin/PTP-master"),
+            python_path,
+        ),
+        cwd=path.join(path.dirname(
+            path.abspath((__file__))), "niclassify/bin/PTP-master"),
+        shell=True
+    )
