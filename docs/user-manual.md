@@ -2,6 +2,31 @@
 
 Welcome to the NIClassify User's Manual!
 
+## Contents
+
+<!-- TOC -->
+
+- [User's Manual](#users-manual)
+    - [Contents](#contents)
+    - [What is NIClassify?](#what-is-niclassify)
+    - [On First Launch](#on-first-launch)
+    - [The Sequence Data Tool](#the-sequence-data-tool)
+        - [Overview](#overview)
+        - [Using the Sequence Data Tool](#using-the-sequence-data-tool)
+            - [Importing Custom Data](#importing-custom-data)
+            - [Retrieving BOLD Data](#retrieving-bold-data)
+            - [Merging Data](#merging-data)
+            - [Initial Data Preparation](#initial-data-preparation)
+            - [Final Data Preparation](#final-data-preparation)
+    - [The Classifier Tool](#the-classifier-tool)
+        - [Overview](#overview-1)
+        - [A Note on the Tool](#a-note-on-the-tool)
+        - [Using the Classifier Tool](#using-the-classifier-tool)
+            - [Training a Classifier](#training-a-classifier)
+            - [Making Predictions using a Trained Classifier](#making-predictions-using-a-trained-classifier)
+
+<!-- /TOC -->
+
 ## What is NIClassify?
 
 NIClassify is a combined toolkit for classifying species (usually, as in the name, as Native or Introduced), based on the principles laid out in [Categorization of species as likely native or likely non-native using DNA barcodes without a complete reference library.](https://doi.org/10.1002/eap.1914) (Andersen JC, et al.)
