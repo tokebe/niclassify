@@ -2,8 +2,6 @@
 
 Welcome to the NIClassify User's Manual!
 
-## Table of Contents
-
 ## What is NIClassify?
 
 NIClassify is a combined toolkit for classifying species (usually, as in the name, as Native or Introduced), based on the principles laid out in [Categorization of species as likely native or likely non-native using DNA barcodes without a complete reference library.](https://doi.org/10.1002/eap.1914) (Andersen JC, et al.)
@@ -63,11 +61,15 @@ Below is an overview of the Sequence Data Tool, with an explanation of each inpu
 20. **Load Prepared Data Button:** This button allows you to quickly load prepared data after saving it, in case the prepared data required any edits before being sent to the Classifier Tool.
 21. **Use Prepared Data Button:** This button sends the prepared data to the Classifier Tool. Please note that Sequence Data Tool trims unnecessary columns from the data before sending it to the Classifier Tool so as to streamline feature selection. Use the Save Prepared Data Button (E19) to save the complete data with all columns.
 
+[(Return to Contents)](#User's-Manual)
+
 ### Using the Sequence Data Tool
 
 The Sequence Data Tool may be reached by clicking "Prepare Sequence Data" On the Classifier Tool (see Classifier Tool - Overview).
 
 The first step is to either look up data from BOLD or to import custom data from your filesystem. Because there are a few more complications to custom data, this will be covered first.
+
+[(Return to Contents)](#User's-Manual)
 
 #### Importing Custom Data
 
@@ -82,6 +84,8 @@ If no other columns are selected, you must select the "No Split" option in the T
 
 To import custom data, assuming it satisfies these requirements, click the Load Custom Data Button (B6), navigate to the data file, and select it. The program will warn you of any problems it can detect while attempting to read the file.
 
+[(Return to Contents)](#User's-Manual)
+
 #### Retrieving BOLD Data
 
 Data may be searched and retrieved from BOLD. To do so, follow the steps below:
@@ -90,6 +94,8 @@ Data may be searched and retrieved from BOLD. To do so, follow the steps below:
 2. Click the button labeled "Search Data From BOLD" (A3)
 
 Depending on the number of returns, this may take anywhere from a few seconds to a few minutes. You will be notified when the search is completed.
+
+[(Return to Contents)](#User's-Manual)
 
 #### Merging Data
 
@@ -105,6 +111,8 @@ Be careful whenever completing any of these steps to not repeatedly click an "Ad
 
 **Restarting a Merge:** There is currently no way to remove data from a merge. To start a merge over again, you have to close the Sequence Data Tool, and open it again from the Classifier Tool.
 
+[(Return to Contents)](#User's-Manual)
+
 #### Initial Data Preparation
 
 Once you have your data loaded, you may begin to prepare it. Follow the below steps:
@@ -114,6 +122,8 @@ Once you have your data loaded, you may begin to prepare it. Follow the below st
 3. **(Optional) Check Alignment.** If you had the sequences automatically aligned, you may wish to check that the alignment was processed correctly. Click "Save Alignment for Editing" (C11) and save the alignment to a location of your choosing. You may wish to do this regardlessly, in the event you wish to process this same raw data again in the future. You may now edit the saved file as necessary, and re-import it by clicking "Load Edited Alignment" (C12) and selecting the file. This will overwrite the current alignment in the program.
 
 At this point, you have completed the initial preparation, and may move on to the next preparation step. You may wish to download the raw (unaligned) FASTA file, and the filtered data, which you may do using the appropriate sections (C13) and (C14), respectively.
+
+[(Return to Contents)](#User's-Manual)
 
 #### Final Data Preparation
 
@@ -127,11 +137,15 @@ When the data preparation is complete, you will be notified. You may be given a 
 
 It is recommended at this point that you review the data and make any manual additions and edits that may be required, however if you are confident you may now send the data to the Classifier Tool by clicking "Use Prepared Data" (E21).
 
+[(Return to Contents)](#User's-Manual)
+
 ## The Classifier Tool
 
 ### Overview
 
 Below is an overview of the Classifer Tool, with an explanation of each input and button in the interface. In subsequent subsections, buttons and inputs will refer to the letters and numbers on this diagram for ease of reference. For example, instructions referencing the Prepare Sequence Data Button will reference as (A1), referencing the section letter and input number.
+
+[(Return to Contents)](#User's-Manual)
 
 ![Classifier Tool - Overview](./img/classifier_tool_overview_small.png)
 
@@ -176,6 +190,8 @@ Below is an overview of the Classifer Tool, with an explanation of each input an
 23. **Status Text:** This text will change to attempt to hint at the status of the program.
 24. **Progress Bar:** This progress bar will either fill to show current progress in a task, or when that is impossible, at least leave a bouncing bar to demonstrate that the program has not frozen.
 
+[(Return to Contents)](#User's-Manual)
+
 ### A Note on the Tool
 
 This tool was created as a generalized classifier tool, and as such works independently of the requirements of the Sequence Data Tool. In theory, and data may be input to the Classifier Tool for training, so long as there is at least one feature column and one known label column. Obviously, this does not mean that this classifier tool can classify anything using any data.
@@ -183,6 +199,8 @@ This tool was created as a generalized classifier tool, and as such works indepe
 Please read up on Random Forest Classifiers before attempting to use this classifier for anything other than what it was strictly intended for. In fact, it is best to read up on Random Forest Classifiers before using this tool for its intended purpose, to understand the strengths and limitations of this tool. Every classifier is, in some portion, vulnerable to a host of problems such as overfitting, underfitting, bias, etc, and this one is no exception.
 
 Put simply, use this tool with great care. Always use such tools as ethically as possible.
+
+[(Return to Contents)](#User's-Manual)
 
 ### Using the Classifier Tool
 
@@ -200,6 +218,8 @@ You may now train the classifier by clicking "Train Classifier" (D15). A small p
 
 At this point you may wish to save the classifier for future use by clicking "Save Classifier" (D16). You may also wish to view and/or save the training report (D17) and the confusion matrix (D18).
 
+[(Return to Contents)](#User's-Manual)
+
 #### Making Predictions using a Trained Classifier
 
 You have either just finished training a classifier, or have a saved classifier which you may wish to use for new predictions on samples of unknown classification. This guide will proceed as if you have a saved classifier. A saved classifier requires data that has the same column names as the data it was trained on, both for the feature columns and for the class label column.
@@ -211,3 +231,5 @@ You have either just finished training a classifier, or have a saved classifier 
 **Selecting Features:** The columns of your data file will appear in the 'Not Selected' List of the 'Select Feature Columns' section (B4). Highlight all columns that are features to be used in classification (if the data was automatically prepared using the Sequence Data Tool, these would be `ksDist_mean` through `dnaSim_max`), and click the single right arrow (second button) (B7). You have successfully selected your training features. If you skipped the previous step, you may skip this step.
 
 **Making Predictions:** Click the "Make Predictions" Button (E20). This may take some time, depending on the amount of data and the number of features in use. When predictions are complete, you will be notified. If your classifier is using fewer than 25 features, a pairplot will be generated, which you may wish to view and/or save (E21). You may now save your predicted data by clicking "Save Output" (E22).
+
+[(Return to Contents)](#User's-Manual)
