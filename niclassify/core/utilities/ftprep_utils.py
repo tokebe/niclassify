@@ -384,7 +384,7 @@ def get_geo_taxon(filename, geo=None, taxon=None, api=None):
         api = "http://www.boldsystems.org/index.php/API_Public/combined?"
 
     if not os.path.isabs(filename):
-        filename = os.path.join(MAIN_PATH, "data/unprepared/" + filename)
+        filename = os.path.join(USER_PATH, "data/unprepared/" + filename)
 
     # create request from options
     request = []

@@ -58,7 +58,7 @@ _required_folders = [
     os.path.join(USER_PATH, "logs/delim/delim"),
     os.path.join(USER_PATH, "logs/ftgen"),
     os.path.join(MAIN_PATH, "data"),
-    os.path.join(MAIN_PATH, "data/unprepared")
+    os.path.join(USER_PATH, "data/unprepared")
 ]
 
 # make sure required folders exist and get/prepare user config
