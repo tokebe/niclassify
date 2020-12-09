@@ -1,0 +1,10 @@
+"""Allows niclassify to be run as a module."""
+from . import gui
+
+
+def main():
+    gui.main()
+
+
+if __name__ == '__main__':
+    main()

@@ -1,62 +1,20 @@
 import subprocess
+import os
 from os import path
 import sys
-
 from setuptools import find_packages, setup
-from setuptools.command.install import install
-from setuptools import Command
-
-# install bPTP - cwd changes directory for install
-# (bPTP install must happen from inside its directory)
-
-
-# class BuildEXE(Command):
-#     """Build an executable version"""
-#     description = "build GUI executable"
-
-#     user_options = [
-#     ]
-
-#     def initialize_options(self):
-#         None
-
-#     def finalize_options(self):
-#         None
-
-#     def run(self):
-#         subprocess.run(
-#             ".\\scripts\\make_exe.bat",
-#             shell=True
-#         )
-
-# class MakeInnoInstaller(Command):
-#     """Build an executable version"""
-#     description = "build GUI executable"
-
-#     user_options = [
-#     ]
-
-#     def initialize_options(self):
-#         None
-
-#     def finalize_options(self):
-#         None
-
-#     def run(self):
-#         subprocess.run(
-#             '"%programfiles(x86)%\\Inno Setup 6\\ISCC.exe" .\\scripts\\installer.iss',
-#             shell=True
-#         )
-
 
 setup(
-    name='niclassify',  # TODO rename this project at some point please
-    version='0.2.0a1',
+    name='niclassify',
+    version='0.3.0a',
     description='Automated insect data retrieval and classification tool',
     author='Jackson Callaghan',
     author_email='jcs.callaghan@gmail.com',
     url='https://github.com/jackson-callaghan',
-    packages=find_packages(include=['niclassify']),
+    packages=find_packages(),
+    package_data={
+        "": ["*.json", "*.ico", "*.jpg", "*.pdf", "*.R"],
+    },
     install_requires=[
         "atomicwrites==1.4.0",
         "attrs==20.3.0",
@@ -118,11 +76,11 @@ setup(
     # cmdclass={
     #     'install': InstallbPTP,
     # },
-    # entry_points={
-    #     'console_scripts': [
-    #         'niclassify-gui = gui:main'
-    #     ]
-    # }
+    entry_points={
+        'console_scripts': [
+            'niclassify = niclassify.__main__:main'
+        ]
+    }
     # TODO implement entry_points
 )
 

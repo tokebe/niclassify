@@ -3,7 +3,26 @@
 Technically extensible by subclassing and copying the main() function.
 If you have to do that, I'm sorry. It probably won't be fun.
 """
+import sys
+import multiprocessing
+if getattr(sys, 'frozen', False):  # required for pyinstaller mp
+    multiprocessing.set_start_method('forkserver', force=True)
+    multiprocessing.freeze_support()
 
+import matplotlib
+import threading
+
+import tkinter as tk
+
+import matplotlib.pyplot as plt
+
+from tkinter import ttk
+
+from .core import utilities
+from .core.StandardProgram import StandardProgram
+from .core.classifiers import RandomForestAC
+from .tkgui.clftool import ClassifierTool
+matplotlib.use('Agg')  # this makes threading not break
 
 # NOW
 # TODO add check for UPID uniqueness
@@ -63,24 +82,4 @@ def main():
 
 
 if __name__ == "__main__":
-    import sys
-    import multiprocessing
-    if getattr(sys, 'frozen', False):  # required for pyinstaller mp
-        multiprocessing.set_start_method('forkserver', force=True)
-        multiprocessing.freeze_support()
-
-    import matplotlib
-    import threading
-
-    import tkinter as tk
-
-    import matplotlib.pyplot as plt
-
-    from tkinter import ttk
-
-    from core import utilities
-    from core.StandardProgram import StandardProgram
-    from core.classifiers import RandomForestAC
-    from tkgui.clftool import ClassifierTool
-    matplotlib.use('Agg')  # this makes threading not break
     main()
