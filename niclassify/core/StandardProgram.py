@@ -441,6 +441,27 @@ class StandardChecks:
         else:
             return True
 
+    def check_UPID_unique(self, data, cb=None):
+        """
+        Check if the UPID column of the given data is all unique.
+
+        Returns result of cb if not.
+
+        Args:
+            data (DataFrame): Data to check.
+            cb (function, optional): Function to call if check failes.
+                Defaults to None.
+
+        Returns:
+            Bool: True if check passes, otherwise result of cb (or False).
+        """
+        if not data["UPID"].is_unique:
+            if cb is not None:
+                return cb()
+            return False
+        else:
+            return True
+
 
 class StandardProgram:
     """
@@ -1024,7 +1045,7 @@ AutoClassifier")
 
         return features, metadata
 
-    def prep_sequence_data(self, data):
+    def filter_sequence_data(self, data):
         """
         Prepare sequence data.
 
@@ -1035,7 +1056,7 @@ AutoClassifier")
             DataFrame: Prepared sequence data.
 
         """
-        data = utilities.prep_sequence_data(data)
+        data = utilities.filter_sequence_data(data)
         utilities.write_fasta(data, self.fasta_fname)
         return data
 
