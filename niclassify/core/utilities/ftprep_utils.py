@@ -608,7 +608,7 @@ def make_genetic_measures(infname, outfname=None):
     print(dm)
 
 
-def prep_sequence_data(data):
+def filter_sequence_data(data):
     """
     Prepare sequence data previously saved from API.
 
@@ -647,16 +647,29 @@ def prep_sequence_data(data):
     data.drop_duplicates(inplace=True)
 
     # make new ID column (fix any duplicate processid's)
-    if data["processid"].is_unique:
-        data.insert(0, "UPID", data["processid"])
-    else:
-        data.insert(0, "UPID", (
-            data["processid"]
-            + "_"
-            + data.groupby("processid").cumcount().add(1).astype(str)
-        ))
+    if "processid" in data.columns:
+        if data["processid"].is_unique:
+            data.insert(0, "UPID", data["processid"])
+        else:
+            data.insert(0, "UPID", (
+                data["processid"].astype(str)
+                + "_"
+                + data.groupby("processid").cumcount().add(1).astype(str)
+            ))
+    # in case user already had UPID
+    elif "UPID" in data.columns:
+        # make new UPID if UPID is not unique
+        if not data["UPID"].is_unique:
+            bad_UPID = data["UPID"]
+            data.drop("UPID", axis=1, inplace=True)
+            data.insert(
+                0, "UPID",
+                bad_UPID.astype(str)
+                + "_"
+                + bad_UPID.groupby(bad_UPID).cumcount().add(1).astype(str)
+            )
 
-    return data
+    return data.reset_index()
 
 
 def write_fasta(data, filename):

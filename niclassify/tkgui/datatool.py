@@ -202,7 +202,7 @@ class DataPreparationTool(tk.Toplevel):
             # get request result tsv and prep it (filter + write fasta)
             self.app.sp.request_fname = self.last_entered_data
 
-            data = self.app.sp.prep_sequence_data(
+            data = self.app.sp.filter_sequence_data(
                 self.app.sp.get_sequence_data())
 
             # save filtered data for later use
@@ -396,6 +396,16 @@ class DataPreparationTool(tk.Toplevel):
         ):
             self.app.status_bar.set_status("Awaiting user input.")
             return
+
+        if "UPID" in data.columns:
+            if not self.app.sp.check.check_UPID_unique(
+                data,
+                lambda: self.app.dlib.dialog(
+                    messagebox.askokcancel, "UPID_NOT_UNIQUE", parent=self)
+            ):
+                self.app.status_bar.set_status("Awaiting user input.")
+                return
+
         # # check if processid is unique, warn user if not (fix in filtering)
         # elif not data["processid"].is_unique:
         #     self.app.dlib.dialog(
