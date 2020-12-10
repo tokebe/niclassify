@@ -59,6 +59,10 @@
     "title": "Non-Unique ProcessID",
     "message": "The processid column of the data contains duplicates.\nThe UPID column will be generated with suffixes to ensure unique IDs per row."
   },
+  "UPID_NOT_UNIQUE": {
+    "title": "Non-Unique UPID",
+    "message": "The UPID column of the data contains duplicates.\nIf you wish to continue, it will be overwritten with unique values."
+  },
   "HIGH_IMBALANCE": {
     "title": "High Known Class Imbalance",
     "message": "The data's known classifications have an extreme imbalance that may result in extreme classifier bias.\nIt is recommended that more known classifications are added. Train at your own risk."
@@ -68,7 +72,7 @@
     "message": "The data contains blank entries in the specified Taxonomic Split Level ({}).\nThis may result in poor feature generation or other unexpected data behavior for those samples.\nProceed?"
   },
   "SINGLE_SPLIT": {
-      "title": "Single-length split",
-      "message": "Splitting this data by {} will result in one or more subsets with only one sample.\nThe program cannot operate on sets of 1. It is recommended that you cancel operation and choose a broader taxonomic level.\nIf you wish to continue, subsets of 1 will be ignored (no features will be generated for those samples).\nSelect 'ok' to continue and ignore subsets of 1, or 'cancel' to cancel."
+    "title": "Single-length split",
+    "message": "Splitting this data by {} will result in one or more subsets with only one sample.\nThe program cannot operate on sets of 1. It is recommended that you cancel operation and choose a broader taxonomic level.\nIf you wish to continue, subsets of 1 will be ignored (no features will be generated for those samples).\nSelect 'ok' to continue and ignore subsets of 1, or 'cancel' to cancel."
   }
 }
