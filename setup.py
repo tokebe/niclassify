@@ -81,7 +81,6 @@ setup(
             'niclassify = niclassify.__main__:main'
         ]
     }
-    # TODO implement entry_points
 )
 
 if sys.argv[1] == "install":

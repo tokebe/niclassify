@@ -613,9 +613,8 @@ class DataPreparationTool(tk.Toplevel):
             # delimit the species
             print("DELIMITING SPECIES...")
             try:
-                # TODO disable debug
                 self.app.sp.delimit_species(
-                    method, tax=self.taxon_level, debug=True)
+                    method, tax=self.taxon_level, debug=False)
             except (ChildProcessError, FileNotFoundError, IndexError) as err:
                 self.app.dlib.dialog(
                     messagebox.showerror,

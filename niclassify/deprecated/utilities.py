@@ -662,7 +662,6 @@ def write_fasta(data, filename):
 
 
 def align_fasta(infname, outfname, debug=False):
-    # TODO support for linux/mac
     """
     Generate an alignment for the given fasta file.
 
@@ -724,7 +723,6 @@ def delimit_species_GMYC(infname, outtreefname, outfname, debug=False):
         outfname (str): Output file path.
         debug (bool, optional): Save script output to file.
     """
-    # TODO support for linux/mac
     r_script_exe = os.path.realpath(
         os.path.join(
             MAIN_PATH, "niclassify/bin/R/R-Portable/App/R-Portable/bin/Rscript.exe")

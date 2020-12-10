@@ -4,11 +4,13 @@ if __name__ == "__main__":
     gui.main()
 
 # NOW
-# TODO implement commandline version, use for tests
-# TODO properly implement logging for most steps
+# TODO go through and find any uncommented/undercommented code and add comments
+# TODO go through all steps and see what is missing status updates
 
 
 # LATER
+# TODO implement commandline version, use for tests
+# TODO properly implement logging for most steps
 # TODO add new tool for merging prepared data
 
 
