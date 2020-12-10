@@ -24,32 +24,6 @@ from .core.classifiers import RandomForestAC
 from .tkgui.clftool import ClassifierTool
 matplotlib.use('Agg')  # this makes threading not break
 
-# NOW
-# TODO add check for UPID uniqueness
-# TODO look into batch to exe, or py2exe
-# TODO implement commandline version, use for tests
-
-# LATER
-# TODO properly implement logging for most steps
-# TODO File import history for merging?
-# TODO use pGMYC?
-
-# LATERER
-# TODO add new tool for merging prepared data
-# TODO support mac/linux
-# filedialog asking for paths to required executables (rscript, etc)
-# config file to keep these paths
-# TODO attempt to make an .exe file
-# TODO go back and implement TUI with support for linux+mac if possible
-# this will require minor changes to some utility functions for system checking
-# TODO create secondary scripts for checking what caused a failure?
-
-# FIXES & MINOR FEATURES
-# TODO go searching for problems, unexpected behaviors, etc
-# TODO minor issues:
-# main progressbar freezes on certain errors, such as not enough labels
-
-
 def main():
     """Run the GUI."""
 
