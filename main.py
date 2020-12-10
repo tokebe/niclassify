@@ -4,7 +4,6 @@ if __name__ == "__main__":
     gui.main()
 
 # NOW
-# TODO add check for UPID uniqueness
 # TODO implement commandline version, use for tests
 # TODO properly implement logging for most steps
 
