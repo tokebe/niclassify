@@ -54,7 +54,7 @@ goto:launchProgram
 :: Launch the program and exit the console window
 :launchProgram
 echo Starting Program...
-start "" "%~dp0\niclassifyenv\Scripts\pythonw.exe" "%~dp0\niclassify\main.py"
+start "" "%~dp0\niclassifyenv\Scripts\pythonw.exe" "%~dp0\main.py"
 goto:eof
 
 :: Notify user python is not installed and ask them to install it
