@@ -10,7 +10,7 @@ The main point of this project has been to provide a straightforward GUI to use 
 ## Installation
 
 1. Install [Python](https://www.python.org/downloads/release/python-386/) 3.7.x - 3.8.x (3.9 is not yet supported).
-2. Clone or download this repository.
+2. Download the latest [Release](https://github.com/tokebe/niclassify/releases) (or clone/dowload the repository, if you want to see the newest ~~bugs~~ code).
 3. Run `niclassify-launch.bat` and follow any messages you may get.
 
 ## Usage
