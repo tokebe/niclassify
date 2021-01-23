@@ -13,11 +13,11 @@ The main point of this project has been to provide a straightforward GUI to use 
 1. Install [Python](https://www.python.org/downloads/release/python-386/) 3.7.x - 3.8.x (3.9 is not yet supported).
 2. Install [the R base](https://cloud.r-project.org/) (Any version _should_ work).
 3. Download the latest [Release](https://github.com/tokebe/niclassify/releases) (or clone/dowload the repository, if you want to see the newest ~~bugs~~ code).
-4. Run `niclassify-launch.bat` and follow any messages you may get.
+4. Run the appropriate `launch-___.bat` for your system and follow any messages you may get.
 
 ## Usage
 
-Run `niclassify-launch.bat` after installation.
+Run the appropriate `launch-___.bat` for your system after installation.
 
 ## User Manual
 
@@ -25,7 +25,7 @@ This project comes with a user manual, which you may access [here](docs/user-man
 
 ## Advanced Usage/Installation
 
-You can find a list of package requirements in the `requirements.txt` file, and may run the program by running `main.py` instead of relying on niclassify-launch.bat, if you wish. Please see the warning below.
+You can find a list of package requirements in the `requirements.txt` file, and may run the program by running `main.py` instead of relying on a launcher script, if you wish. Please see the warning below.
 
 ## WARNING
 
