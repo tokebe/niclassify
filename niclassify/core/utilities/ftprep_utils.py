@@ -21,7 +21,7 @@ from Bio.Phylo.TreeConstruction import DistanceCalculator
 from Bio import AlignIO
 from xml.etree import ElementTree
 
-from .general_utils import MAIN_PATH, USER_PATH, REGIONS
+from .general_utils import MAIN_PATH, USER_PATH, REGIONS, R_LOC
 from ..bPTP_interface import bPTP
 
 
@@ -51,19 +51,13 @@ def align_fasta(infname, outfname, debug=False):
     else:
         subprocess.run(alignment_call.__str__())
 
-    r_script_exe = os.path.realpath(
-        os.path.join(
-            MAIN_PATH,
-            "niclassify/bin/R/R-Portable/App/R-Portable/bin/Rscript.exe"
-        )
-    )
     r_script = os.path.realpath(
         os.path.join(
             MAIN_PATH, "niclassify/core/scripts/trim_alignment.R")
     )
 
     trim_call = '"{}" "{}" "{}" "{}"'.format(
-                r_script_exe,
+                R_LOC,
                 r_script,
                 outfname,
                 outfname
@@ -90,12 +84,6 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
         outfname (str): Output file path.
         debug (bool, optional): Save script output to file.
     """
-    r_script_exe = os.path.realpath(
-        os.path.join(
-            MAIN_PATH,
-            "niclassify/bin/R/R-Portable/App/R-Portable/bin/Rscript.exe"
-        )
-    )
     r_script = os.path.realpath(
         os.path.join(
             MAIN_PATH, "niclassify/core/scripts/delim_tree.R")
@@ -125,7 +113,7 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
     if debug:
         subprocess.run(
             '"{}" "{}" "{}" "{}"'.format(
-                r_script_exe,
+                R_LOC,
                 r_script,
                 infname,
                 outtreefname
@@ -136,7 +124,7 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
     else:
         subprocess.run(
             '"{}" "{}" "{}" "{}"'.format(
-                r_script_exe,
+                R_LOC,
                 r_script,
                 infname,
                 outtreefname
@@ -233,12 +221,6 @@ def delimit_species_GMYC(infname, outtreefname, outfname, debug=False):
         debug (bool, optional): Save script output to file.
     """
     # TODO support for linux/mac
-    r_script_exe = os.path.realpath(
-        os.path.join(
-            MAIN_PATH,
-            "niclassify/bin/R/R-Portable/App/R-Portable/bin/Rscript.exe"
-        )
-    )
     r_script = os.path.realpath(
         os.path.join(
             MAIN_PATH, "niclassify/core/scripts/delim_tree.R")
@@ -258,7 +240,7 @@ def delimit_species_GMYC(infname, outtreefname, outfname, debug=False):
         ) as logfile:
             subprocess.run(
                 '"{}" "{}" "{}" "{}" "{}"'.format(
-                    r_script_exe,
+                    R_LOC,
                     r_script,
                     infname,
                     outtreefname,
@@ -270,7 +252,7 @@ def delimit_species_GMYC(infname, outtreefname, outfname, debug=False):
     else:
         subprocess.run(
             '"{}" "{}" "{}" "{}" "{}"'.format(
-                r_script_exe,
+                R_LOC,
                 r_script,
                 infname,
                 outtreefname,
@@ -280,12 +262,6 @@ def delimit_species_GMYC(infname, outtreefname, outfname, debug=False):
 
 
 def generate_measures(fastafname, delimfname, outfname, debug=False):
-    r_script_exe = os.path.realpath(
-        os.path.join(
-            MAIN_PATH,
-            "niclassify/bin/R/R-Portable/App/R-Portable/bin/Rscript.exe"
-        )
-    )
     r_script = os.path.realpath(
         os.path.join(
             MAIN_PATH,
@@ -293,7 +269,7 @@ def generate_measures(fastafname, delimfname, outfname, debug=False):
         )
     )
     ftgen_call = '"{}" "{}" "{}" "{}" "{}"'.format(
-        r_script_exe,
+        R_LOC,
         r_script,
         fastafname,
         delimfname,

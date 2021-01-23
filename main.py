@@ -4,6 +4,11 @@ if __name__ == "__main__":
     gui.main()
 
 # NOW
+# TODO replace all calls to R-portable to use rloc.txt (with error checking)
+# make new utility function that takes a script path and calls R on it
+# with error checking
+# add higher level error check to warn user if it fails
+# TODO remove R-portable from the project
 # TODO go through and find any uncommented/undercommented code and add comments
 # TODO go through all steps and see what is missing status updates
 

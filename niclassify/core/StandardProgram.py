@@ -419,6 +419,14 @@ class StandardChecks:
         else:
             return True
 
+    def check_r_working(self, cb=None):
+        if not os.path.isfile(utilities.R_LOC):
+            if cb is not None:
+                cb()
+            return False
+        else:
+            return True
+
     def check_single_split(self, data, cb=None):
         """
         Check if splitting data by taxon split level would return subsets of
@@ -533,6 +541,9 @@ class StandardProgram:
         Args:
             debug (bool, optional): Save script output to file.
         """
+        if not self.check.check_r_working():
+            raise utilities.RNotFoundError("Rscript.exe not found")
+
         utilities.align_fasta(
             self.fasta_fname, self.fasta_align_fname, debug)
 
@@ -702,6 +713,9 @@ class StandardProgram:
                 delimitation.
             debug (bool, optional): Save script output to file.
         """
+        if not self.check.check_r_working():
+            raise utilities.RNotFoundError("Rscript.exe not found")
+
         pool_files, pool_dir = self.split_by_taxon(taxon_split=tax)
         pool_files = [f + [method] for f in pool_files]
 
@@ -744,6 +758,9 @@ class StandardProgram:
         Args:
             debug (bool, optional): Save script output to file.
         """
+        if not self.check.check_r_working():
+            raise utilities.RNotFoundError("Rscript.exe not found")
+
         pool_files, pool_dir = self.split_by_taxon(taxon_split=tax)
 
         utilities.clean_folder(

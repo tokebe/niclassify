@@ -1,3 +1,4 @@
+#!/usr/bin/env Rscript
 # SCRIPT EXPECTS 3 ARGUMENTS: FNAME_IN, FNAME_TREE_OUT, FNAME_OUT
 # I have yet to figure out error handling, so please be gentle.
 

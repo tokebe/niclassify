@@ -25,18 +25,10 @@ class DialogLibrary:
         """
         self.items = {}
         files = ["message.json", "warning.json", "error.json"]
-        try:
-            for file in files:
-                with pkg_resources.open_text(messages, file) as msg_file:
-                    self.items[os.path.splitext(file)[0]] = json.load(
-                        msg_file)
-        except FileNotFoundError:
-            for file in files:
-                with open(
-                    os.path.join(sys._MEIPASS, "dialogs/{}".format(file))
-                ) as msg_file:
-                    self.items[os.path.splitext(file)[0]] = json.load(
-                        msg_file)
+        for file in files:
+            with pkg_resources.open_text(messages, file) as msg_file:
+                self.items[os.path.splitext(file)[0]] = json.load(
+                    msg_file)
         # for file in [
         #     f
         #     for f in os.listdir(dialogs_folder)

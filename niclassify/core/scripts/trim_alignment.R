@@ -1,3 +1,4 @@
+#!/usr/bin/env Rscript
 # SCRIPT EXPECTS 2 ARGUMENTS: FNAME_IN, FNAME_OUT
 # Script does not modify original file (unless both arguments are same)
 

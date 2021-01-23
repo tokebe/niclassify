@@ -19,30 +19,21 @@ import importlib.resources as pkg_resources
 from . import config
 
 
-# get nans config and main path
-# should work either in dev or PyInstaller
-if getattr(sys, 'frozen', False):  # pyinstaller
-    with open(os.path.join(sys._MEIPASS, "config/nans.json"), "r") as nansfile:
-        NANS = json.load(nansfile)
-    MAIN_PATH = sys._MEIPASS
-    with open(
-            os.path.join(sys._MEIPASS, "config/regions.json"), "r") as regions:
-        REGIONS = json.load(regions)
-    HELP_DOC = os.path.join(sys._MEIPASS, "config/user-manual.pdf")
-    PROGRAM_ICON = os.path.join(sys._MEIPASS, "config/NI.ico")
-else:  # dev
-    with pkg_resources.open_text(config, "nans.json") as nansfile:
-        NANS = json.load(nansfile)
-        MAIN_PATH = os.path.join(
-            os.path.dirname(__file__),
-            "../../../"
-        )
-    with pkg_resources.open_text(config, "regions.json") as regions:
-        REGIONS = json.load(regions)
-    with pkg_resources.path(config, "user-manual.pdf") as p:
-        HELP_DOC = str(p)
-    with pkg_resources.path(config, "NI.ico") as p:
-        PROGRAM_ICON = str(p)
+with pkg_resources.open_text(config, "nans.json") as nansfile:
+    NANS = json.load(nansfile)
+    MAIN_PATH = os.path.join(
+        os.path.dirname(__file__),
+        "../../../"
+    )
+with pkg_resources.open_text(config, "regions.json") as regions:
+    REGIONS = json.load(regions)
+with pkg_resources.path(config, "user-manual.pdf") as p:
+    HELP_DOC = str(p)
+with pkg_resources.path(config, "NI.ico") as p:
+    PROGRAM_ICON = str(p)
+with pkg_resources.open_text(config, "rloc.txt") as rloc:
+    R_LOC = os.path.join(rloc.read().strip('\n'), "bin/Rscript.exe")
+
 
 USER_PATH = os.path.join(userpaths.get_my_documents(), "niclassify")
 
@@ -84,6 +75,10 @@ for i, f in enumerate(_required_folders):
         except (FileNotFoundError, KeyError):  # regions do not exist, copy
             with open(os.path.join(f, "regions.json"), "w") as user_regions:
                 json.dump(REGIONS, user_regions)
+
+
+class RNotFoundError(Exception):
+    pass
 
 
 def clean_folder(path):
@@ -200,25 +195,6 @@ def keyboardInterruptHandler(signal, frame):
     Likely to go unused, but good to have.
     """
     exit(0)
-
-
-def resource_path(relative_path):
-    """
-    Get absolute path for resource, works for dev or PyInstaller.
-
-    Args:
-        relative_path (str): A relative path.
-
-    Returns:
-        str: Working absolute path.
-    """
-    try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
-    except Exception:
-        base_path = os.path.abspath(".")
-
-    return os.path.join(base_path, relative_path)
 
 
 def view_open_file(filename):

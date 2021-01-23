@@ -7,11 +7,13 @@ NIClassify is a combined toolkit for classifying species (usually, as in the nam
 The main point of this project has been to provide a straightforward GUI to use this toolkit.
 
 (For a more in-depth explanation, see [The User's Manual](docs/user-manual.md))
+
 ## Installation
 
 1. Install [Python](https://www.python.org/downloads/release/python-386/) 3.7.x - 3.8.x (3.9 is not yet supported).
-2. Download the latest [Release](https://github.com/tokebe/niclassify/releases) (or clone/dowload the repository, if you want to see the newest ~~bugs~~ code).
-3. Run `niclassify-launch.bat` and follow any messages you may get.
+2. Install [the R base](https://cloud.r-project.org/) (Any version _should_ work).
+3. Download the latest [Release](https://github.com/tokebe/niclassify/releases) (or clone/dowload the repository, if you want to see the newest ~~bugs~~ code).
+4. Run `niclassify-launch.bat` and follow any messages you may get.
 
 ## Usage
 

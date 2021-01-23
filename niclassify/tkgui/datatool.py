@@ -129,6 +129,16 @@ class DataPreparationTool(tk.Toplevel):
                     "ALIGN_ERR",
                     parent=self
                 )
+                on_finish()
+                return
+            except self.util.RNotFoundError:
+                self.app.dlib.dialog(
+                    messagebox.showerror,
+                    "R_NOT_FOUND",
+                    parent=self
+                )
+                on_finish()
+                return
 
             # enable alignment save/load buttons
             self.data_sec.align_load_button["state"] = tk.ACTIVE
@@ -635,6 +645,14 @@ class DataPreparationTool(tk.Toplevel):
                     messagebox.showerror,
                     "FEATURE_GEN_ERR",
                     form=(self.taxon_level_name, str(err)),
+                    parent=self
+                )
+                on_finish()
+                return
+            except self.util.RNotFoundError:
+                self.app.dlib.dialog(
+                    messagebox.showerror,
+                    "R_NOT_FOUND",
                     parent=self
                 )
                 on_finish()
