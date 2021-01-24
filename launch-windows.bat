@@ -1,4 +1,6 @@
 @echo off
+if "%1"=="am_admin" (goto:RPackageInstall)
+cd %~dp0
 :: Check if we're using 'python'  or 'py'
 :: If neither work, Python's not installed, ask the user to install
 :beginScript
@@ -33,7 +35,7 @@ goto:eof
 :: Prompt user to select R location and check if Rscript.exe exists
 :GetRLoc
 wscript "%~dp0\scripts\message.vbs" "R could not be located. After ensuring it is installed, click OK. A folder prompt will open. Please locate the R folder with the latest version (e.g. 'R-4.0.3')."
-call "scripts\fchooser.bat"
+call "%~dp0\scripts\fchooser.bat"
 goto:RInstalled
 
 :: Check if the defined location for R exists/if there is a defined location
@@ -44,8 +46,8 @@ if exist "%~dp0\niclassify\core\utilities\config\rloc.txt" (
     :: read in saved folder path
     :: need usebackq and delims= to allow spaces in target file path, and not delim on spaces, respectively
     :: (windows batch and its documentation makes me sad)
-    for /f "usebackq delims=" %%x in ("%~dp0\niclassify\core\utilities\config\rloc.txt") do set RFolderLocation=%%x&goto:next
-    :next
+    for /f "usebackq delims=" %%x in ("%~dp0\niclassify\core\utilities\config\rloc.txt") do set RFolderLocation=%%x&goto:next1
+    :next1
     if exist "%RFolderLocation%\bin\Rscript.exe" (
         goto:RPackageCheck
     ) else (
@@ -59,11 +61,16 @@ if exist "%~dp0\niclassify\core\utilities\config\rloc.txt" (
 :: Check if required packages are installed
 :RPackageCheck
 echo Checking required R packages...
-"%RFolderLocation%\bin\Rscript.exe" "scripts\check_r_reqs.R" >nul 2>nul && goto:launchProgram || goto:RPackageInstall
+"%RFolderLocation%\bin\Rscript.exe" "%~dp0\scripts\check_r_reqs.R" >nul 2>nul && goto:launchProgram || goto:RPackageInstall
 
 :RPackageInstall
 echo Installing required R packages. This may take some time...
-"%RFolderLocation%\bin\Rscript.exe" "scripts\install_r_reqs.R" && goto:launchProgram || goto:RPackageFailure
+if "%RFolderLocation%"=="" (
+    for /f "usebackq delims=" %%x in ("%~dp0\niclassify\core\utilities\config\rloc.txt") do set RFolderLocation=%%x&goto:next2
+    )
+:next2
+if not "%1"=="am_admin" (powershell start -verb runas '%0' am_admin & exit /b)
+"%RFolderLocation%\bin\Rscript.exe" "%~dp0\scripts\install_r_reqs.R" && goto:launchProgram || goto:RPackageFailure
 
 :: In the event that the venv appears to be corrupt, inform the user and re-install venv
 :corruptVenv
