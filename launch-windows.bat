@@ -30,7 +30,6 @@ if exist "%~dp0\niclassifyenv\Scripts\activate.bat" (
     echo Executing First time setup. Please do not close the Console Window...
     goto:makeVenv
 )
-goto:eof
 
 :: Prompt user to select R location and check if Rscript.exe exists
 :GetRLoc
@@ -89,15 +88,14 @@ if "%pyLaunch%" == "py" (
     %pyLaunch% -m venv "%~dp0\niclassifyenv"
 )
 :: make sure pip is upgraded to avoid problems with certain packages
-call "%~dp0\niclassifyenv\Scripts\python.exe" -m pip install --upgrade pip
-call "%~dp0\niclassifyenv\Scripts\python.exe" "%~dp0\setup.py" install
-
-goto:RInstalled
+call "%~dp0\niclassifyenv\Scripts\python.exe" -m pip install --upgrade pip && echo. || goto:venvSetupFailure
+call "%~dp0\niclassifyenv\Scripts\python.exe" "%~dp0\setup.py" install && goto:RInstalled || goto:venvSetupFailure
 
 :: Launch the program and exit the console window
 :launchProgram
 echo Starting Program...
 start "" "%~dp0\niclassifyenv\Scripts\pythonw.exe" "%~dp0\main.py"
+timeout /T 3 >nul
 goto:eof
 
 :: Notify user python is not installed and ask them to install it
@@ -107,7 +105,6 @@ wscript "%~dp0\scripts\message.vbs" "Python is not installed. Please install Pyt
 echo Python is not installed. Please install Python 3.7.x - 3.8.x. https://www.python.org/downloads/release/python-386/
 start "" https://www.python.org/downloads/release/python-386/
 goto:beginScript
-goto:eof
 
 :: Notify the user that the wrong version of python is installed and exit.
 :: Assumes that if user has python installed, but wrong version, they would prefer to fix it on their own
@@ -115,8 +112,17 @@ goto:eof
 wscript "%~dp0\scripts\message.vbs" "The wrong version of Python is installed. Please ensure you have a version of Python 3 between 3.7.x and 3.8.x and try again."
 echo The wrong version of Python is installed. Please ensure you have a version of Python between 3.7.x and 3.8.x. https://www.python.org/downloads/release/python-386/
 start "" https://www.python.org/downloads/release/python-386/
+pause
 goto:eof
 
 :: Notify user that something went wrong with R package installation and give up
 :RPackageFailure
-wscript "%~dp0\scripts\message.vbs" "Something went wrong with R package installation. Please review the console output for debug purposes. You may have to complete package installation manually. If this problem persists, please register an issue or contact the project developer."
+wscript "%~dp0\scripts\message.vbs" "Something went wrong with R package installation. Please review the console output for debug purposes, and copy any error messages to paste when registering an issue on the repositoy page."
+pause
+goto:eof
+
+:: Notify user if venv setup fails for any reason
+:venvSetupFailure
+wscript "%~dp0\scripts\message.vbs" "Something went wrong with Python venv setup. Please review the console output for debug purposes, and copy any error messages to paste when registering an issue on the repositoy page."
+pause
+goto:eof
