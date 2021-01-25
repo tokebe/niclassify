@@ -11,3 +11,4 @@ dist
 build
 niclassify/core/utilties/config/rloc.txt
 .Rhistory
+.eggs

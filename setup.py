@@ -15,6 +15,9 @@ setup(
     package_data={
         "": ["*.json", "*.ico", "*.jpg", "*.pdf", "*.R"],
     },
+    setup_requires=[
+        "numpy==1.19.3",
+    ],
     install_requires=[
         "atomicwrites==1.4.0",
         "attrs==20.3.0",
