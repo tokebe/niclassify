@@ -101,17 +101,16 @@ goto:eof
 REM Notify user python is not installed and ask them to install it
 REM Open browser to the preferred version and restart script after they install
 :errorNoPython
-wscript "%~dp0\scripts\message.vbs" "Python is not installed. Please install Python 3.7.x - 3.8.x and then click 'ok'."
-echo Python is not installed. Please install Python 3.7.x - 3.8.x. https://www.python.org/downloads/release/python-386/
-start "" https://www.python.org/downloads/release/python-386/
+wscript "%~dp0\scripts\message.vbs" "Python is not installed. Please install Python 3.7.x - 3.9.x and then click 'ok'."
+echo Python is not installed. Please install Python 3.7.x - 9.x. https://www.python.org/downloads/
 goto:beginScript
 
 REM Notify the user that the wrong version of python is installed and exit.
 REM Assumes that if user has python installed, but wrong version, they would prefer to fix it on their own
 :errorWrongPython
-wscript "%~dp0\scripts\message.vbs" "The wrong version of Python is installed. Please ensure you have a version of Python 3 between 3.7.x and 3.8.x and try again."
-echo The wrong version of Python is installed. Please ensure you have a version of Python between 3.7.x and 3.8.x. https://www.python.org/downloads/release/python-386/
-start "" https://www.python.org/downloads/release/python-386/
+wscript "%~dp0\scripts\message.vbs" "The wrong version of Python is installed. Please ensure you have a version of Python 3 between 3.7.x and 9.x and try again."
+echo The wrong version of Python is installed. Please ensure you have a version of Python between 3.7.x and 3.9.x. https://www.python.org/downloads/
+start "" https://www.python.org/downloads/
 pause
 goto:eof
 
