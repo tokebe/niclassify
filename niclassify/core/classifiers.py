@@ -11,6 +11,7 @@ try:
     import logging
 
     import numpy as np
+    import pandas as pd
 
     from copy import deepcopy
     from sklearn import metrics
@@ -86,11 +87,15 @@ class AutoClassifier:
             int: The number of splits for the cross-validation. See below.
 
         """
+        if not isinstance(classes_known, pd.Series):
+            classes_known = pd.Series(classes_known)
         # get number of k splits based on data available
+        print(classes_known.value_counts())
         k = min(classes_known.value_counts())
+        print(k)
         # set k to 10 if the minimum class label count is >= 10, or to the min
         # class label count if it's less
-        k = 10 if k >= 10 else k
+        k = (10 if k > 10 else k - 1)
 
         return k
 
@@ -306,7 +311,7 @@ class AutoClassifier:
         x_train, x_test, y_train, y_test = self._get_test_train_splits(
             features_known, classes_known)
 
-        k = self._get_k(classes_known)
+        k = self._get_k(y_train)
 
         scorer = metrics.make_scorer(self.score_method)
 
