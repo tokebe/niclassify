@@ -449,6 +449,15 @@ class StandardChecks:
         else:
             return True
 
+    def check_taxon_exists(self, data, cb=None):
+        if self.sp.taxon_split not in data.columns:
+            if cb is not None:
+                cb()
+            return False
+        else:
+            return True
+
+
     def check_UPID_unique(self, data, cb=None):
         """
         Check if the UPID column of the given data is all unique.

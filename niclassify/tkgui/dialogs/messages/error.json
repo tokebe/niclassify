@@ -58,5 +58,13 @@
   "R_NOT_FOUND": {
     "title": "Rscript executable not found",
     "message": "The Rscript executable file was not found. Please verify that R is installed and that the program has its proper location."
+  },
+  "TAXON_NOT_PRESENT": {
+    "title": "Chosen Split Level Not Present",
+    "message": "The chosen split level ({}) is not present in the data.\nPlease choose a taxon split level that is present in the data."
+  },
+  "R_SCRIPT_FAILED": {
+    "title": "R Script Error",
+    "message": "the operation could not be completed due to an error in the relevant R script.\nPlease register an issue on the repository stating that the R script failed during the step you were trying to complete."
   }
 }
