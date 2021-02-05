@@ -80,6 +80,8 @@ for i, f in enumerate(_required_folders):
 class RNotFoundError(Exception):
     pass
 
+class RScriptFailedError(Exception):
+    pass
 
 def clean_folder(path):
     """Delete contents of a folder.

@@ -21,7 +21,7 @@ from Bio.Phylo.TreeConstruction import DistanceCalculator
 from Bio import AlignIO
 from xml.etree import ElementTree
 
-from .general_utils import MAIN_PATH, USER_PATH, REGIONS, R_LOC
+from .general_utils import MAIN_PATH, USER_PATH, REGIONS, R_LOC, RNotFoundError, RScriptFailedError
 from ..bPTP_interface import bPTP
 
 
@@ -64,14 +64,19 @@ def align_fasta(infname, outfname, debug=False):
     )
 
     if debug:
-        subprocess.run(
+        proc = subprocess.run(
             trim_call,
-            creationflags=subprocess.CREATE_NEW_CONSOLE)
+            creationflags=subprocess.CREATE_NEW_CONSOLE,
+            env=os.environ.copy()
+        )
     else:
-        subprocess.run(trim_call)
+        proc = subprocess.run(trim_call, env=os.environ.copy())
 
     if os.stat(outfname).st_size == 0:
         raise ChildProcessError("Sequence Alignment Failed")
+
+    if proc.returncode != 0:
+        raise RScriptFailedError("R TrimAlignment failed")
 
 
 def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
@@ -111,7 +116,7 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
 
     # make tree
     if debug:
-        subprocess.run(
+        proc = subprocess.run(
             '"{}" "{}" "{}" "{}"'.format(
                 R_LOC,
                 r_script,
@@ -119,20 +124,25 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
                 outtreefname
             ),
             stdout=treelogfile,
-            stderr=treelogfile
+            stderr=treelogfile,
+            env=os.environ.copy()
         )
     else:
-        subprocess.run(
+        proc = subprocess.run(
             '"{}" "{}" "{}" "{}"'.format(
                 R_LOC,
                 r_script,
                 infname,
                 outtreefname
-            )
+            ),
+            env=os.environ.copy()
         )
 
     if os.stat(outtreefname).st_size == 0:
         raise ChildProcessError("bPTP Delimitation: Tree gen failed.")
+
+    if proc.returncode != 0:
+        raise RScriptFailedError("R TrimAlignment failed")
 
     # delimit species
     bPTP.main_routine(
@@ -149,28 +159,6 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
         nmi=False,
         scale=500
     )
-    # if debug:
-    #     subprocess.run(
-    #         '"{}" "{}" -t "{}" -o "{}" -s 123'.format(
-    #             python_path,
-    #             bPTP,
-    #             outtreefname,
-    #             outfname,
-
-    #         ),
-    #         stdout=delimlogfile,
-    #         stderr=delimlogfile
-    #     )
-    # else:
-    #     subprocess.run(
-    #         '"{}" "{}" -t "{}" -o "{}" -s 123'.format(
-    #             python_path,
-    #             bPTP,
-    #             outtreefname,
-    #             outfname,
-
-    #         )
-    #     )
     treelogfile.close()
     delimlogfile.close()
 
@@ -238,7 +226,7 @@ def delimit_species_GMYC(infname, outtreefname, outfname, debug=False):
         with open(
                 os.path.join(lpath, "log{}.txt".format(fs)), "w"
         ) as logfile:
-            subprocess.run(
+            proc = subprocess.run(
                 '"{}" "{}" "{}" "{}" "{}"'.format(
                     R_LOC,
                     r_script,
@@ -247,18 +235,23 @@ def delimit_species_GMYC(infname, outtreefname, outfname, debug=False):
                     outfname
                 ),
                 stdout=logfile,
-                stderr=logfile
+                stderr=logfile,
+                env=os.environ.copy()
             )
     else:
-        subprocess.run(
+        proc = subprocess.run(
             '"{}" "{}" "{}" "{}" "{}"'.format(
                 R_LOC,
                 r_script,
                 infname,
                 outtreefname,
                 outfname
-            )
+            ),
+            env=os.environ.copy()
         )
+
+    if proc.returncode != 0:
+        raise RScriptFailedError("R TrimAlignment failed")
 
 
 def generate_measures(fastafname, delimfname, outfname, debug=False):
@@ -289,13 +282,17 @@ def generate_measures(fastafname, delimfname, outfname, debug=False):
 
     # run script
     if debug:
-        subprocess.run(
+        proc = subprocess.run(
             ftgen_call,
             stdout=logfile,
-            stderr=logfile
+            stderr=logfile,
+            env=os.environ.copy()
         )
     else:
-        subprocess.run(ftgen_call)
+        proc = subprocess.run(ftgen_call, env=os.environ.copy())
+
+    if proc.returncode != 0:
+        raise RScriptFailedError("R TrimAlignment failed")
 
 
 def geo_contains(ref_geo, geo):

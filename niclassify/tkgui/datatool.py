@@ -139,6 +139,14 @@ class DataPreparationTool(tk.Toplevel):
                 )
                 on_finish()
                 return
+            except self.util.RScriptFailedError:
+                self.app.dlib.dialog(
+                    messagebox.showerror,
+                    "R_SCRIPT_FAILED",
+                    parent=self
+                )
+                on_finish()
+                return
 
             # enable alignment save/load buttons
             self.data_sec.align_load_button["state"] = tk.ACTIVE
@@ -563,6 +571,18 @@ class DataPreparationTool(tk.Toplevel):
 
             data = self.util.get_data(self.sequence_filtered.name)
 
+            if not self.app.sp.check.check_taxon_exists(
+                data,
+                lambda: self.app.dlib.dialog(
+                    messagebox.showerror,
+                    "TAXON_NOT_PRESENT",
+                    form=(self.taxon_level_name,),
+                    parent=self
+                )
+            ):
+                on_finish()
+                return
+
             if not self.app.sp.check.check_nan_taxon(
                 data,
                 lambda: self.app.dlib.dialog(
@@ -634,12 +654,20 @@ class DataPreparationTool(tk.Toplevel):
                 )
                 on_finish()
                 return
+            except self.util.RScriptFailedError:
+                self.app.dlib.dialog(
+                    messagebox.showerror,
+                    "R_SCRIPT_FAILED",
+                    parent=self
+                )
+                on_finish()
+                return
 
             status_cb("Generating species features \
 (This will take some time)...")
             print("GENERATING FEATURES...")
             try:
-                self.app.sp.generate_features(tax=self.taxon_level, debug=True)
+                self.app.sp.generate_features(tax=self.taxon_level, debug=False)
             except (ChildProcessError, FileNotFoundError) as err:
                 self.app.dlib.dialog(
                     messagebox.showerror,
@@ -653,6 +681,14 @@ class DataPreparationTool(tk.Toplevel):
                 self.app.dlib.dialog(
                     messagebox.showerror,
                     "R_NOT_FOUND",
+                    parent=self
+                )
+                on_finish()
+                return
+            except self.util.RScriptFailedError:
+                self.app.dlib.dialog(
+                    messagebox.showerror,
+                    "R_SCRIPT_FAILED",
                     parent=self
                 )
                 on_finish()
