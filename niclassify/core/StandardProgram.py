@@ -457,7 +457,6 @@ class StandardChecks:
         else:
             return True
 
-
     def check_UPID_unique(self, data, cb=None):
         """
         Check if the UPID column of the given data is all unique.

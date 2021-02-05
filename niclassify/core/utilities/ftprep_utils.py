@@ -135,7 +135,8 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
                 infname,
                 outtreefname
             ),
-            env=os.environ.copy()
+            env=os.environ.copy(),
+            creationflags=subprocess.CREATE_NO_WINDOW
         )
 
     if os.stat(outtreefname).st_size == 0:
@@ -289,7 +290,11 @@ def generate_measures(fastafname, delimfname, outfname, debug=False):
             env=os.environ.copy()
         )
     else:
-        proc = subprocess.run(ftgen_call, env=os.environ.copy())
+        proc = subprocess.run(
+            ftgen_call,
+            env=os.environ.copy(),
+            creationflags=subprocess.CREATE_NO_WINDOW
+        )
 
     if proc.returncode != 0:
         raise RScriptFailedError("R TrimAlignment failed")
