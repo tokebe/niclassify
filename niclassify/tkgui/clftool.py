@@ -1091,12 +1091,12 @@ class ClassifierTool(tk.Frame):
             self.status_bar.set_status("Splitting known data...")
 
             # get known for making cm
-            features_known, metadata_known = self.util.get_known(
+            features, metadata = self.util.get_known(
                 features, metadata, self.sp.class_column)
 
             # make sure there are at least 2 classes
             if not self.sp.check.check_enough_classes(
-                metadata_known,
+                metadata,
                 lambda: self.dlib.dialog(
                     messagebox.showerror,
                     "CANNOT_TRAIN"
@@ -1108,7 +1108,7 @@ class ClassifierTool(tk.Frame):
             # check for extreme known class imbalance
             # using stdev as a very rough heuristic
             if not self.sp.check.check_inbalance(
-                metadata_known,
+                metadata,
                 lambda: self.dlib.dialog(
                     messagebox.askokcancel,
                     "HIGH_IMBALANCE"
@@ -1128,7 +1128,7 @@ class ClassifierTool(tk.Frame):
 
             # generate outputs
             self.make_report()
-            self.make_cm(features_known, metadata_known[self.sp.class_column])
+            self.make_cm(features, metadata[self.sp.class_column])
 
             # finish up status updates
             self.status_bar.progress.step(20)
