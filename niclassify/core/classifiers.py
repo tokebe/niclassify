@@ -21,6 +21,8 @@ try:
     from sklearn.model_selection import train_test_split
     from sklearn.inspection import permutation_importance
 
+    from . import utilities
+
 except ModuleNotFoundError:
     logging.error("Missing required modules. Install requirements by running")
     logging.error("'python -m pip install -r requirements.txt'")
@@ -236,22 +238,23 @@ class AutoClassifier:
                         (self.best_test_cm[true, pred] * 100)))
         report.append("---")
 
-        importance = permutation_importance(
-            self.best_model,
-            self.best_x_train,
-            self.best_y_train,
-            metrics.make_scorer(self.score_method),
-            n_jobs=-1
-        )
+        # importance = permutation_importance(
+        #     self.best_model,
+        #     self.best_x_test,
+        #     self.best_y_test,
+        #     metrics.make_scorer(self.score_method),
+        #     n_jobs=-1,
+        #     n_repeats=100
+        # )
+        importance = self.best_model.feature_importances_
 
-        report.append("feature permuation importances:")
+        report.append("feature importances:")
 
         mlen = max((len(x) for x in self.trained_features))
-        for i in importance.importances_mean.argsort()[::-1]:
-            report.append("  {:{w}s} : {:.3f} +/- {:.3f}".format(
+        for i in importance.argsort()[::-1]:
+            report.append("  {:{w}s} : {:.9f}".format(
                 self.trained_features[i],
-                importance.importances_mean[i],
-                importance.importances_mean[i],
+                importance[i],
                 w=mlen
             ))
 
@@ -310,6 +313,11 @@ class AutoClassifier:
 
         x_train, x_test, y_train, y_test = self._get_test_train_splits(
             features_known, classes_known)
+
+        # impute the data
+        # TODO review whether this should remain
+        x_train = utilities.impute_data(x_train)
+        x_test = utilities.impute_data(x_test)
 
         k = self._get_k(y_train)
 
