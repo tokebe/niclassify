@@ -94,7 +94,7 @@ call "%~dp0\niclassifyenv\Scripts\python.exe" "%~dp0\setup.py" install && goto:R
 REM Launch the program and exit the console window
 :launchProgram
 echo Starting Program...
-start "" "%~dp0\niclassifyenv\Scripts\pythonw.exe" "%~dp0\main.py"
+start "" "%~dp0\niclassifyenv\Scripts\python.exe" "%~dp0\main.py"
 timeout /T 3 >nul
 goto:eof
 
