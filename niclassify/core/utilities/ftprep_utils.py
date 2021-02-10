@@ -647,6 +647,61 @@ def filter_sequence_data(data):
                 + bad_UPID.groupby(bad_UPID).cumcount().add(1).astype(str)
             )
 
+    # drop columns which may interfere with operation
+    # TODO add a warning about reserved columns in manual
+    data.drop(
+        columns=[
+            "gbif_status",
+            "itis_status",
+            "final_status",
+            "predict",
+            "prob. endemic",
+            "prob. introduced",
+            "ksDist_mean",
+            "ksDist_med",
+            "ksDist_std",
+            "ksDist_min",
+            "ksDist_max",
+            "ksSim_mean",
+            "ksSim_med",
+            "ksSim_std",
+            "ksSim_min",
+            "ksSim_max",
+            "kaDist_mean",
+            "kaDist_med",
+            "kaDist_std",
+            "kaDist_min",
+            "kaDist_max",
+            "kaSim_mean",
+            "kaSim_med",
+            "kaSim_std",
+            "kaSim_min",
+            "kaSim_max",
+            "aaDist_mean",
+            "aaDist_med",
+            "aaDist_std",
+            "aaDist_min",
+            "aaDist_max",
+            "aaSim_mean",
+            "aaSim_med",
+            "aaSim_std",
+            "aaSim_min",
+            "aaSim_max",
+            "dnaDist_mean",
+            "dnaDist_med",
+            "dnaDist_std",
+            "dnaDist_min",
+            "dnaDist_max",
+            "dnaSim_mean",
+            "dnaSim_med",
+            "dnaSim_std",
+            "dnaSim_min",
+            "dnaSim_max"
+        ],
+        inplace=True,
+        errors='ignore'
+    )
+
     return data.reset_index()
 
 
