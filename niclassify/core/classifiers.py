@@ -238,23 +238,40 @@ class AutoClassifier:
                         (self.best_test_cm[true, pred] * 100)))
         report.append("---")
 
-        # importance = permutation_importance(
-        #     self.best_model,
-        #     self.best_x_test,
-        #     self.best_y_test,
-        #     metrics.make_scorer(self.score_method),
-        #     n_jobs=-1,
-        #     n_repeats=100
-        # )
-        importance = self.best_model.feature_importances_
+        permutation_importance = permutation_importance(
+            self.best_model,
+            self.best_x_test,
+            self.best_y_test,
+            metrics.make_scorer(self.score_method),
+            n_jobs=-1,
+            n_repeats=100
+        )
+        feature_importance = self.best_model.feature_importances_
 
-        report.append("feature importances:")
+        report.append("permutation importances:")
 
+        # if permutation importances are all 0, then there probably wasn't
+        # enough training data
         mlen = max((len(x) for x in self.trained_features))
-        for i in importance.argsort()[::-1]:
-            report.append("  {:{w}s} : {:.9f}".format(
+        if sum(permutation_importance.importances_mean) == 0:
+            report.append(
+                "permutation importances all 0, did you have enough training data?")
+        else:
+
+            for i in permutation_importance.importances_mean.argsort()[::-1]:
+                report.append("  {:{w}s} : {:.3f} +/- {:.3f}".format(
+                    self.trained_features[i],
+                    permutation_importance.importances_mean[i],
+                    permutation_importance.importances_std[i],
+                    w=mlen
+                ))
+
+        report.append(
+            "feature importances (possibly misleading, prefer permutation importances):")
+        for i in feature_importance.argsort()[::-1]:
+            report.append("  {:{w}s} : {:.3f}".format(
                 self.trained_features[i],
-                importance[i],
+                feature_importance[i],
                 w=mlen
             ))
 
