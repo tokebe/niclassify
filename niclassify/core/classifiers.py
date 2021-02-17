@@ -238,7 +238,7 @@ class AutoClassifier:
                         (self.best_test_cm[true, pred] * 100)))
         report.append("---")
 
-        permutation_importance = permutation_importance(
+        perm_importance = permutation_importance(
             self.best_model,
             self.best_x_test,
             self.best_y_test,
@@ -253,16 +253,16 @@ class AutoClassifier:
         # if permutation importances are all 0, then there probably wasn't
         # enough training data
         mlen = max((len(x) for x in self.trained_features))
-        if sum(permutation_importance.importances_mean) == 0:
+        if sum(perm_importance.importances_mean) == 0:
             report.append(
                 "permutation importances all 0, did you have enough training data?")
         else:
 
-            for i in permutation_importance.importances_mean.argsort()[::-1]:
+            for i in perm_importance.importances_mean.argsort()[::-1]:
                 report.append("  {:{w}s} : {:.3f} +/- {:.3f}".format(
                     self.trained_features[i],
-                    permutation_importance.importances_mean[i],
-                    permutation_importance.importances_std[i],
+                    perm_importance.importances_mean[i],
+                    perm_importance.importances_std[i],
                     w=mlen
                 ))
 
