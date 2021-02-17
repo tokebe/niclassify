@@ -358,12 +358,6 @@ class DataPreparationTool(tk.Toplevel):
 
         Also conditionally enables the 'merge data' button.
         """
-        req_cols = [
-            ["processid", "UPID"],  # can have one or the other
-            "nucleotides",
-            "marker_codes",
-            "species_name"
-        ]
 
         self.app.status_bar.set_status("Awaiting user file selection...")
 

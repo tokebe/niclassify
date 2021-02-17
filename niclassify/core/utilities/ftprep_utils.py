@@ -24,6 +24,13 @@ from xml.etree import ElementTree
 from .general_utils import MAIN_PATH, USER_PATH, REGIONS, R_LOC, RNotFoundError, RScriptFailedError
 from ..bPTP_interface import bPTP
 
+REQUIRED_COLUMNS = [
+    ["processid", "UPID"],  # can have one or the other
+    "nucleotides",
+    ["marker_codes", ""],  # empty means it's optional
+    "species_name"
+]
+
 RESERVED_COLUMNS = [
     "gbif_status",
     "itis_status",
@@ -656,9 +663,11 @@ def filter_sequence_data(data):
     # change to str in case it's not
     data["nucleotides"] = data["nucleotides"].astype(str)
 
-    # remove rows missing COI-5P in marker_codes
-    data["marker_codes"] = data["marker_codes"].astype(str)  # avoid exceptions
-    data = data[data["marker_codes"].str.contains("COI-5P", na=False)]
+    # remove rows missing COI-5P in marker_codes (if column provided)
+    if "marker_codes" in data.columns:
+        # avoid exceptions by casting to str
+        data["marker_codes"] = data["marker_codes"].astype(str)
+        data = data[data["marker_codes"].str.contains("COI-5P", na=False)]
 
     # remove rows with less than 350 base pairs
     data = data[

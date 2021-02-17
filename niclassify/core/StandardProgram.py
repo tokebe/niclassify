@@ -414,8 +414,12 @@ class StandardChecks:
         if not all(
             r in data.columns.values.tolist()
                 if not isinstance(r, list)
-                else any(s in data.columns.values.tolist() for s in r)
-                for r in self.sp.req_cols
+                else any(
+                    s in data.columns.values.tolist()
+                    if s != ""
+                    else True
+                    for s in r)
+                for r in utilities.REQUIRED_COLUMNS
         ):
             if cb is not None:
                 cb()
@@ -583,12 +587,7 @@ class StandardProgram:
         self.check = StandardChecks(self)
 
         # reference information
-        self.req_cols = [
-            ["processid", "UPID"],  # can have one or the other
-            "nucleotides",
-            "marker_codes",
-            "species_name"
-        ]
+        self.req_cols = utilities.REQUIRED_COLUMNS
 
     def align_fasta(self, debug=False):
         """

@@ -7,23 +7,23 @@ Welcome to the NIClassify User's Manual!
 <!-- TOC -->
 
 - [User's Manual](#users-manual)
-    - [Contents](#contents)
-    - [What is NIClassify?](#what-is-niclassify)
-    - [On First Launch](#on-first-launch)
-    - [The Sequence Data Tool](#the-sequence-data-tool)
-        - [Overview](#overview)
-        - [Using the Sequence Data Tool](#using-the-sequence-data-tool)
-            - [Importing Custom Data](#importing-custom-data)
-            - [Retrieving BOLD Data](#retrieving-bold-data)
-            - [Merging Data](#merging-data)
-            - [Initial Data Preparation](#initial-data-preparation)
-            - [Final Data Preparation](#final-data-preparation)
-    - [The Classifier Tool](#the-classifier-tool)
-        - [Overview](#overview-1)
-        - [A Note on the Tool](#a-note-on-the-tool)
-        - [Using the Classifier Tool](#using-the-classifier-tool)
-            - [Training a Classifier](#training-a-classifier)
-            - [Making Predictions using a Trained Classifier](#making-predictions-using-a-trained-classifier)
+  - [Contents](#contents)
+  - [What is NIClassify?](#what-is-niclassify)
+  - [On First Launch](#on-first-launch)
+  - [The Sequence Data Tool](#the-sequence-data-tool)
+    - [Overview](#overview)
+    - [Using the Sequence Data Tool](#using-the-sequence-data-tool)
+      - [Importing Custom Data](#importing-custom-data)
+      - [Retrieving BOLD Data](#retrieving-bold-data)
+      - [Merging Data](#merging-data)
+      - [Initial Data Preparation](#initial-data-preparation)
+      - [Final Data Preparation](#final-data-preparation)
+  - [The Classifier Tool](#the-classifier-tool)
+    - [Overview](#overview-1)
+    - [A Note on the Tool](#a-note-on-the-tool)
+    - [Using the Classifier Tool](#using-the-classifier-tool)
+      - [Training a Classifier](#training-a-classifier)
+      - [Making Predictions using a Trained Classifier](#making-predictions-using-a-trained-classifier)
 
 <!-- /TOC -->
 
@@ -57,12 +57,11 @@ Below is an overview of the Sequence Data Tool, with an explanation of each inpu
 4. **Save Button:** Opens a dialog to save the retrieved data to a location of your choosing.
 5. **Merge Button:** Useable after a second search or when searching after importing custom data. Allows you to merge multiple searches/data files into one temporary file for subsequent preparation.
 
-
 **B: Custom Data Section:** This section is used for importing data you have stored locally.
 
 6. **Load Data Button:** Opens a file dialog to load a locally saved data file of your choosing.
 7. **Merge Button:** Useable after loading a second file or when loading a file after retrieving data from BOLD. Allows you to merge multiple searches/data files into one temporary file for subsequent preparation.
-8. ***Save Merge Button:** Useable after merging data. Opens a file dialog to save merged data to a location of your choosing.
+8. **\*Save Merge Button:** Useable after merging data. Opens a file dialog to save merged data to a location of your choosing.
 
 **C: Sequence Alignment Section:** This section is used to filter and align the raw data, and export various files from those steps. Buttons only become available as each step is completed.
 
@@ -102,10 +101,10 @@ When importing data, there are a number of required columns. At minimum, the fol
 
 - Either `processid` or `UPID`. If `UPID`, the values in the column must be guaranteed to be unique for each row, or the program may encounter errors or output unexpected data.
 - `nucleotides` containing nucleotide sequences. Sequences with less than 350 base pairs will be dropped. These sequences need not be aligned.
-- `marker_codes` containing marker code information. Rows not containing the marker code `COI-5P` will be dropped.
+- `marker_codes` (optional) containing marker code information. Rows not containing the marker code `COI-5P` will be dropped.
 - `species_name` containing the name of the species for the given sample.
 
-If no other columns are selected, you must select the "No Split" option in the Taxonomic Split Level Settings (D17). If you wish to split by a taxonomic level, you must have a column specifying that taxonomic level for each sample named *\<taxonomic level name\>_name*. For instance, if you wish to split by order, there must be a column named `order_name` specifying the order name for each sample. The system will tolerate missing taxonomic level names, however relying on this is very likely to cause useless feature data.
+If no other columns are selected, you must select the "No Split" option in the Taxonomic Split Level Settings (D17). If you wish to split by a taxonomic level, you must have a column specifying that taxonomic level for each sample named _\<taxonomic level name\>\_name_. For instance, if you wish to split by order, there must be a column named `order_name` specifying the order name for each sample. The system will tolerate missing taxonomic level names, however relying on this is very likely to cause useless feature data.
 
 To import custom data, assuming it satisfies these requirements, click the Load Custom Data Button (B6), navigate to the data file, and select it. The program will warn you of any problems it can detect while attempting to read the file.
 
@@ -126,9 +125,9 @@ Depending on the number of returns, this may take anywhere from a few seconds to
 
 If you wish to make multiple searches, combine multiple local files, or combine search data and custom data, you may do so using the appropriate merge buttons (A5, A8). There are three ways to merge:
 
-**Merging two search results:** To merge two search results, make a second search. After this second search has completed, click "Add to Merge" (A5). If you wish to merge more than two search results, you must add each search to the merge after *each* subsequent search. If you do not add the results to the merge, the data used for subsequent steps will be the results of the *most recent search*.
+**Merging two search results:** To merge two search results, make a second search. After this second search has completed, click "Add to Merge" (A5). If you wish to merge more than two search results, you must add each search to the merge after _each_ subsequent search. If you do not add the results to the merge, the data used for subsequent steps will be the results of the _most recent search_.
 
-**Merging two custom data files:** To merge two data files, open a second data file. You will be presented with an Overwrite Warning. Click "OK" and select your second file. Once the data has been loaded, click "Add to Merge" (B7). If you wish to merge more than two custom data files, you must add *each* file to the merge after loading it. If you do not add a newly loaded file to the merge, then the *most recently loaded file* will be used for subsequent steps.
+**Merging two custom data files:** To merge two data files, open a second data file. You will be presented with an Overwrite Warning. Click "OK" and select your second file. Once the data has been loaded, click "Add to Merge" (B7). If you wish to merge more than two custom data files, you must add _each_ file to the merge after loading it. If you do not add a newly loaded file to the merge, then the _most recently loaded file_ will be used for subsequent steps.
 
 **Merging custom data and BOLD results** To merge custom data and BOLD results, in either order, first complete either a search or load a custom file, and then load or search the other. The Custom Data section's "Add to Merge" button (B7) will become available. Click it to merge the data. In order to merge more than two datasets from either source, be sure to click this button after each new search or file.
 
@@ -211,9 +210,7 @@ Below is an overview of the Classifer Tool, with an explanation of each input an
 21. **Pairplot Section:** These buttons allow you to view and save a pairplot that is generated after predictions are made. If there are too many feature columns (more than 25) a pairplot will not be generated, as the resulting plot will be almost illegible, and generally worthless for analysis. View opens a temporary file of the plot in your system default image viewer, while Save opens a file dialog to save the plot in a location of your choosing.
 22. **Save Output Button** Opens a file dialog to save the output predictions in a location of your choosing.
 
-**F: Information Section:** This section offers information on what the program is doing and what progress it's making on certain functions.
-23. **Status Text:** This text will change to attempt to hint at the status of the program.
-24. **Progress Bar:** This progress bar will either fill to show current progress in a task, or when that is impossible, at least leave a bouncing bar to demonstrate that the program has not frozen.
+**F: Information Section:** This section offers information on what the program is doing and what progress it's making on certain functions. 23. **Status Text:** This text will change to attempt to hint at the status of the program. 24. **Progress Bar:** This progress bar will either fill to show current progress in a task, or when that is impossible, at least leave a bouncing bar to demonstrate that the program has not frozen.
 
 [(Return to Contents)](#User's-Manual)
 
