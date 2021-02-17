@@ -282,6 +282,7 @@ class StandardChecks:
         Args:
             data (DataFrame/Series): The data to check.
             cd (function, optional): Function to call if check fails.
+                Defaults to None.
 
         Returns:
             Bool: True if number of classes is greater than 2, otherwise false.
@@ -324,6 +325,7 @@ class StandardChecks:
         Args:
             filename (str): A filename.
             cb (function, optional): Function to call if check fails.
+                Defaults to None.
 
         Raises:
             ValueError: If the file does not exist.
@@ -356,6 +358,7 @@ class StandardChecks:
         Args:
             data (DataFrame/Series): Data to check.
             cb (function, optional): Function to call if check fails.
+                Defaults to None.
         """
         if isinstance(data, pd.Series):
             test = data.value_counts(normalize=True).std() > 0.35
@@ -403,6 +406,7 @@ class StandardChecks:
         Args:
             data (DataFrame): Data to check.
             cb (function, optional): Function to call if check fails.
+                Defaults to None.
 
         Returns:
             Bool: True if check passes, False otherwise.
@@ -419,7 +423,39 @@ class StandardChecks:
         else:
             return True
 
+    def check_reserved_columns(self, data, cb=None):
+        """Check if the data has any columns using reserved names.
+
+        Args:
+            data (DataFrame): Data to check.
+            cb (function, optional): Function to call if check fails.
+                Defaults to None.
+
+        Returns:
+            Bool: True if check passes, otherwise False or cb return.
+        """
+        # if the two column name lists have anything in common
+        if set(data.columns.values.tolist()) & set(utilities.RESERVED_COLUMNS):
+            if cb is not None:
+                return cb()
+            else:
+                return False
+        else:
+            return True
+
     def check_r_working(self, cb=None):
+        """Check the the Rscript executable is working as expected.
+
+        In windows this means that the .exe is in the expected location,
+        where in linux this means the Rscript command works.
+
+        Args:
+            cb (function, optional): Function to call if check fails.
+                Defaults to None.
+
+        Returns:
+            Bool: True if check passes, False otherwise.
+        """
         if not os.path.isfile(utilities.R_LOC):
             if cb is not None:
                 cb()
@@ -438,7 +474,7 @@ class StandardChecks:
                 Defaults to None.
 
         Returns:
-            Bool: True if check passes, otherwise false (or return of cb).
+            Bool: True if check passes, otherwise False (or return of cb).
         """
         if self.sp.taxon_split == 0:
             return True
@@ -450,6 +486,18 @@ class StandardChecks:
             return True
 
     def check_taxon_exists(self, data, cb=None):
+        """Check if a given taxonomic level exists in the data.
+
+        Generally taxon levels are used for subsetting.
+
+        Args:
+            data (DataFrame): Data to check.
+            cb (function, optional): Function to call if check fails.
+                Defaults to None.
+
+        Returns:
+            Bool: True if check passes, otherwise False.
+        """
         if self.sp.taxon_split not in data.columns:
             if cb is not None:
                 cb()

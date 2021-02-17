@@ -184,6 +184,7 @@ class DataPreparationTool(tk.Toplevel):
         # ----- threaded function -----
         @threaded
         def _filter_seq_data(on_finish):
+
             # prepare tempfile for prepped data
             self.sequence_filtered = tempfile.NamedTemporaryFile(
                 mode="w+",
@@ -415,6 +416,7 @@ class DataPreparationTool(tk.Toplevel):
             self.app.status_bar.set_status("Awaiting user input.")
             return
 
+        # check that UPID is actually unique, if provided
         if "UPID" in data.columns:
             if not self.app.sp.check.check_UPID_unique(
                 data,
@@ -424,10 +426,13 @@ class DataPreparationTool(tk.Toplevel):
                 self.app.status_bar.set_status("Awaiting user input.")
                 return
 
-        # # check if processid is unique, warn user if not (fix in filtering)
-        # elif not data["processid"].is_unique:
-        #     self.app.dlib.dialog(
-        #         messagebox.showwarning, "PID_NOT_UNIQUE", parent=self)
+        # check if user data has any reserved columns
+            if not self.app.sp.check.check_reserved_columns(
+                data,
+                lambda: self.app.dlib.dialog(
+                    messagebox.askokcancel, "RESERVED_COLUMNS", parent=self)
+            ):
+                return
 
         # set file location
         self.user_sequence_raw = file
@@ -667,7 +672,8 @@ class DataPreparationTool(tk.Toplevel):
 (This will take some time)...")
             print("GENERATING FEATURES...")
             try:
-                self.app.sp.generate_features(tax=self.taxon_level, debug=False)
+                self.app.sp.generate_features(
+                    tax=self.taxon_level, debug=False)
             except (ChildProcessError, FileNotFoundError) as err:
                 self.app.dlib.dialog(
                     messagebox.showerror,

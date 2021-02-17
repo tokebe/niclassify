@@ -74,5 +74,9 @@
   "SINGLE_SPLIT": {
     "title": "Single-length split",
     "message": "Splitting this data by {} will result in one or more subsets with only one sample.\nThe program cannot operate on sets of 1. It is recommended that you cancel operation and choose a broader taxonomic level.\nIf you wish to continue, subsets of 1 will be ignored (no features will be generated for those samples).\nSelect 'ok' to continue and ignore subsets of 1, or 'cancel' to cancel."
+  },
+  "RESERVED_COLUMNS": {
+    "title": "Reserved column names",
+    "message": "The chosen data has one or more columns using names reserved for the Sequence Data Tool (See 'Using the Sequence Data Tool' in the Manual).\nClicking 'Ok' will remove these columns from the data (your original file will not be changed). Clicking 'Cancel' will cancel the operation."
   }
 }
