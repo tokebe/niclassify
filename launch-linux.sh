@@ -60,10 +60,21 @@ fi
 # check if R and required R packages work, if not install prereqs, R, r packages
 if [ ! Rscript $Dir/scripts/check_r_reqs.R ];
 then
+    echo "R or required packages not installed. This installation may take some time..."
+    sleep 0.5
     generic_install libcurl4-openssl-dev libssl-dev libxml2-dev dirmngr gnupg apt-transport-https ca-certificates software-properties-common libcurl4-gnutls-dev libudunits2-dev libgdal-dev gdal-bin libproj-dev proj-data proj-bin libgeos-dev
     sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
     sudo add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/'
     sudo apt install r-base-dev
     sudo rm -Rf /usr/local/lib/R/site-library
     sudo Rscript scripts/install_r_reqs.R
+    if [ ! Rscript $Dir/scripts/check_r_reqs.R ];
+    then
+        echo "Something has gone wrong with automated R/package installation. Please see above output for debug purposes."
+        exit 1
+    else
+        echo "Installation success."
+    fi
 fi
+
+$DIR/niclassifyenv/bin/python3 $DIR/main.py & sleep 3 & exit 0
