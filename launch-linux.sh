@@ -55,10 +55,11 @@ fi
 if ! -f "$DIR/niclassifyenv/bin/python3"
 then
     echo "Executing First time setup. Please do not interrupt the program."
+    setup_venv
 fi
 
 # check if R and required R packages work, if not install prereqs, R, r packages
-if ! Rscript "$DIR/scripts/check_r_reqs.R"
+if ! Rscript "$DIR/scripts/check_r_reqs.R" &>/dev/null
 then
     echo "R or required packages not installed. This installation may take some time..."
     sleep 0.5
