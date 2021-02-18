@@ -7,6 +7,7 @@ accessing by utilities.function (instead of utilities.general_utils.function).
 
 import json
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -18,6 +19,7 @@ import pandas as pd
 import importlib.resources as pkg_resources
 from . import config
 
+PLATFORM = platform.system()
 
 with pkg_resources.open_text(config, "nans.json") as nansfile:
     NANS = json.load(nansfile)
@@ -29,13 +31,25 @@ with pkg_resources.open_text(config, "regions.json") as regions:
     REGIONS = json.load(regions)
 with pkg_resources.path(config, "user-manual.pdf") as p:
     HELP_DOC = str(p)
-with pkg_resources.path(config, "NI.ico") as p:
+
+_icon_to_use = {
+    'Windows': "NI.ico",
+    "Linux": "NI.xbm",
+    "Darwin": "NI.icns"
+}
+
+with pkg_resources.path(config, _icon_to_use[PLATFORM]) as p:
     PROGRAM_ICON = str(p)
-with pkg_resources.open_text(config, "rloc.txt") as rloc:
-    R_LOC = os.path.join(rloc.read().strip('\n'), "bin/Rscript.exe")
+
+if PLATFORM == "Windows":
+    with pkg_resources.open_text(config, "rloc.txt") as rloc:
+        R_LOC = os.path.join(rloc.read().strip('\n'), "bin/Rscript.exe")
+else:
+    R_LOC = "Rscript"
 
 
 USER_PATH = os.path.join(userpaths.get_my_documents(), "niclassify")
+
 
 _required_folders = [
     os.path.join(USER_PATH),
@@ -80,8 +94,10 @@ for i, f in enumerate(_required_folders):
 class RNotFoundError(Exception):
     pass
 
+
 class RScriptFailedError(Exception):
     pass
+
 
 def clean_folder(path):
     """Delete contents of a folder.

@@ -21,7 +21,7 @@ from Bio.Phylo.TreeConstruction import DistanceCalculator
 from Bio import AlignIO
 from xml.etree import ElementTree
 
-from .general_utils import MAIN_PATH, USER_PATH, REGIONS, R_LOC, RNotFoundError, RScriptFailedError
+from .general_utils import MAIN_PATH, USER_PATH, REGIONS, R_LOC, RNotFoundError, RScriptFailedError, PLATFORM
 from ..bPTP_interface import bPTP
 
 REQUIRED_COLUMNS = [
@@ -90,9 +90,14 @@ def align_fasta(infname, outfname, debug=False):
         infname (str): Path to fasta to be aligned.
         outfname (str): Path to output fasta to be
     """
+    muscle_exec = {
+        "Windows": "niclassify/bin/muscle3.8.31_i86win32.exe",
+        "Linux": "niclassify/bin/muscle3.8.31_i86linux64"
+    }[PLATFORM]
+
     alignment_call = MuscleCommandline(
         os.path.realpath(
-            os.path.join(MAIN_PATH, "niclassify/bin/muscle3.8.31_i86win32.exe")
+            os.path.join(MAIN_PATH, muscle_exec)
         ),
         input=os.path.realpath(infname),
         out=os.path.realpath(outfname)
