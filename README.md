@@ -50,4 +50,5 @@ Please, by all means, register issues for any problems you encounter, make pull 
 Many thanks to:
 
 Jeremy Andersen
+
 Natalie Graham
