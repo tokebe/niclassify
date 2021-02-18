@@ -80,4 +80,5 @@ then
     fi
 fi
 
-"$DIR/niclassifyenv/bin/python3" "$DIR/main.py" & sleep 3 & exit 0
+echo "=====[ V NICLASSIFY DEBUG OUTPUT BELOW V ]====="
+"$DIR/niclassifyenv/bin/python3" "$DIR/main.py"

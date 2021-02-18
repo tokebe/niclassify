@@ -27,13 +27,16 @@ matplotlib.use('Agg')  # this makes threading not break
 def main():
     """Run the GUI."""
 
-    root = tk.Tk()
+    root = tk.Tk(className="NIClassify")
 
     root.style = ttk.Style()
     app = ClassifierTool(root, StandardProgram, RandomForestAC, utilities)
     root.update()
     root.minsize(root.winfo_width(), root.winfo_height())
     root.iconbitmap(utilities.PROGRAM_ICON)
+    if utilities.PLATFORM == 'Linux':
+        img = tk.Image("photo", utilities.PLATFORM[1:-4] + ".png")
+        root.tk.call('wm', 'iconphoto', root._w, img)
 
     def graceful_exit():
         """
