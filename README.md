@@ -4,7 +4,7 @@
 
 Currently there are a lot of moving parts to this program, and much of it has been written with the primary goal of getting it working quickly, which has meant a few sacrifices: namely, [`regions.json`](https://github.com/tokebe/niclassify/blob/main/niclassify/core/utilities/config/regions.json) is incomplete! If you have a working knowledge of how GBIF and/or ITIS geopgraphic regions work, and see anything you can add to the current file, please make a pull request with your updates!
 
-Additionally, if you see any changes to the program that you'd like to propose, whether it be additional features, you noticed a bug, you fixed a bug, etc, please do open an issue and/or make a pull request! This is an open-source tool that is meant to be extensible and community-modifiable
+Additionally, if you see any changes to the program that you'd like to propose, whether it be additional features, you noticed a bug, you fixed a bug, etc, please do open an issue and/or make a pull request! This is an open-source tool that is meant to be extensible and community-modifiable.
 
 ## What is NIClassify?
 
