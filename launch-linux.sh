@@ -37,11 +37,13 @@ then
     while true; do
         read -p 'requirement python3 not installed. Install now (y/n)? ' yn
         case $yn in
-            [Yy]* ) generic_install python3 python3-venv; break;;
+            [Yy]* ) generic_install python3 python3-venv python3-tk; break;;
             [Nn]* ) exit;;
             * ) echo 'Please answer y or n.';;
         esac
     done
+else
+	generic_install python3-venv python3-tk
 fi
 
 # check if python version is acceptable and inform user if not
@@ -52,7 +54,7 @@ then
 fi
 
 # check if the venv is already installed and has integrity, and install if not
-if ! -f "$DIR/niclassifyenv/bin/python3"
+if [ ! -f "$DIR/niclassifyenv/bin/python3" ];
 then
     echo "Executing First time setup. Please do not interrupt the program."
     setup_venv
