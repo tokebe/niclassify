@@ -45,20 +45,20 @@ then
 fi
 
 # check if python version is acceptable and inform user if not
-if [ ! python3 $Dir/check_version.py ];
+if ! python3 $Dir/check_version.py
 then
     echo "The Python version is not supported. Please install Python 3.7.x - 3.9.x"
     exit 1
 fi
 
 # check if the venv is already installed and has integrity, and install if not
-if [ ! -f $DIR/niclassifyenv/bin/python3 ];
+if ! -f $DIR/niclassifyenv/bin/python3
 then
     echo "Executing First time setup. Please do not interrupt the program."
 fi
 
 # check if R and required R packages work, if not install prereqs, R, r packages
-if [ ! Rscript $Dir/scripts/check_r_reqs.R ];
+if ! Rscript $Dir/scripts/check_r_reqs.R
 then
     echo "R or required packages not installed. This installation may take some time..."
     sleep 0.5
@@ -68,7 +68,7 @@ then
     sudo apt install r-base-dev
     sudo rm -Rf /usr/local/lib/R/site-library
     sudo Rscript scripts/install_r_reqs.R
-    if [ ! Rscript $Dir/scripts/check_r_reqs.R ];
+    if ! Rscript $Dir/scripts/check_r_reqs.R
     then
         echo "Something has gone wrong with automated R/package installation. Please see above output for debug purposes."
         exit 1
