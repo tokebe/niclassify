@@ -45,7 +45,7 @@ then
 fi
 
 # check if python version is acceptable and inform user if not
-if ! python3 $Dir/bin/check_version.py
+if ! python3 $Dir/scripts/check_version.py
 then
     echo "The Python version is not supported. Please install Python 3.7.x - 3.9.x"
     exit 1
