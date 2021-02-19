@@ -17,7 +17,7 @@ rInstallationFailure() {
 generic_install() {
     for iarg in "$@"
     do
-        if [ $(dpkg-query -W -f='${Status}' $iarg 2>/dev/null | grep -c "ok installed") -eq 1]; then continue; fi
+        if [ $(dpkg-query -W -f='${Status}' $iarg 2>/dev/null | grep -c "ok installed") -eq 1 ]; then continue; fi
         echo "Attempting to install $iarg..."
         if [ -x "$(command -v apt)" ]; then sudo apt install "$iarg" && return 0
         elif [ -x "$(command -v apt-get)" ]; then sudo apt-get install "$iarg" && return 0

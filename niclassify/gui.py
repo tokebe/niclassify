@@ -49,7 +49,6 @@ def main():
             app.tempdir.cleanup()
         except PermissionError:
             None
-        print(threading.active_count())
         plt.close("all")
         root.quit()
         root.destroy()
