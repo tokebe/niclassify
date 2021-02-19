@@ -19,15 +19,16 @@ generic_install() {
     do
         if [ $(dpkg-query -W -f='${Status}' $iarg 2>/dev/null | grep -c "ok installed") -eq 1 ]; then continue; fi
         echo "Attempting to install $iarg..."
-        if [ -x "$(command -v apt)" ]; then sudo apt install -y "$iarg" && return 0
-        elif [ -x "$(command -v apt-get)" ]; then sudo apt-get install -y "$iarg" && return 0
-        elif [ -x "$(command -v yum)" ]; then sudo yum install "$iarg" && return 0
-        elif [ -x "$(command -v dnf)" ]; then sudo dnf install "$iarg" && return 0
-        elif [ -x "$(command -v pacman)" ]; then sudo pacman -S "$iarg" && return 0
-        elif [ -x "$(command -v zypper)" ]; then sudo zypper install "$iarg" && return 0
+        if [ -x "$(command -v apt)" ]; then sudo apt install -y "$iarg"  || return 1
+        elif [ -x "$(command -v apt-get)" ]; then sudo apt-get install -y "$iarg" || return 1
+        elif [ -x "$(command -v yum)" ]; then sudo yum install "$iarg" || return 1
+        elif [ -x "$(command -v dnf)" ]; then sudo dnf install "$iarg" || return 1
+        elif [ -x "$(command -v pacman)" ]; then sudo pacman -S "$iarg" || return 1
+        elif [ -x "$(command -v zypper)" ]; then sudo zypper install "$iarg" || return 1
         else echo "PACKAGE INSTALLATION FAILED: Package manager not found. Please manually install packages.">&2 && return 1;
         fi
     done
+    return 0
 }
 
 venvSetupFailure() {
