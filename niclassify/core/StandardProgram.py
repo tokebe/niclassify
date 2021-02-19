@@ -10,6 +10,7 @@ it, as seen in the GUI implementation.
 import os
 import logging
 import re
+import shutil
 import tempfile
 
 import numpy as np
@@ -460,13 +461,18 @@ class StandardChecks:
         Returns:
             Bool: True if check passes, False otherwise.
         """
-        if not os.path.isfile(utilities.R_LOC):
-            if cb is not None:
-                cb()
-            return False
+        if utilities.PLATFORM == "Windows":
+            if os.path.isfile(utilities.R_LOC):
+                return True
         else:
-            return True
+            if shutil.which("Rscript") is not None:
+                return True
 
+        # none of the checks succeeded, assume check fails
+        if cb is not None:
+            cb()
+        return False
+        
     def check_single_split(self, data, cb=None):
         """
         Check if splitting data by taxon split level would return subsets of
