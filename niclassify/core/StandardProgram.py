@@ -204,7 +204,7 @@ def mp_delim(arg):
 
     # rename delims with order prefix
     delim = utilities.get_data(arg[3])
-    delim["GMYC_spec"] = arg[0] + delim["GMYC_spec"].astype(str)
+    delim["Delim_spec"] = arg[0] + delim["Delim_spec"].astype(str)
     delim.to_csv(arg[3], sep="\t", index=False)
 
 
@@ -472,7 +472,7 @@ class StandardChecks:
         if cb is not None:
             cb()
         return False
-        
+
     def check_single_split(self, data, cb=None):
         """
         Check if splitting data by taxon split level would return subsets of
