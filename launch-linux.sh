@@ -19,8 +19,8 @@ generic_install() {
     do
         if [ $(dpkg-query -W -f='${Status}' $iarg 2>/dev/null | grep -c "ok installed") -eq 1 ]; then continue; fi
         echo "Attempting to install $iarg..."
-        if [ -x "$(command -v apt)" ]; then sudo apt install "$iarg" && return 0
-        elif [ -x "$(command -v apt-get)" ]; then sudo apt-get install "$iarg" && return 0
+        if [ -x "$(command -v apt)" ]; then sudo apt install -y "$iarg" && return 0
+        elif [ -x "$(command -v apt-get)" ]; then sudo apt-get install -y "$iarg" && return 0
         elif [ -x "$(command -v yum)" ]; then sudo yum install "$iarg" && return 0
         elif [ -x "$(command -v dnf)" ]; then sudo dnf install "$iarg" && return 0
         elif [ -x "$(command -v pacman)" ]; then sudo pacman -S "$iarg" && return 0
@@ -90,7 +90,7 @@ then
     generic_install libcurl4-openssl-dev libssl-dev libxml2-dev dirmngr gnupg apt-transport-https ca-certificates software-properties-common libcurl4-gnutls-dev libudunits2-dev libgdal-dev gdal-bin libproj-dev proj-data proj-bin libgeos-dev && : || rInstallationFailure
     sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9 && : || rInstallationFailure
     sudo add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/' && : || rInstallationFailure
-    sudo apt install r-base-dev && : || rInstallationFailure
+    sudo apt install -y r-base-dev && : || rInstallationFailure
     sudo rm -Rf /usr/local/lib/R/site-library && : || rInstallationFailure
     sudo Rscript scripts/install_r_reqs.R && : || rInstallationFailure
     if ! Rscript "$DIR/scripts/check_r_reqs.R"
