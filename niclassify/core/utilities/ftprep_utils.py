@@ -32,6 +32,7 @@ REQUIRED_COLUMNS = [
 ]
 
 RESERVED_COLUMNS = [
+    "species_group",
     "gbif_status",
     "itis_status",
     "final_status",
@@ -255,7 +256,7 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
 
         # convert to dataframe and save to file
         pd.DataFrame({
-            "GMYC_spec": species_expanded,
+            "Delim_spec": species_expanded,
             "sample_name": samples_expanded
         }).to_csv(outfname, sep="\t", index=False)
 
