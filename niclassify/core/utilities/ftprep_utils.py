@@ -117,12 +117,12 @@ def align_fasta(infname, outfname, debug=False):
             MAIN_PATH, "niclassify/core/scripts/trim_alignment.R")
     )
 
-    trim_call = '"{}" "{}" "{}" "{}"'.format(
-                R_LOC,
-                r_script,
-                outfname,
-                outfname
-    )
+    trim_call = [
+        R_LOC,
+        r_script,
+        outfname,
+        outfname
+    ]
 
     if debug:
         proc = subprocess.run(
@@ -178,24 +178,24 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
     # make tree
     if debug:
         proc = subprocess.run(
-            '"{}" "{}" "{}" "{}"'.format(
+            [
                 R_LOC,
                 r_script,
                 infname,
                 outtreefname
-            ),
+            ],
             stdout=treelogfile,
             stderr=treelogfile,
             env=os.environ.copy()
         )
     else:
         proc = subprocess.run(
-            '"{}" "{}" "{}" "{}"'.format(
+            [
                 R_LOC,
                 r_script,
                 infname,
                 outtreefname
-            ),
+            ],
             env=os.environ.copy(),
             creationflags=subprocess.CREATE_NO_WINDOW
         )
@@ -289,26 +289,26 @@ def delimit_species_GMYC(infname, outtreefname, outfname, debug=False):
                 os.path.join(lpath, "log{}.txt".format(fs)), "w"
         ) as logfile:
             proc = subprocess.run(
-                '"{}" "{}" "{}" "{}" "{}"'.format(
+                [
                     R_LOC,
                     r_script,
                     infname,
                     outtreefname,
                     outfname
-                ),
+                ],
                 stdout=logfile,
                 stderr=logfile,
                 env=os.environ.copy()
             )
     else:
         proc = subprocess.run(
-            '"{}" "{}" "{}" "{}" "{}"'.format(
+            [
                 R_LOC,
                 r_script,
                 infname,
                 outtreefname,
                 outfname
-            ),
+            ],
             env=os.environ.copy()
         )
 
@@ -323,13 +323,13 @@ def generate_measures(fastafname, delimfname, outfname, debug=False):
             "niclassify/core/scripts/create_measures.R"
         )
     )
-    ftgen_call = '"{}" "{}" "{}" "{}" "{}"'.format(
+    ftgen_call = [
         R_LOC,
         r_script,
         fastafname,
         delimfname,
         outfname
-    )
+    ]
     # assign log number
     fs = 0
     lpath = os.path.join(
