@@ -39,7 +39,7 @@ _icon_to_use = {
 }
 
 with pkg_resources.path(config, _icon_to_use[PLATFORM]) as p:
-    PROGRAM_ICON = str(p) if platform == 'Windows' else "@" + str(p)
+    PROGRAM_ICON = str(p) if PLATFORM == 'Windows' else "@" + str(p)
 
 if PLATFORM == "Windows":
     with pkg_resources.open_text(config, "rloc.txt") as rloc:

@@ -22,7 +22,8 @@ from .core import utilities
 from .core.StandardProgram import StandardProgram
 from .core.classifiers import RandomForestAC
 from .tkgui.clftool import ClassifierTool
-matplotlib.use('Agg')  # this makes threading not break
+matplotlib.use('TkAgg')  # this makes threading not break
+
 
 def main():
     """Run the GUI."""

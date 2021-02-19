@@ -58,9 +58,9 @@ dnaDist <- melt(dnaDist)
 ### Add species groups to distance table ###
 dnaDist <- dnaDist %>%
   left_join(speciesNames, by = c("Var1" = "sample_name")) %>%
-  rename(Var1_group = GMYC_spec) %>%
+  rename(Var1_group = Delim_spec) %>%
   left_join(speciesNames, by = c("Var2" = "sample_name")) %>%
-  rename(Var2_group = GMYC_spec)
+  rename(Var2_group = Delim_spec)
 
 ### Create summary statistics ###
 dnaDistAggregated <- dnaDist %>%
@@ -80,7 +80,7 @@ dnaDistAggregated <- dnaDist %>%
 
 ### Join with sample names in preparation for output ###
 groups_metrics <- dnaDistAggregated %>%
-  right_join(speciesNames, by = c("Var1_group" = "GMYC_spec")) %>%
+  right_join(speciesNames, by = c("Var1_group" = "Delim_spec")) %>%
   rename(species_group = Var1_group)
 
 
@@ -91,9 +91,9 @@ aaDist <- melt(aaDist)
 ### Add species groups to distance table ###
 aaDist <- aaDist %>%
   left_join(speciesNames, by = c("Var1" = "sample_name")) %>%
-  rename(Var1_group = GMYC_spec) %>%
+  rename(Var1_group = Delim_spec) %>%
   left_join(speciesNames, by = c("Var2" = "sample_name")) %>%
-  rename(Var2_group = GMYC_spec)
+  rename(Var2_group = Delim_spec)
 
 ### Create summary statistics ###
 aaDistAggregated <- aaDist %>%
@@ -124,9 +124,9 @@ if (!is.atomic(seqKaKs)) {
   ### Add species groups to distance table ###
   kaDist <- kaDist %>%
     left_join(speciesNames, by = c("Var1" = "sample_name")) %>%
-    rename(Var1_group = GMYC_spec) %>%
+    rename(Var1_group = Delim_spec) %>%
     left_join(speciesNames, by = c("Var2" = "sample_name")) %>%
-    rename(Var2_group = GMYC_spec)
+    rename(Var2_group = Delim_spec)
 
   ### Create summary statistics ###
   kaDistAggregated <- kaDist %>%
@@ -156,9 +156,9 @@ if (!is.atomic(seqKaKs)) {
   ### Add species groups to distance table ###
   ksDist <- ksDist %>%
     left_join(speciesNames, by = c("Var1" = "sample_name")) %>%
-    rename(Var1_group = GMYC_spec) %>%
+    rename(Var1_group = Delim_spec) %>%
     left_join(speciesNames, by = c("Var2" = "sample_name")) %>%
-    rename(Var2_group = GMYC_spec)
+    rename(Var2_group = Delim_spec)
 
   ### Create summary statistics ###
   ksDistAggregated <- ksDist %>%
