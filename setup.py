@@ -89,20 +89,20 @@ setup(
 if sys.argv[1] == "install":
     python_path = sys.executable
     subprocess.run(
-        [
-            "cd",
+        # [
+        #    "cd",
+        #    path.join(path.dirname(path.abspath(__file__)),
+        #              "niclassify/bin/PTP-master"),
+        #    "&&",
+        #    python_path,
+        #    "setup.py",
+        #    "install"
+        # ],
+        'cd "{}" && "{}" setup.py install'.format(
             path.join(path.dirname(path.abspath(__file__)),
                       "niclassify/bin/PTP-master"),
-            "&&",
             python_path,
-            "setup.py",
-            "install"
-        ],
-        # 'cd "{}" && "{}" setup.py install'.format(
-        #     path.join(path.dirname(path.abspath(__file__)),
-        #               "niclassify/bin/PTP-master"),
-        #     python_path,
-        # ),
+        ),
         cwd=path.join(path.dirname(
             path.abspath((__file__))), "niclassify/bin/PTP-master"),
         shell=True
