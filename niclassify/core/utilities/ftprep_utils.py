@@ -198,7 +198,8 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
                 outtreefname
             ],
             env=os.environ.copy(),
-            creationflags=subprocess.CREATE_NO_WINDOW
+            creationflags=(
+                0 if PLATFORM != 'Windows' else subprocess.CREATE_NO_WINDOW)
         )
 
     if os.stat(outtreefname).st_size == 0:
@@ -355,7 +356,8 @@ def generate_measures(fastafname, delimfname, outfname, debug=False):
         proc = subprocess.run(
             ftgen_call,
             env=os.environ.copy(),
-            creationflags=subprocess.CREATE_NO_WINDOW
+            creationflags=(
+                0 if PLATFORM != 'Windows' else subprocess.CREATE_NO_WINDOW)
         )
 
     if proc.returncode != 0:
