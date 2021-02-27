@@ -1,11 +1,5 @@
 # NIClassify
 
-## I'm Looking for help!
-
-Currently there are a lot of moving parts to this program, and much of it has been written with the primary goal of getting it working quickly, which has meant a few sacrifices: namely, [`regions.json`](https://github.com/tokebe/niclassify/blob/main/niclassify/core/utilities/config/regions.json) is incomplete! If you have a working knowledge of how GBIF and/or ITIS geopgraphic regions work, and see anything you can add to the current file, please make a pull request with your updates!
-
-Additionally, if you see any changes to the program that you'd like to propose, whether it be additional features, you noticed a bug, you fixed a bug, etc, please do open an issue and/or make a pull request! This is an open-source tool that is meant to be extensible and community-modifiable.
-
 ## What is NIClassify?
 
 NIClassify is a combined toolkit for classifying species (usually, as in the name, as Native or Introduced), based on the principles laid out in [Categorization of species as likely native or likely non-native using DNA barcodes without a complete reference library.](https://doi.org/10.1002/eap.1914) (Andersen JC, et al.)
@@ -44,6 +38,12 @@ This may be resolved in the future, however for the time being the project relie
 Most submodules and functions of NIClassify are documented with comments and docstrings. A technical manual may be added to the docs in a future update, which will detail the inner workings of the project further.
 
 Please, by all means, register issues for any problems you encounter, make pull requests for anything you want to try implementing, etc, etc. Until a message is left below stating otherwise, this project is being actively maintained.
+
+## I Want Your Help!
+
+Currently there are a lot of moving parts to this program, and much of it has been written with the primary goal of getting it working quickly, which has meant a few sacrifices: namely, [`regions.json`](https://github.com/tokebe/niclassify/blob/main/niclassify/core/utilities/config/regions.json) is incomplete! If you have a working knowledge of how GBIF and/or ITIS geopgraphic regions work, and see anything you can add to the current file, please make a pull request with your updates!
+
+Additionally, if you see any changes to the program that you'd like to propose, whether it be additional features, you noticed a bug, you fixed a bug, etc, please do open an issue and/or make a pull request! This is an open-source tool that is meant to be extensible and community-modifiable.
 
 ## Acknowledgements
 
