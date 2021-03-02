@@ -108,10 +108,12 @@ def align_fasta(infname, outfname, debug=False):
 
     if debug:
         subprocess.run(
-            alignment_call.__str__().split(' '),
-            creationflags=subprocess.CREATE_NEW_CONSOLE)
+            alignment_call.__str__(),
+            creationflags=subprocess.CREATE_NEW_CONSOLE,
+            shell=True
+        )
     else:
-        subprocess.run(alignment_call.__str__().split(' '))
+        subprocess.run(alignment_call.__str__(), shell=True)
 
     r_script = os.path.realpath(
         os.path.join(
