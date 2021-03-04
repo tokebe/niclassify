@@ -10,10 +10,16 @@ The main point of this project has been to provide a straightforward GUI to use 
 
 ## Installation
 
-1. Install [Python](https://www.python.org/downloads/) 3.7.x - 3.9.x.
+1. Install [Python](https://www.python.org/downloads/) 3.8.x - 3.9.x.
 2. Install [the R base](https://cloud.r-project.org/) (Any version _should_ work).
 3. Download the latest [Release](https://github.com/tokebe/niclassify/releases) (or clone/dowload the repository, if you want to see the newest ~~bugs~~ code).
 4. Run the appropriate `launch-___.bat` for your system and follow any messages you may get.
+
+## Troubleshooting
+
+**Visual C++**
+
+If you get this error: `error: Setup script exited with error: Microsoft Visual C++ 14.0 is required. Get it with "Build Tools for Visual Studio": https://visualstudio.microsoft.com/downloads/`, then you need to install the latest Visual Studio C++ build tools (Required for biopython package). Use [this link](https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=BuildTools&rel=16#), and check 'C++ Build Tools' in the installer when it opens before installing.
 
 ## Usage
 
