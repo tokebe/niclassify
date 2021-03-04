@@ -570,42 +570,6 @@ class DataPreparationTool(tk.Toplevel):
 
             data = self.util.get_data(self.sequence_filtered.name)
 
-            if not self.app.sp.check.check_taxon_exists(
-                data,
-                lambda: self.app.dlib.dialog(
-                    messagebox.showerror,
-                    "TAXON_NOT_PRESENT",
-                    form=(self.taxon_level_name,),
-                    parent=self
-                )
-            ):
-                on_finish()
-                return
-
-            if not self.app.sp.check.check_nan_taxon(
-                data,
-                lambda: self.app.dlib.dialog(
-                    messagebox.askokcancel,
-                    "NAN_TAXON",
-                    form=(self.taxon_level_name,),
-                    parent=self
-                )
-            ):
-                on_finish()
-                return
-
-            if not self.app.sp.check.check_single_split(
-                data,
-                lambda: self.app.dlib.dialog(
-                    messagebox.askokcancel,
-                    "SINGLE_SPLIT",
-                    form=(self.taxon_level_name,),
-                    parent=self
-                )
-            ):
-                on_finish()
-                return
-
             method = self.data_sec.method_select.get()
 
             # create delim tempfile
@@ -757,6 +721,44 @@ class DataPreparationTool(tk.Toplevel):
 
             on_finish()
         # ----- end threaded function -----
+
+        data = self.util.get_data(self.sequence_filtered.name)
+
+        if not self.app.sp.check.check_taxon_exists(
+            data,
+            lambda: self.app.dlib.dialog(
+                messagebox.showerror,
+                "TAXON_NOT_PRESENT",
+                form=(self.taxon_level_name,),
+                parent=self
+            )
+        ):
+            on_finish()
+            return
+
+        if not self.app.sp.check.check_nan_taxon(
+            data,
+            lambda: self.app.dlib.dialog(
+                messagebox.askokcancel,
+                "NAN_TAXON",
+                form=(self.taxon_level_name,),
+                parent=self
+            )
+        ):
+            on_finish()
+            return
+
+        if not self.app.sp.check.check_single_split(
+            data,
+            lambda: self.app.dlib.dialog(
+                messagebox.askokcancel,
+                "SINGLE_SPLIT",
+                form=(self.taxon_level_name,),
+                parent=self
+            )
+        ):
+            on_finish()
+            return
 
         # make popup to keep user from pressing buttons and breaking it
         progress = ProgressPopup(
