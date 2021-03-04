@@ -17,9 +17,9 @@ The main point of this project has been to provide a straightforward GUI to use 
 
 ## Troubleshooting
 
-Visual C++
+**Visual C++**
 
-If you get this error: `error: Setup script exited with error: Microsoft Visual C++ 14.0 is required. Get it with "Build Tools for Visual Studio": https://visualstudio.microsoft.com/downloads/`, then you need to install the latest Microsoft Visual C++ (required for some Python packages).
+If you get this error: `error: Setup script exited with error: Microsoft Visual C++ 14.0 is required. Get it with "Build Tools for Visual Studio": https://visualstudio.microsoft.com/downloads/`, then you need to install the latest Visual Studio and Microsoft Visual C++ (required for some Python packages) from the [link the error mesasge provides](https://visualstudio.microsoft.com/downloads/).
 
 ## Usage
 
