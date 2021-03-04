@@ -169,13 +169,13 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
         USER_PATH,
         "logs/delim"
     )
-    while os.path.isfile(os.path.join(lpath, "log{}.txt".format(fs))):
+    while os.path.isfile(os.path.join(lpath, "delim/log{}.txt".format(fs))):
         fs += 1
     delimlogfile = open(
-        os.path.join(lpath, "log{}.txt".format(fs)), "w"
+        os.path.join(lpath, "delim/log{}.txt".format(fs)), "w"
     )
     treelogfile = open(
-        os.path.join(lpath, "log{}.txt".format(fs)), "w"
+        os.path.join(lpath, "tree/log{}.txt".format(fs)), "w"
     )
 
     # make tree
@@ -199,6 +199,8 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
                 infname,
                 outtreefname
             ],
+            stdout=treelogfile,
+            stderr=treelogfile,
             env=os.environ.copy(),
             creationflags=(
                 0 if PLATFORM != 'Windows' else subprocess.CREATE_NO_WINDOW)
@@ -283,7 +285,7 @@ def delimit_species_GMYC(infname, outtreefname, outfname, debug=False):
     fs = 0
     lpath = os.path.join(
         USER_PATH,
-        "logs/delim"
+        "logs/delim/delim"
     )
     while os.path.isfile(os.path.join(lpath, "log{}.txt".format(fs))):
         fs += 1
