@@ -804,6 +804,11 @@ class DataPreparationTool(tk.Toplevel):
                     messagebox.showerror, "BOLD_SEARCH_ERR", parent=self)
                 on_finish()
                 return
+            except UnicodeDecodeError:
+                self.app.dlib.dialog(
+                    messagebox.showerror, "RESPONSE_DECODE_ERR", parent=self)
+                on_finish()
+                return
 
             # check if file downloaded properly (parses successfully)
             try:

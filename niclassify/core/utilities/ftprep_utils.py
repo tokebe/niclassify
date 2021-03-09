@@ -443,18 +443,20 @@ def get_geo_taxon(filename, geo=None, taxon=None, api=None):
 
     request = api + "&".join(request)
 
-    # try:
-    with open(filename, "wb") as file, \
-            requests.get(request, stream=True) as response:
+    try:
+        with open(filename, "wb") as file, \
+                requests.get(request, stream=True) as response:
 
-        # error if response isn't success
-        response.raise_for_status()
+            # error if response isn't success
+            response.raise_for_status()
 
-        # otherwise read to file
-        for line in response.iter_lines():
-            # print(line, end="\r")
-            file.write(line)
-            file.write(b"\n")
+            # otherwise read to file
+            for line in response.iter_lines():
+                # print(line, end="\r")
+                file.write(line)
+                file.write(b"\n")
+    except UnicodeDecodeError:
+        raise UnicodeDecodeError("The received file was not utf-8 encoded.")
 
     # except (OSError, IOError, KeyError, TypeError, ValueError):
     #     raise OSError("File could not be created.")
@@ -535,7 +537,10 @@ getJurisdictionalOriginFromTSN?tsn="
 
     response.raise_for_status()
 
-    tree = ElementTree.fromstring(response.content)
+    try:
+        tree = ElementTree.fromstring(response.content)
+    except UnicodeDecodeError:
+        return None
 
     juris = {
         j.text: n.text
@@ -595,7 +600,10 @@ def get_native_ranges(species_name):
 
     response.raise_for_status()
 
-    results = response.json()
+    try:
+        results = response.json()
+    except UnicodeDecodeError:
+        return None
 
     lookup = [
         res["description"]
