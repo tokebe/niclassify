@@ -66,5 +66,9 @@
   "R_SCRIPT_FAILED": {
     "title": "R Script Error",
     "message": "the operation could not be completed due to an error in the relevant R script.\nPlease register an issue on the repository stating that the R script failed during the step you were trying to complete."
+  },
+  "RESPONSE_DECODE_ERR": {
+    "title": "Response Decode Error",
+    "message": "There was an error while decoding the server response. Please try again. If this operation fails repeatedly please check the status of BOLD servers and/or register an issue on the repository with the exact search terms used."
   }
 }
