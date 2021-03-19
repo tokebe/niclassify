@@ -71,7 +71,7 @@ setup(
         "threadpoolctl==2.1.0",
         "toml==0.10.2",
         "uritemplate==3.0.1",
-        "urllib3==1.26.2",
+        "urllib3==1.26.3",
         "userpaths==0.1.3",
         "wcwidth==0.2.5",
         "xlrd==1.2.0",
