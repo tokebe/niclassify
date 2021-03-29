@@ -733,7 +733,6 @@ class DataPreparationTool(tk.Toplevel):
                 parent=self
             )
         ):
-            on_finish()
             return
 
         if not self.app.sp.check.check_nan_taxon(
@@ -745,7 +744,6 @@ class DataPreparationTool(tk.Toplevel):
                 parent=self
             )
         ):
-            on_finish()
             return
 
         if not self.app.sp.check.check_single_split(
@@ -757,7 +755,6 @@ class DataPreparationTool(tk.Toplevel):
                 parent=self
             )
         ):
-            on_finish()
             return
 
         # make popup to keep user from pressing buttons and breaking it
