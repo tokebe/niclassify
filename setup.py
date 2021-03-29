@@ -50,7 +50,7 @@ setup(
         "py==1.9.0",
         "pycodestyle==2.6.0",
         "pyflakes==2.2.0",
-        "pygments==2.7.3",
+        "pygments==2.7.4",
         "pyinquirer==1.0.3",
         "pyparsing==3.0.0b1",
         "pyqt5==5.15.2",
