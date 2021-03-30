@@ -643,6 +643,9 @@ class StandardProgram:
             "logs/rf-auto.log".format()
         )
 
+        # empty the log
+        open(logname, "w+").close()
+
         # set up logging
         logging.basicConfig(
             level=logging.INFO,
