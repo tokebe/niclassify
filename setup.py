@@ -43,7 +43,7 @@ setup(
         "newick==1.0.0",
         "numpy==1.19.3",
         "packaging==20.7",
-        "pandas==1.2.0rc0",
+        "pandas==1.2.3",
         "pillow==8.1.1",
         "pluggy==0.13.1",
         "prompt-toolkit==1.0.14",

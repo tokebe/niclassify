@@ -10,8 +10,8 @@ from os.path import normcase
 import re
 import requests
 import shutil
-
 import tempfile
+import traceback
 
 import numpy as np
 import pandas as pd
@@ -809,6 +809,7 @@ class DataPreparationTool(tk.Toplevel):
 
             # check if file downloaded properly (parses successfully)
             try:
+                print(self.sequence_raw.name)
                 nlines = self.util.get_data(self.sequence_raw.name).shape[0]
             except ParserError:
                 self.app.dlib.dialog(
@@ -821,6 +822,7 @@ class DataPreparationTool(tk.Toplevel):
                 on_finish()
                 return
             except UnicodeDecodeError:
+                traceback.print_exc()
                 self.app.dlib.dialog(
                     messagebox.showerror, "RESPONSE_DECODE_ERR", parent=self)
                 on_finish()

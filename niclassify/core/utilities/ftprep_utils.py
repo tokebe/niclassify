@@ -9,10 +9,11 @@ accessing by utilities.function (instead of utilities.general_utils.function).
 import json
 import os
 import re
+import requests
+import shutil
 import subprocess
 import sys
 import xlrd
-import requests
 
 import pandas as pd
 
@@ -426,7 +427,6 @@ def get_geo_taxon(filename, geo=None, taxon=None, api=None):
         request.RequestException: If request otherwise fails.
 
     """
-    print("making request...")
     if api is None:
         api = "http://www.boldsystems.org/index.php/API_Public/combined?"
 
@@ -445,19 +445,34 @@ def get_geo_taxon(filename, geo=None, taxon=None, api=None):
     request = api + "&".join(request)
 
     try:
-        with open(filename, "wb") as file, \
-                requests.get(request, stream=True) as response:
+        attempts = 3
+        while True:
+            if attempts == 0:
+                raise request.exceptions.RequestException(
+                    "site keeps timing out")
+                break
+            print("making request...")
+            try:
+                with open(filename, "wb") as file, \
+                        requests.get(request, stream=True) as response:
 
-            # error if response isn't success
-            response.raise_for_status()
+                    # error if response isn't success
+                    response.raise_for_status()
+                    shutil.copyfileobj(response.raw, file)
 
-            # otherwise read to file
-            for line in response.iter_lines():
-                # print(line, end="\r")
-                file.write(line)
-                file.write(b"\n")
-    except UnicodeDecodeError:
-        raise UnicodeDecodeError("The received file was not utf-8 encoded.")
+                return
+            except requests.exceptions.Timeout:
+                attempts -= 1
+                print(
+                    "    request timed out, trying again ({} of 3)...".format(
+                        3 - attempts))
+                pass
+            except requests.exceptions.RequestException as e:
+                raise e
+                break
+
+    except UnicodeDecodeError as e:
+        raise e
 
     # except (OSError, IOError, KeyError, TypeError, ValueError):
     #     raise OSError("File could not be created.")
