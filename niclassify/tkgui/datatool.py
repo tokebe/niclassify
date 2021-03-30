@@ -23,7 +23,7 @@ from pandas.errors import EmptyDataError, ParserError
 
 from .datapanels import RetrievalPanel, PreparationPanel
 from .smallwindows import ProgressPopup
-from .threadwrap import threaded
+from .wrappers import threaded, report_uncaught
 
 
 class DataPreparationTool(tk.Toplevel):
@@ -42,6 +42,9 @@ class DataPreparationTool(tk.Toplevel):
         self.parent = parent
         self.app = app
         self.util = utilities
+
+        self.dlib = self.app.dlib
+        self.uncaught_exception = self.app.uncaught_exception
 
         # set window icon
         self.iconbitmap(self.util.PROGRAM_ICON)
@@ -98,6 +101,7 @@ class DataPreparationTool(tk.Toplevel):
 
         self.protocol("WM_DELETE_WINDOW", on_exit)
 
+    @report_uncaught
     def align_seq_data(self):
         """Filter and align sequences."""
         # ----- threaded function -----
@@ -124,7 +128,7 @@ class DataPreparationTool(tk.Toplevel):
             try:
                 self.app.sp.align_fasta(debug=False)
             except ChildProcessError:
-                self.app.dlib.dialog(
+                self.dlib.dialog(
                     messagebox.showerror,
                     "ALIGN_ERR",
                     parent=self
@@ -132,7 +136,7 @@ class DataPreparationTool(tk.Toplevel):
                 on_finish()
                 return
             except self.util.RNotFoundError:
-                self.app.dlib.dialog(
+                self.dlib.dialog(
                     messagebox.showerror,
                     "R_NOT_FOUND",
                     parent=self
@@ -140,7 +144,7 @@ class DataPreparationTool(tk.Toplevel):
                 on_finish()
                 return
             except self.util.RScriptFailedError:
-                self.app.dlib.dialog(
+                self.dlib.dialog(
                     messagebox.showerror,
                     "R_SCRIPT_FAILED",
                     parent=self
@@ -162,7 +166,7 @@ class DataPreparationTool(tk.Toplevel):
             on_finish()
 
             # advise the user to check the alignment
-            self.app.dlib.dialog(
+            self.dlib.dialog(
                 messagebox.showinfo, "ALIGNMENT_COMPLETE", parent=self)
         # ----- end threaded function -----
 
@@ -179,6 +183,7 @@ class DataPreparationTool(tk.Toplevel):
             progress_popup.set_status
         )
 
+    @report_uncaught
     def filter_seq_data(self):
         """Filter Sequence Data"""
         # ----- threaded function -----
@@ -243,6 +248,7 @@ class DataPreparationTool(tk.Toplevel):
 
         _filter_seq_data(progress_popup.complete)
 
+    @report_uncaught
     def get_geographies(self):
         """
         Return a list of all geographies.
@@ -254,6 +260,7 @@ class DataPreparationTool(tk.Toplevel):
         return sorted(self.util.get_geographies())
         # return self.util.get_geographies()
 
+    @report_uncaught
     def load_item(self, item):
         """
         Load an item into the program.
@@ -306,7 +313,7 @@ class DataPreparationTool(tk.Toplevel):
                         names_not_found.append(name)
 
                 if len(names_not_found) > 0:
-                    self.app.dlib.dialog(
+                    self.dlib.dialog(
                         messagebox.showwarning,
                         "ALIGN_MISMATCH",
                         parent=self,
@@ -352,6 +359,7 @@ class DataPreparationTool(tk.Toplevel):
             # overwrite the alignment file
             shutil.copy(file, tempfiles[item])
 
+    @report_uncaught
     def load_sequence_data(self):
         """
         Get the location of custom user sequence data for later use.
@@ -363,7 +371,7 @@ class DataPreparationTool(tk.Toplevel):
 
         # check if user is overwriting and make sure they're ok with it
         if self.user_sequence_raw is not None:
-            if not self.app.dlib.dialog(
+            if not self.dlib.dialog(
                     messagebox.askokcancel, "SEQUENCE_OVERWRITE", parent=self):
                 self.app.status_bar.set_status("Awaiting user input.")
                 return
@@ -395,7 +403,7 @@ class DataPreparationTool(tk.Toplevel):
             data = self.util.get_data(file)
         except (ParserError, EmptyDataError, OSError, IOError, KeyError,
                 TypeError, ValueError, csv.Error):
-            self.app.dlib.dialog(
+            self.dlib.dialog(
                 messagebox.showwarning,
                 "FILE_READ_ERR"
             )
@@ -404,7 +412,7 @@ class DataPreparationTool(tk.Toplevel):
         # check if sequence data has required columns
         if not self.app.sp.check.check_required_columns(
             data,
-            lambda: self.app.dlib.dialog(
+            lambda: self.dlib.dialog(
                 messagebox.showwarning, "INVALID_SEQUENCE_DATA", parent=self)
         ):
             self.app.status_bar.set_status("Awaiting user input.")
@@ -414,7 +422,7 @@ class DataPreparationTool(tk.Toplevel):
         if "UPID" in data.columns:
             if not self.app.sp.check.check_UPID_unique(
                 data,
-                lambda: self.app.dlib.dialog(
+                lambda: self.dlib.dialog(
                     messagebox.askokcancel, "UPID_NOT_UNIQUE", parent=self)
             ):
                 self.app.status_bar.set_status("Awaiting user input.")
@@ -423,7 +431,7 @@ class DataPreparationTool(tk.Toplevel):
         # check if user data has any reserved columns
             if not self.app.sp.check.check_reserved_columns(
                 data,
-                lambda: self.app.dlib.dialog(
+                lambda: self.dlib.dialog(
                     messagebox.askokcancel, "RESERVED_COLUMNS", parent=self)
             ):
                 return
@@ -451,6 +459,7 @@ class DataPreparationTool(tk.Toplevel):
         self.data_sec.final_save_button["state"] = tk.DISABLED
         self.data_sec.use_data_button["state"] = tk.DISABLED
 
+    @report_uncaught
     def merge_sequence_data(self, bold=False):
         """
         Merge multiple sequence files.
@@ -464,13 +473,13 @@ class DataPreparationTool(tk.Toplevel):
         def _merge_sequence_data(on_finish):
             if self.merged_raw is not None:
                 if bold:
-                    answer = self.app.dlib.dialog(
+                    answer = self.dlib.dialog(
                         messagebox.askyesnocancel,
                         "MESSAGE_MERGE_BOLD",
                         parent=self
                     )
                 else:
-                    answer = self.app.dlib.dialog(
+                    answer = self.dlib.dialog(
                         messagebox.askyesnocancel,
                         "EXISTING_MERGE_USER",
                         parent=self
@@ -544,7 +553,7 @@ class DataPreparationTool(tk.Toplevel):
 
             on_finish()
 
-            self.app.dlib.dialog(
+            self.dlib.dialog(
                 messagebox.showinfo, "MERGE_COMPLETE", parent=self)
 
         # ----- end threaded function -----
@@ -562,6 +571,7 @@ class DataPreparationTool(tk.Toplevel):
 
         _merge_sequence_data(progress.complete)
 
+    @report_uncaught
     def prep_sequence_data(self):
         """Prepare aligned sequence data."""
         # ----- threaded function -----
@@ -609,7 +619,7 @@ class DataPreparationTool(tk.Toplevel):
                 self.app.sp.delimit_species(
                     method, tax=self.taxon_level, debug=False)
             except (ChildProcessError, FileNotFoundError, IndexError) as err:
-                self.app.dlib.dialog(
+                self.dlib.dialog(
                     messagebox.showerror,
                     "DELIM_ERR",
                     form=(self.taxon_level_name, str(err)),
@@ -618,7 +628,7 @@ class DataPreparationTool(tk.Toplevel):
                 on_finish()
                 return
             except self.util.RScriptFailedError:
-                self.app.dlib.dialog(
+                self.dlib.dialog(
                     messagebox.showerror,
                     "R_SCRIPT_FAILED",
                     parent=self
@@ -633,7 +643,7 @@ class DataPreparationTool(tk.Toplevel):
                 self.app.sp.generate_features(
                     tax=self.taxon_level, debug=False)
             except (ChildProcessError, FileNotFoundError) as err:
-                self.app.dlib.dialog(
+                self.dlib.dialog(
                     messagebox.showerror,
                     "FEATURE_GEN_ERR",
                     form=(self.taxon_level_name, str(err)),
@@ -642,7 +652,7 @@ class DataPreparationTool(tk.Toplevel):
                 on_finish()
                 return
             except self.util.RNotFoundError:
-                self.app.dlib.dialog(
+                self.dlib.dialog(
                     messagebox.showerror,
                     "R_NOT_FOUND",
                     parent=self
@@ -650,7 +660,7 @@ class DataPreparationTool(tk.Toplevel):
                 on_finish()
                 return
             except self.util.RScriptFailedError:
-                self.app.dlib.dialog(
+                self.dlib.dialog(
                     messagebox.showerror,
                     "R_SCRIPT_FAILED",
                     parent=self
@@ -667,7 +677,7 @@ class DataPreparationTool(tk.Toplevel):
                 self.app.sp.ref_geo = self.data_sec.ref_geo_select.get()
                 self.app.sp.lookup_status()
             except ChildProcessError:
-                self.app.dlib.dialog(
+                self.dlib.dialog(
                     messagebox.showerror,
                     "GEO_LOOKUP_ERR",
                     parent=self
@@ -685,7 +695,7 @@ class DataPreparationTool(tk.Toplevel):
             # check if there are at least 2 classes
             if self.app.sp.check.check_enough_classes(
                 final["final_status"],
-                lambda: self.app.dlib.dialog(
+                lambda: self.dlib.dialog(
                     messagebox.showwarning,
                     "NOT_ENOUGH_CLASSES",
                     parent=self
@@ -694,7 +704,7 @@ class DataPreparationTool(tk.Toplevel):
                 # check that enough samples were classified
                 self.app.sp.check.check_enough_classified(
                     final["final_status"],
-                    lambda: self.app.dlib.dialog(
+                    lambda: self.dlib.dialog(
                         messagebox.showwarning,
                         "LOW_CLASS_COUNT",
                         form=(n_classified,),
@@ -705,14 +715,14 @@ class DataPreparationTool(tk.Toplevel):
                 # check for extreme inbalance using stdev as a heuristic
                 self.app.sp.check.check_inbalance(
                     final["final_status"],
-                    lambda: self.app.dlib.dialog(
+                    lambda: self.dlib.dialog(
                         messagebox.showwarning,
                         "HIGH_IMBALANCE"
                     )
                 )
 
                 # notify of completion
-                self.app.dlib.dialog(
+                self.dlib.dialog(
                     messagebox.showinfo,
                     "DATA_PREP_COMPLETE",
                     form=(n_classified,),
@@ -726,7 +736,7 @@ class DataPreparationTool(tk.Toplevel):
 
         if not self.app.sp.check.check_taxon_exists(
             data,
-            lambda: self.app.dlib.dialog(
+            lambda: self.dlib.dialog(
                 messagebox.showerror,
                 "TAXON_NOT_PRESENT",
                 form=(self.taxon_level_name,),
@@ -737,7 +747,7 @@ class DataPreparationTool(tk.Toplevel):
 
         if not self.app.sp.check.check_nan_taxon(
             data,
-            lambda: self.app.dlib.dialog(
+            lambda: self.dlib.dialog(
                 messagebox.askokcancel,
                 "NAN_TAXON",
                 form=(self.taxon_level_name,),
@@ -748,7 +758,7 @@ class DataPreparationTool(tk.Toplevel):
 
         if not self.app.sp.check.check_single_split(
             data,
-            lambda: self.app.dlib.dialog(
+            lambda: self.dlib.dialog(
                 messagebox.askokcancel,
                 "SINGLE_SPLIT",
                 form=(self.taxon_level_name,),
@@ -767,6 +777,7 @@ class DataPreparationTool(tk.Toplevel):
         # run time-consuming items in thread
         _prep_sequence_data(progress.complete, progress.set_status)
 
+    @report_uncaught
     def retrieve_seq_data(self):
         """Search for sequence data from BOLD."""
         # ----- threaded function -----
@@ -797,12 +808,12 @@ class DataPreparationTool(tk.Toplevel):
                 # retrieve the data
                 self.app.sp.retrieve_sequence_data()
             except requests.exceptions.RequestException:
-                self.app.dlib.dialog(
+                self.dlib.dialog(
                     messagebox.showerror, "BOLD_SEARCH_ERR", parent=self)
                 on_finish()
                 return
             except UnicodeDecodeError:
-                self.app.dlib.dialog(
+                self.dlib.dialog(
                     messagebox.showerror, "RESPONSE_DECODE_ERR", parent=self)
                 on_finish()
                 return
@@ -812,18 +823,18 @@ class DataPreparationTool(tk.Toplevel):
                 print(self.sequence_raw.name)
                 nlines = self.util.get_data(self.sequence_raw.name).shape[0]
             except ParserError:
-                self.app.dlib.dialog(
+                self.dlib.dialog(
                     messagebox.showerror, "BOLD_FILE_ERR", parent=self)
                 on_finish()
                 return
             except EmptyDataError:
-                self.app.dlib.dialog(
+                self.dlib.dialog(
                     messagebox.showerror, "BOLD_NO_OBSERVATIONS", parent=self)
                 on_finish()
                 return
             except UnicodeDecodeError:
                 traceback.print_exc()
-                self.app.dlib.dialog(
+                self.dlib.dialog(
                     messagebox.showerror, "RESPONSE_DECODE_ERR", parent=self)
                 on_finish()
                 return
@@ -855,7 +866,7 @@ class DataPreparationTool(tk.Toplevel):
             on_finish()
 
             if nlines == 0:
-                self.app.dlib.dialog(
+                self.dlib.dialog(
                     messagebox.showwarning,
                     "BOLD_NO_OBSERVATIONS",
                     parent=self
@@ -864,7 +875,7 @@ class DataPreparationTool(tk.Toplevel):
                 return
 
             # tell user it worked/how many lines downloaded
-            self.app.dlib.dialog(
+            self.dlib.dialog(
                 messagebox.showinfo,
                 "BOLD_SEARCH_COMPLETE",
                 parent=self,
@@ -876,16 +887,16 @@ class DataPreparationTool(tk.Toplevel):
         self.app.sp.taxon = self.get_data_sec.taxon_input.get()
 
         if (self.app.sp.geo is None or self.app.sp.taxon is None):
-            self.app.dlib.dialog(
+            self.dlib.dialog(
                 messagebox.showwarning, "MISSING_SEARCH_TERMS", parent=self)
             return
         elif len(self.app.sp.geo) == 0 or len(self.app.sp.taxon) == 0:
-            self.app.dlib.dialog(
+            self.dlib.dialog(
                 messagebox.showwarning, "MISSING_SEARCH_TERMS", parent=self)
 
             return
 
-        if not self.app.dlib.dialog(
+        if not self.dlib.dialog(
             messagebox.askokcancel,
             "CONFIRM_SEARCH_TERMS",
             form=(self.app.sp.geo, self.app.sp.taxon),
@@ -901,6 +912,7 @@ class DataPreparationTool(tk.Toplevel):
 
         _retrieve_seq_data(progress_popup.complete)
 
+    @report_uncaught
     def set_taxon_level(self, event):
         levels = {
             "No Split": 0,
@@ -916,6 +928,7 @@ class DataPreparationTool(tk.Toplevel):
         self.taxon_level = levels[self.taxon_level_name]
         self.app.sp.taxon_split = self.taxon_level
 
+    @report_uncaught
     def transfer_prepared_data(self):
         """Transfer prepared data to the classifier tool's data handling."""
         # drop extra columns to avoid confusion
