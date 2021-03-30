@@ -820,6 +820,11 @@ class DataPreparationTool(tk.Toplevel):
                     messagebox.showerror, "BOLD_NO_OBSERVATIONS", parent=self)
                 on_finish()
                 return
+            except UnicodeDecodeError:
+                self.app.dlib.dialog(
+                    messagebox.showerror, "RESPONSE_DECODE_ERR", parent=self)
+                on_finish()
+                return
 
             self.last_entered_data = self.sequence_raw.name
 
