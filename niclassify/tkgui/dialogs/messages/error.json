@@ -70,5 +70,9 @@
   "RESPONSE_DECODE_ERR": {
     "title": "Response Decode Error",
     "message": "There was an error while decoding the server response. Please try again. If this operation fails repeatedly please check the status of BOLD servers and/or register an issue on the repository with the exact search terms used."
+  },
+  "UNHANDLED_EXCEPTION": {
+    "title": "Unhandled Exception Caught",
+    "message": "An unhandled exception has occurred. A traceback has been saved to the following file:\n{}.\n\nAs uncaught exceptions may lead to unexpected behavior, it is recommended you save any progress possible and re-launch the program."
   }
 }
