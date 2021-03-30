@@ -93,7 +93,8 @@ def align_fasta(infname, outfname, debug=False):
     """
     muscle_exec = {
         "Windows": "niclassify/bin/muscle3.8.31_i86win32.exe",
-        "Linux": "niclassify/bin/muscle3.8.31_i86linux64"
+        "Linux": "niclassify/bin/muscle3.8.31_i86linux64",
+        "Darwin": "niclassify/bin/muscle3.8.31_i86darwin64"
     }[PLATFORM]
 
     alignment_call = MuscleCommandline(
