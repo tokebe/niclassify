@@ -101,7 +101,6 @@ class DataPreparationTool(tk.Toplevel):
 
         self.protocol("WM_DELETE_WINDOW", on_exit)
 
-    @report_uncaught
     def align_seq_data(self):
         """Filter and align sequences."""
         # ----- threaded function -----
@@ -183,7 +182,6 @@ class DataPreparationTool(tk.Toplevel):
             progress_popup.set_status
         )
 
-    @report_uncaught
     def filter_seq_data(self):
         """Filter Sequence Data"""
         # ----- threaded function -----
@@ -248,7 +246,6 @@ class DataPreparationTool(tk.Toplevel):
 
         _filter_seq_data(progress_popup.complete)
 
-    @report_uncaught
     def get_geographies(self):
         """
         Return a list of all geographies.
@@ -260,7 +257,6 @@ class DataPreparationTool(tk.Toplevel):
         return sorted(self.util.get_geographies())
         # return self.util.get_geographies()
 
-    @report_uncaught
     def load_item(self, item):
         """
         Load an item into the program.
@@ -359,7 +355,6 @@ class DataPreparationTool(tk.Toplevel):
             # overwrite the alignment file
             shutil.copy(file, tempfiles[item])
 
-    @report_uncaught
     def load_sequence_data(self):
         """
         Get the location of custom user sequence data for later use.
@@ -459,7 +454,6 @@ class DataPreparationTool(tk.Toplevel):
         self.data_sec.final_save_button["state"] = tk.DISABLED
         self.data_sec.use_data_button["state"] = tk.DISABLED
 
-    @report_uncaught
     def merge_sequence_data(self, bold=False):
         """
         Merge multiple sequence files.
@@ -571,7 +565,6 @@ class DataPreparationTool(tk.Toplevel):
 
         _merge_sequence_data(progress.complete)
 
-    @report_uncaught
     def prep_sequence_data(self):
         """Prepare aligned sequence data."""
         # ----- threaded function -----
@@ -777,7 +770,6 @@ class DataPreparationTool(tk.Toplevel):
         # run time-consuming items in thread
         _prep_sequence_data(progress.complete, progress.set_status)
 
-    @report_uncaught
     def retrieve_seq_data(self):
         """Search for sequence data from BOLD."""
         # ----- threaded function -----
@@ -912,7 +904,6 @@ class DataPreparationTool(tk.Toplevel):
 
         _retrieve_seq_data(progress_popup.complete)
 
-    @report_uncaught
     def set_taxon_level(self, event):
         levels = {
             "No Split": 0,
@@ -928,7 +919,6 @@ class DataPreparationTool(tk.Toplevel):
         self.taxon_level = levels[self.taxon_level_name]
         self.app.sp.taxon_split = self.taxon_level
 
-    @report_uncaught
     def transfer_prepared_data(self):
         """Transfer prepared data to the classifier tool's data handling."""
         # drop extra columns to avoid confusion

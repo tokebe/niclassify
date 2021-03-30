@@ -125,7 +125,6 @@ class ClassifierTool(tk.Frame):
         )
         self.status_bar.pack(fill=tk.X)
 
-    @report_uncaught
     def check_enable_predictions(self):
         """
         Conditionally enable the predict button.
@@ -147,7 +146,6 @@ class ClassifierTool(tk.Frame):
         else:
             return False
 
-    @report_uncaught
     def check_warn_overwrite(self):
         """
         Check if action would (should) overwrite current data or classifier.
@@ -166,7 +164,6 @@ class ClassifierTool(tk.Frame):
         else:
             return True
 
-    @report_uncaught
     def enable_train(self, event):
         """
         Enable the train button.
@@ -177,7 +174,6 @@ class ClassifierTool(tk.Frame):
         self.sp.class_column = self.train_sec.known_select.get()
         self.train_sec.train_button.config(state=tk.ACTIVE)
 
-    @report_uncaught
     def get_data_file(self, internal=None):
         """
         Prompt the user for a file and update contents appropriately.
@@ -345,7 +341,6 @@ class ClassifierTool(tk.Frame):
         # threaded portion of function
         _get_data_file(data_file)
 
-    @report_uncaught
     def get_selected_cols(self):
         """
         Get the currently selected feature columns.
@@ -364,7 +359,6 @@ class ClassifierTool(tk.Frame):
         # return to be useful
         return selected_cols
 
-    @report_uncaught
     def get_sheet_cols(self, event):
         """
         Get the columns for a given excel sheet when it is selected.
@@ -439,7 +433,6 @@ class ClassifierTool(tk.Frame):
         # launch thread to get columns
         _get_sheet_cols(sheet)
 
-    @report_uncaught
     def load_classifier(self):
         """
         Prompt the user to select a saved classifier and load it.
@@ -503,7 +496,6 @@ class ClassifierTool(tk.Frame):
         # launch thread to load the classifier
         _load_classifier(clf_file)
 
-    @report_uncaught
     def make_cm(self, features_known, class_labels):
         """
         Generate a confusion matrix graph and save to tempfile.
@@ -535,7 +527,6 @@ class ClassifierTool(tk.Frame):
             class_labels
         ).savefig(self.cm.name)
 
-    @report_uncaught
     def make_report(self):
         """
         Grab a report of the classifier training from the log.
@@ -579,7 +570,6 @@ class ClassifierTool(tk.Frame):
         # close the file so it's ready for open/copy
         self.report.close()
 
-    @report_uncaught
     def make_pairplot(self, features, predict):
         """Generate a pairplot and save to a tempfile.
 
@@ -617,7 +607,6 @@ class ClassifierTool(tk.Frame):
             predict
         ).savefig(self.pairplot.name)
 
-    @report_uncaught
     def make_predictions(self):
         """
         Make predictions and save to a tempfile.
@@ -761,7 +750,6 @@ class ClassifierTool(tk.Frame):
             progress_popup.set_status
         )
 
-    @report_uncaught
     def open_data_tool(self):
         """Open the data preparation tool."""
         # make sure multiple instances can't open
@@ -770,19 +758,16 @@ class ClassifierTool(tk.Frame):
         self.data_win = DataPreparationTool(
             self, self, self.tempdir, self.util)
 
-    @report_uncaught
     def open_help(self):
         """Open User Manual document"""
         self.util.view_open_file(self.util.HELP_DOC)
 
-    @report_uncaught
     def open_nans(self):
         """Open a window to view and edit NaN values."""
         # test = tk.Toplevel(self.parent)
         self.data_sec.nan_check["state"] = tk.DISABLED
         NaNEditor(self, self)
 
-    @report_uncaught
     def open_output_folder(self):
         """
         Open the output folder for classifiers, logs, etc.
@@ -791,7 +776,6 @@ class ClassifierTool(tk.Frame):
         """
         self.util.view_open_file(os.path.join(self.util.USER_PATH))
 
-    @report_uncaught
     def reset_controls(self, clf=False):
         """
         Reset controls and stored data.
@@ -823,7 +807,6 @@ class ClassifierTool(tk.Frame):
         if not clf:
             self.predict_sec.reset_enabled()
 
-    @report_uncaught
     def save_classifier(self):
         """
         Save the current classifier to a location the user chooses.
@@ -865,7 +848,6 @@ class ClassifierTool(tk.Frame):
         # launch thread to save classifier
         _save_classifier(location)
 
-    @report_uncaught
     def save_item(self, item):
         """
         Save the chosen item (selected by str) to a user-designated place.
@@ -1039,7 +1021,6 @@ class ClassifierTool(tk.Frame):
         # launch thread to save item
         _save_item(item, location)
 
-    @report_uncaught
     def save_nans(self):
         """Save nans value list to nans.json."""
         # ----- threaded function -----
@@ -1070,7 +1051,6 @@ class ClassifierTool(tk.Frame):
         # launch thread to save NaN values
         _save_nans()
 
-    @report_uncaught
     def uncaught_exception(self, error_trace, logfile):
         """Report uncaught exceptions to the user."""
         self.dlib.dialog(
@@ -1079,7 +1059,6 @@ class ClassifierTool(tk.Frame):
             form=(logfile,)
         )
 
-    @report_uncaught
     def train_classifier(self):
         """
         Train a classifier with the given data.
@@ -1212,7 +1191,6 @@ class ClassifierTool(tk.Frame):
             progress_popup.set_status
         )
 
-    @report_uncaught
     def view_item(self, item):
         """
         View an item using the system default.
