@@ -13,3 +13,4 @@ niclassify/core/utilties/config/rloc.txt
 .Rhistory
 .eggs
 *.pyc
+.python3installed
