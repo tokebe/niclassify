@@ -13,7 +13,7 @@ The main point of this project has been to provide a straightforward GUI to use 
 1. Install [Python](https://www.python.org/downloads/) 3.8.x - 3.9.x.
 2. Install [the R base](https://cloud.r-project.org/) (Any version _should_ work).
 3. Download the latest [Release](https://github.com/tokebe/niclassify/releases) (or clone/dowload the repository, if you want to see the newest ~~bugs~~ code).
-4. Run the appropriate `launch-___.bat` for your system and follow any messages you may get.
+4. Run the appropriate `launch-___.bat` for your system and follow any messages you may get. **NOTE:** for MacOS, you will need to launch `niclassify/bin/muscle3.8.31_i86darwin64` manually PRIOR to using NIClassify, in order to grant permission for the program to be launched (due to MacOS trusted developer policy).
 
 ## Troubleshooting
 
