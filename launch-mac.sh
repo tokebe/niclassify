@@ -71,7 +71,7 @@ then
 fi
 
 # check if R is installed
-if ! Rscript &>/dev/null
+if ! R --version  &>/dev/null
 then
     open -n "https://cloud.r-project.org/"
     osascript -e 'display alert "R Not Installed" message "R is not installed. Please install R and then click ok"'
