@@ -84,7 +84,6 @@ RESERVED_COLUMNS = [
 
 
 def align_fasta(infname, outfname, debug=False):
-    # TODO support for linux/mac
     """
     Generate an alignment for the given fasta file.
 
@@ -278,7 +277,6 @@ def delimit_species_GMYC(infname, outtreefname, outfname, debug=False):
         outfname (str): Output file path.
         debug (bool, optional): Save script output to file.
     """
-    # TODO support for linux/mac
     r_script = os.path.realpath(
         os.path.join(
             MAIN_PATH, "niclassify/core/scripts/delim_tree.R")
