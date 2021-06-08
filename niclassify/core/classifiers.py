@@ -405,6 +405,36 @@ class AutoClassifier:
 
         self.log_report()
 
+    def predict(self, features):
+        """
+        Return the predictions of the trained classifier.
+
+        Args:
+            features (DataFrame): Feature data.
+
+        Returns:
+            Array: Predicted labels.
+        """
+        return self.clf.predict(features)
+
+    def predict_proba(self, features):
+        """
+        Return the predicted probability for each label.
+        Returns None if classifier does not support predict_proba.
+
+
+        Args:
+            features (DataFrame): Feature data.
+
+        Returns:
+            np.ndarray: class label probabilities for the input data,
+                or None if not supported.
+        """
+        if hasattr(self.clf, "predict_proba"):
+            return self.clf.predict_proba(features)
+        else:
+            return None
+
 
 class RandomForestAC(AutoClassifier):
     """

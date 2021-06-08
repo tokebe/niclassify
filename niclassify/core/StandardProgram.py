@@ -1069,7 +1069,7 @@ AutoClassifier")
 
         # make predictions
         logging.info("predicting unknown class labels...")
-        predict = pd.DataFrame(clf.clf.predict(feature_norm))
+        predict = pd.DataFrame(clf.predict(feature_norm))
         # rename predict column
         predict.rename(columns={predict.columns[0]: "predict"}, inplace=True)
 
@@ -1080,7 +1080,7 @@ AutoClassifier")
             status_cb("Getting predicition probabilities...")
 
             # get predict probabilities
-            predict_prob = pd.DataFrame(clf.clf.predict_proba(feature_norm))
+            predict_prob = pd.DataFrame(clf.predict_proba(feature_norm))
             # rename column
             predict_prob.rename(
                 columns={
