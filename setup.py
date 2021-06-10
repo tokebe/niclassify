@@ -44,7 +44,7 @@ setup(
         "numpy==1.19.3",
         "packaging==20.7",
         "pandas==1.2.3",
-        "pillow==8.1.1",
+        "pillow",
         "pluggy==0.13.1",
         "prompt-toolkit==1.0.14",
         "py==1.10.0",
