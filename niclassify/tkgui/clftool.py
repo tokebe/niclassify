@@ -1097,7 +1097,18 @@ class ClassifierTool(tk.Frame):
                 metadata,
                 lambda: self.dlib.dialog(
                     messagebox.showerror,
-                    "CANNOT_TRAIN"
+                    "NOT_ENOUGH_CLASSES_TO_TRAIN"
+                )
+            ):
+                on_finish()
+                return
+
+            # make sure there are at minimum 4 known samples per label
+            if not self.sp.check.check_minimum_training_labels(
+                metadata,
+                lambda: self.dlib.dialog(
+                    messagebox.showerror,
+                    "NOT_ENOUGH_KNOWN_SAMPLES"
                 )
             ):
                 on_finish()

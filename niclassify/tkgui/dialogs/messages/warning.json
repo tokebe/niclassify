@@ -43,9 +43,13 @@
     "title": "Missing Search Term(s)",
     "message": "Please fill in both search terms before requesting data."
   },
-  "CANNOT_TRAIN": {
+  "NOT_ENOUGH_CLASSES_TO_TRAIN": {
     "title": "Not Enough Known Classes",
     "message": "The data contains fewer than two classes, and cannot be used for training a classifier.\nDid you mean to use this data for prediction with a saved classifier?"
+  },
+  "NOT_ENOUGH_KNOWN_SAMPLES": {
+    "title": "Too Few Known Class Samples",
+    "message": "The program requires a minimum of 4 known samples per class label. Please provide more known samples. It is recommended to train using significantly more than 4 known samples per label."
   },
   "NOT_ENOUGH_CLASSES": {
     "title": "Not Enough Known Classes",

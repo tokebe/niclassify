@@ -374,6 +374,36 @@ class StandardChecks:
         else:
             return True
 
+    def check_minimum_training_labels(self, data, cb=None):
+        """
+        Check that there are > 4 known samples for each label.
+
+        Calls callback if check fails.
+
+        4 samples per label is the minimum required for train/test split and
+        k-fold cross validation steps in training.
+
+        Hopefully the user never tries to use this few because that would be
+        one aweful classifier.
+
+        Args:
+            data (DataFrame): Data to check.
+            cb (function, optional): Function to call if chekc fails. Defaults to None.
+
+        Returns:
+            Bool: True if check passes, otherwise False.
+        """
+        fail_condition = any(
+            c < 4
+            for c in data[self.sp.class_column].value_counts().tolist()
+        )
+        if fail_condition:
+            if cb is not None:
+                cb()
+            return False
+        else:
+            return True
+
     def check_nan_taxon(self, data, cb=None):
         """
         Check if the given data null values in a given taxon split level.
