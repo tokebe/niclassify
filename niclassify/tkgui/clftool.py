@@ -23,6 +23,8 @@ from .datatool import DataPreparationTool
 from .wrappers import threaded, report_uncaught
 from .dialogs.dialog import DialogLibrary
 
+# TODO add any status updates that might be worthwhile
+
 
 class ClassifierTool(tk.Frame):
     """
@@ -65,8 +67,7 @@ class ClassifierTool(tk.Frame):
         except json.JSONDecodeError:
             messagebox.showerror(
                 title="Dialog Library Read Error",
-                message="Unable to read dialog lib, likely due to a formatting\
- error.\nProgram will exit."
+                message="Unable to read dialog lib, likely due to a formatting error.\nProgram will exit."
             )
             exit(-1)
 
@@ -125,6 +126,7 @@ class ClassifierTool(tk.Frame):
         )
         self.status_bar.pack(fill=tk.X)
 
+    @report_uncaught
     def check_enable_predictions(self):
         """
         Conditionally enable the predict button.
@@ -146,6 +148,7 @@ class ClassifierTool(tk.Frame):
         else:
             return False
 
+    @report_uncaught
     def check_warn_overwrite(self):
         """
         Check if action would (should) overwrite current data or classifier.
@@ -164,6 +167,7 @@ class ClassifierTool(tk.Frame):
         else:
             return True
 
+    @report_uncaught
     def enable_train(self, event):
         """
         Enable the train button.
@@ -174,6 +178,7 @@ class ClassifierTool(tk.Frame):
         self.sp.class_column = self.train_sec.known_select.get()
         self.train_sec.train_button.config(state=tk.ACTIVE)
 
+    @report_uncaught
     def get_data_file(self, internal=None):
         """
         Prompt the user for a file and update contents appropriately.
@@ -184,7 +189,8 @@ class ClassifierTool(tk.Frame):
         """
         # ----- threaded function -----
         @threaded
-        def _get_data_file(data_file):
+        @report_uncaught
+        def _get_data_file(self, data_file, on_finish=None):
             """
             Get data file information in a thread.
 
@@ -215,13 +221,7 @@ class ClassifierTool(tk.Frame):
                 ):
                     self.dlib.dialog(messagebox.showwarning, "EXCEL_READ_ERR")
 
-                    # re-enable loading data
-                    self.data_sec.load_data_button["state"] = tk.ACTIVE
-
-                    # stop status
-                    self.status_bar.set_status("Awaiting user input.")
-                    self.status_bar.progress.stop()
-                    self.status_bar.progress["mode"] = "determinate"
+                    on_finish()
                     return
 
                 # update sheet options for dropdown and prompt user to select
@@ -234,13 +234,7 @@ class ClassifierTool(tk.Frame):
                 self.sp.excel_sheet = sheets[0]
                 # self.get_sheet_cols(None)
 
-                # re-enable loading data
-                self.data_sec.load_data_button["state"] = tk.ACTIVE
-
-                # stop status
-                self.status_bar.set_status("Awaiting user input.")
-                self.status_bar.progress.stop()
-                self.status_bar.progress["mode"] = "determinate"
+                on_finish()
 
                 self.dlib.dialog(messagebox.showinfo, "EXCEL_DETECTED")
 
@@ -264,13 +258,7 @@ class ClassifierTool(tk.Frame):
                         TypeError, ValueError, csv.Error
                 ):
                     self.dlib.dialog(messagebox.showwarning, "FILE_READ_ERR")
-                    # re-enable loading data
-                    self.data_sec.load_data_button["state"] = tk.ACTIVE
-
-                    # stop status
-                    self.status_bar.set_status("Awaiting user input.")
-                    self.status_bar.progress.stop()
-                    self.status_bar.progress["mode"] = "determinate"
+                    on_finish()
                     return
 
                 # update column selections for known class labels
@@ -284,13 +272,7 @@ class ClassifierTool(tk.Frame):
                 # conditionally enable predicting
                 self.check_enable_predictions()
 
-                # re-enable loading data
-                self.data_sec.load_data_button["state"] = tk.ACTIVE
-
-                # stop status
-                self.status_bar.set_status("Awaiting user input.")
-                self.status_bar.progress.stop()
-                self.status_bar.progress["mode"] = "determinate"
+                on_finish()
         # ----- end threaded function -----
 
         # check if user is overwriting and ask if they're ok with it
@@ -338,9 +320,30 @@ class ClassifierTool(tk.Frame):
         # disable load data button so we don't get multiple
         self.data_sec.load_data_button["state"] = tk.DISABLED
 
-        # threaded portion of function
-        _get_data_file(data_file)
+        progress = ProgressPopup(
+            self,
+            "Reading File",
+            "Reading file..."
+        )
 
+        def finish(self, on_finish):
+            # re-enable loading data
+            self.data_sec.load_data_button["state"] = tk.ACTIVE
+
+            # stop status
+            self.status_bar.set_status("Awaiting user input.")
+            self.status_bar.progress.stop()
+            self.status_bar.progress["mode"] = "determinate"
+            on_finish()
+
+        # threaded portion of function
+        _get_data_file(
+            self,
+            data_file,
+            on_finish=lambda: finish(self, progress.complete)
+        )
+
+    @report_uncaught
     def get_selected_cols(self):
         """
         Get the currently selected feature columns.
@@ -359,6 +362,7 @@ class ClassifierTool(tk.Frame):
         # return to be useful
         return selected_cols
 
+    @report_uncaught
     def get_sheet_cols(self, event):
         """
         Get the columns for a given excel sheet when it is selected.
@@ -367,7 +371,8 @@ class ClassifierTool(tk.Frame):
         """
         # ---- threaded function -----
         @threaded
-        def _get_sheet_cols(sheet):
+        @report_uncaught
+        def _get_sheet_cols(self, sheet, on_finish=None):
             try:
                 column_names = pd.read_excel(
                     self.sp.data_file,
@@ -398,11 +403,7 @@ class ClassifierTool(tk.Frame):
 
             self.check_enable_predictions()
 
-            # reset status and re-enable sheet selection
-            self.status_bar.set_status("Awaiting user input.")
-            self.data_sec.excel_sheet_input["state"] = "readonly"
-            self.status_bar.progress["mode"] = "determinate"
-            self.status_bar.progress.stop()
+            on_finish()
         # ----- end threaded function -----
 
         # check if user is overwriting and make sure they're ok with it
@@ -430,9 +431,30 @@ class ClassifierTool(tk.Frame):
         self.status_bar.progress["mode"] = "indeterminate"
         self.status_bar.progress.start()
 
-        # launch thread to get columns
-        _get_sheet_cols(sheet)
+        progress = ProgressPopup(
+            self,
+            "Reading Excel File",
+            "Reading sheet..."
+        )
 
+        def finish(self, on_finish):
+            # reset status and re-enable sheet selection
+            self.status_bar.set_status("Awaiting user input.")
+            self.data_sec.excel_sheet_input["state"] = "readonly"
+            self.status_bar.progress["mode"] = "determinate"
+            self.status_bar.progress.stop()
+            on_finish()
+
+        # launch thread to get columns
+        _get_sheet_cols(
+            self,
+            sheet,
+            on_finish=lambda: finish(self, progress.complete)
+        )
+
+    # TODO: add and test report_uncaught decorator for everything after here
+
+    @report_uncaught
     def load_classifier(self):
         """
         Prompt the user to select a saved classifier and load it.
@@ -441,7 +463,8 @@ class ClassifierTool(tk.Frame):
         """
         # ----- threaded function -----
         @threaded
-        def _load_classifier(clf_file):
+        @report_uncaught
+        def _load_classifier(self, clf_file, on_finish=None):
             """
             Load the chosen classifier in a thread.
 
@@ -454,9 +477,7 @@ class ClassifierTool(tk.Frame):
             except (TypeError, KeyError):
                 self.dlib.dialog(
                     messagebox.showwarning, "INCOMPATIBLE_NOT_CLF")
-
-                self.status_bar.set_status("Awaiting user input.")
-                self.predict_sec.classifier_load["state"] = tk.ACTIVE
+                on_finish()
                 return
             except (OSError, IOError):
                 self.dlib.dialog(messagebox.showerror, "FILE_READ_ERR")
@@ -464,9 +485,7 @@ class ClassifierTool(tk.Frame):
             # reset controls and conditionally enable steps
             self.reset_controls(clf=True)
             self.check_enable_predictions()
-            # reset status and disabled button
-            self.status_bar.set_status("Awaiting user input.")
-            self.predict_sec.classifier_load["state"] = tk.ACTIVE
+            on_finish()
         # ----- end threaded function -----
 
         self.status_bar.set_status("Awaiting user file selection...")
@@ -493,9 +512,27 @@ class ClassifierTool(tk.Frame):
 
         # disable button while launching thread
         self.predict_sec.classifier_load["state"] = tk.DISABLED
-        # launch thread to load the classifier
-        _load_classifier(clf_file)
 
+        progress = ProgressPopup(
+            self,
+            "Loading Classifier",
+            "Unpacking file..."
+        )
+
+        def finish(self, on_finish):
+            # reset status and disabled button
+            self.status_bar.set_status("Awaiting user input.")
+            self.predict_sec.classifier_load["state"] = tk.ACTIVE
+            on_finish()
+
+        # launch thread to load the classifier
+        _load_classifier(
+            self,
+            clf_file,
+            on_finish=lambda: finish(self, progress.complete)
+        )
+
+    @report_uncaught
     def make_cm(self, features_known, class_labels):
         """
         Generate a confusion matrix graph and save to tempfile.
@@ -527,6 +564,7 @@ class ClassifierTool(tk.Frame):
             class_labels
         ).savefig(self.cm.name)
 
+    @report_uncaught
     def make_report(self):
         """
         Grab a report of the classifier training from the log.
@@ -570,6 +608,7 @@ class ClassifierTool(tk.Frame):
         # close the file so it's ready for open/copy
         self.report.close()
 
+    @report_uncaught
     def make_pairplot(self, features, predict):
         """Generate a pairplot and save to a tempfile.
 
@@ -607,6 +646,7 @@ class ClassifierTool(tk.Frame):
             predict
         ).savefig(self.pairplot.name)
 
+    @report_uncaught
     def make_predictions(self):
         """
         Make predictions and save to a tempfile.
@@ -615,7 +655,8 @@ class ClassifierTool(tk.Frame):
         """
         # ----- threaded function -----
         @threaded
-        def _make_predictions(on_finish, status_cb):
+        @report_uncaught
+        def _make_predictions(self, status_cb, on_finish=None):
             """
             Make predictions on data in a thread.
 
@@ -660,8 +701,6 @@ class ClassifierTool(tk.Frame):
                 # finish updating status
                 self.status_bar.progress["value"] = 100
                 time.sleep(0.2)
-                self.status_bar.progress["value"] = 0
-                self.status_bar.set_status("Awaiting user input.")
 
                 # call finisher function
                 on_finish()
@@ -704,8 +743,6 @@ class ClassifierTool(tk.Frame):
             # finish updating status
             self.status_bar.progress["value"] = 100
             time.sleep(0.2)
-            self.status_bar.progress["value"] = 0
-            self.status_bar.set_status("Awaiting user input.")
 
             self.dlib.dialog(
                 messagebox.showinfo,
@@ -745,11 +782,18 @@ class ClassifierTool(tk.Frame):
             ""
         )
 
+        def finish(self, on_finish):
+            self.status_bar.progress["value"] = 0
+            self.status_bar.set_status("Awaiting user input.")
+            on_finish()
+
         _make_predictions(
-            progress_popup.complete,
-            progress_popup.set_status
+            self,
+            progress_popup.set_status,
+            on_finish=lambda: finish(self, progress_popup.complete)
         )
 
+    @report_uncaught
     def open_data_tool(self):
         """Open the data preparation tool."""
         # make sure multiple instances can't open
@@ -758,16 +802,19 @@ class ClassifierTool(tk.Frame):
         self.data_win = DataPreparationTool(
             self, self, self.tempdir, self.util)
 
+    @report_uncaught
     def open_help(self):
         """Open User Manual document"""
         self.util.view_open_file(self.util.HELP_DOC)
 
+    @report_uncaught
     def open_nans(self):
         """Open a window to view and edit NaN values."""
         # test = tk.Toplevel(self.parent)
         self.data_sec.nan_check["state"] = tk.DISABLED
         NaNEditor(self, self)
 
+    @report_uncaught
     def open_output_folder(self):
         """
         Open the output folder for classifiers, logs, etc.
@@ -776,6 +823,7 @@ class ClassifierTool(tk.Frame):
         """
         self.util.view_open_file(os.path.join(self.util.USER_PATH))
 
+    @report_uncaught
     def reset_controls(self, clf=False):
         """
         Reset controls and stored data.
@@ -807,6 +855,7 @@ class ClassifierTool(tk.Frame):
         if not clf:
             self.predict_sec.reset_enabled()
 
+    @report_uncaught
     def save_classifier(self):
         """
         Save the current classifier to a location the user chooses.
@@ -815,18 +864,17 @@ class ClassifierTool(tk.Frame):
         """
         # ----- threaded function -----
         @threaded
-        def _save_classifier(location):
-            """Save the classifier to a given location in a thread.
+        @report_uncaught
+        def _save_classifier(self, location, on_finish=None):
+            """
+            Save the classifier to a given location in a thread.
 
             Args:
                 location (str): Path to the new file to save to.
             """
             # save the classifier
             dump(self.sp.clf, location)
-            # reset buttons and status
-            self.train_sec.classifier_save["state"] = tk.ACTIVE
-            self.status_bar.progress["mode"] = "determinate"
-            self.status_bar.progress.stop()
+            on_finish()
         # ----- end threaded function -----
 
         self.status_bar.set_status("Awaiting user save location...")
@@ -845,9 +893,17 @@ class ClassifierTool(tk.Frame):
 
         # disable button while launching thread
         self.train_sec.classifier_save["state"] = tk.DISABLED
-        # launch thread to save classifier
-        _save_classifier(location)
 
+        def finish(self):
+            # reset buttons and status
+            self.train_sec.classifier_save["state"] = tk.ACTIVE
+            self.status_bar.progress["mode"] = "determinate"
+            self.status_bar.progress.stop()
+
+        # launch thread to save classifier
+        _save_classifier(self, location, on_finish=lambda: finish(self))
+
+    @report_uncaught
     def save_item(self, item):
         """
         Save the chosen item (selected by str) to a user-designated place.
@@ -963,7 +1019,8 @@ class ClassifierTool(tk.Frame):
 
         # ----- threaded function -----
         @threaded
-        def _save_item(item, location):
+        @report_uncaught
+        def _save_item(self, item, location, on_finish=None):
             """
             Save the given item to the given location, in a thread.
 
@@ -994,9 +1051,7 @@ class ClassifierTool(tk.Frame):
                 except (OSError, IOError):
                     self.dlib.dialog(messagebox.showerror, "FILE_WRITE_ERR")
 
-            # reset buttons and status
-            buttons[item]["state"] = tk.ACTIVE
-            self.status_bar.set_status("Awaiting user input.")
+            on_finish()
         # ----- end threaded function -----
 
         self.status_bar.set_status("Awaiting user save location...")
@@ -1018,14 +1073,21 @@ class ClassifierTool(tk.Frame):
         self.status_bar.set_status("Saving {}...".format(item))
         buttons[item]["state"] = tk.DISABLED
 
-        # launch thread to save item
-        _save_item(item, location)
+        def finish(self):
+            # reset buttons and status
+            buttons[item]["state"] = tk.ACTIVE
+            self.status_bar.set_status("Awaiting user input.")
 
+        # launch thread to save item
+        _save_item(self, item, location, on_finish=lambda: finish(self))
+
+    @report_uncaught
     def save_nans(self):
         """Save nans value list to nans.json."""
         # ----- threaded function -----
         @threaded
-        def _save_nans():
+        @report_uncaught
+        def _save_nans(self, on_finish=None):
             """Save the NaN values to nans.json in a thread."""
             nans = self.sp.nans
             try:
@@ -1040,25 +1102,31 @@ class ClassifierTool(tk.Frame):
             except IOError:
                 self.dlib.dialog(messagebox.showerror, "NAN_DUMP_ERR")
 
-            # reset buttons and status
-            self.status_bar.set_status("Awaiting user input.")
-            self.data_sec.nan_check["state"] = tk.ACTIVE
+            on_finish()
         # ----- end threaded function -----
 
         # set status and disable button while launching thread
         self.status_bar.set_status("Saving NaN values...")
         self.data_sec.nan_check["state"] = tk.DISABLED
-        # launch thread to save NaN values
-        _save_nans()
 
+        def finish(self):
+            # reset buttons and status
+            self.status_bar.set_status("Awaiting user input.")
+            self.data_sec.nan_check["state"] = tk.ACTIVE
+
+        # launch thread to save NaN values
+        _save_nans(self, on_finish=lambda: finish(self))
+
+    @report_uncaught
     def uncaught_exception(self, error_trace, logfile):
         """Report uncaught exceptions to the user."""
         self.dlib.dialog(
             messagebox.showerror,
             "UNHANDLED_EXCEPTION",
-            form=(logfile,)
+            form=(logfile.replace("/", "\\"),)
         )
 
+    @report_uncaught
     def train_classifier(self):
         """
         Train a classifier with the given data.
@@ -1067,7 +1135,8 @@ class ClassifierTool(tk.Frame):
         """
         # ----- threaded function -----
         @threaded
-        def _train_classifier(on_finish, status_cb):
+        @report_uncaught
+        def _train_classifier(self, status_cb, on_finish=None):
             """
             Train the classifier in a thread.
 
@@ -1198,10 +1267,12 @@ class ClassifierTool(tk.Frame):
 
         # start threaded portion
         _train_classifier(
-            progress_popup.complete,
-            progress_popup.set_status
+            self,
+            progress_popup.set_status,
+            on_finish=progress_popup.complete
         )
 
+    @report_uncaught
     def view_item(self, item):
         """
         View an item using the system default.
