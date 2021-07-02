@@ -25,7 +25,8 @@ def threaded(func):
 
 
 def report_uncaught(func):
-    """Execute a function, catching and logging any uncaught exceptions.
+    """
+    Execute a function, catching and logging any uncaught exceptions.
 
     Calls back to class instance to handle reporting to user.
 
@@ -34,8 +35,13 @@ def report_uncaught(func):
     """
 
     def wrapper(self, *args, **kwargs):
+
+        # special handling for if a progress popup is blocking
+        special_callback = None
+        if "on_finish" in kwargs:
+            special_callback = kwargs["on_finish"]
         try:
-            func(self, *args, **kwargs)
+            return func(self, *args, **kwargs)
         except:
             error_trace = traceback.format_exc()
             logfile = os.path.join(
@@ -48,4 +54,7 @@ def report_uncaught(func):
                 error_log.write(error_trace)
 
             self.uncaught_exception(error_trace, logfile)
+            if special_callback is not None:
+                special_callback()
+
     return wrapper
