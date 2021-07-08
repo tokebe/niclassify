@@ -688,47 +688,66 @@ class StandardProgram:
 
         return logname
 
-    def split_by_taxon(self, taxon_split=None):
+    def split_by_taxon(self, taxon_split=None, create_align=False):
+        """
+        Split data by a given taxonomic level, craeting temporary files.
+
+        Args:
+            taxon_split (str, optional): Taxonomic level to split by.
+                Defaults to None.
+            create_align (bool, optional): Create empty files for alignments.
+                For use prior to the creation of alignment file.
+                Defaults to False.
+
+        Returns:
+            tuple: (filenames: str[], directory: str)
+        """
         if taxon_split is None:
             taxon_split = self.taxon_split
 
         pool_dir = tempfile.TemporaryDirectory()
 
-        # get each order and its corresponding samples
+        # get each taxon and its corresponding samples
         data = utilities.get_data(self.filtered_fname)
 
         # don't split if there is no split is selected
         if taxon_split == 0:
             taxons = {"all": data["UPID"].tolist()}
         else:
-            # checks either taxon match or isna if taxon level is na
+            # assign all rows where taxon matches
+            # if taxon is null, assign all rows with null taxon to that key
             # essentially just makes sure all taxons are handled
             taxons = {
-                str(taxon): (data[data[taxon_split] == taxon]
-                             if not pd.isnull(taxon)
-                             else data[data[taxon_split].isna()])
-                ["UPID"].tolist()
+                str(taxon): (
+                    data[data[taxon_split] == taxon]
+                    if not pd.isnull(taxon)
+                    else data[data[taxon_split].isna()]
+                )["UPID"].tolist()
                 for taxon in data[taxon_split].unique()
             }
+
+        # TODO create the blank files if create_align is True
 
         for taxon, pids in taxons.items():
             print("{}: {}".format(taxon, len(pids)))
         print()
         # print(taxons.keys())
 
-        # split alignment file according to taxon splits
-        with open(self.fasta_align_fname, "r") as file:
-            align = file.read()
+        if not create_align:
+            # split alignment file according to taxon splits
+            with open(self.fasta_align_fname, "r") as file:
+                align = file.read()
 
-        names = re.findall("(?<=>).*(?=\n)", align)
-        seqs = re.findall("(?<=\n)(\n|[^>]+)(?=\n)", align)
+            names = re.findall("(?<=>).*(?=\n)", align)
+            seqs = re.findall("(?<=\n)(\n|[^>]+)(?=\n)", align)
 
-        delims = None
+            delims = None
 
-        if os.stat(self.delim_fname).st_size > 0:
-            delims = utilities.get_data(self.delim_fname)
+            if os.stat(self.delim_fname).st_size > 0:
+                delims = utilities.get_data(self.delim_fname)
 
         # make temporary alignment and tree files, and write the alignments
+        # unless splitting for
         pool_files = []
         for taxon, pids in taxons.items():
             # ignore subsets of length 1
@@ -746,10 +765,11 @@ class StandardProgram:
                 dir=pool_dir.name
             )
 
-            for pid in pids:
-                if pid in names:  # in case seq in data but not in align
-                    align_file.write(">{}\n".format(pid))
-                    align_file.write("{}\n".format(seqs[names.index(pid)]))
+            if not create_align:
+                for pid in pids:
+                    if pid in names:  # in case seq in data but not in align
+                        align_file.write(">{}\n".format(pid))
+                        align_file.write("{}\n".format(seqs[names.index(pid)]))
 
             align_file.close()
 
