@@ -424,7 +424,7 @@ class StandardChecks:
 
     def check_nan_taxon(self, data, cb=None):
         """
-        Check if the given data null values in a given taxon split level.
+        Check if the given data has null values in a given taxon split level.
 
         Calls cb if null values are found.
 
@@ -434,7 +434,7 @@ class StandardChecks:
                 Defaults to None.
 
         Returns:
-            [type]: [description]
+            Bool: True if check passes, otherwise False or cb return.
         """
         # check if 'no split' has been selected
         if self.sp.taxon_split == 0:
@@ -544,7 +544,8 @@ class StandardChecks:
             return True
 
     def check_taxon_exists(self, data, cb=None):
-        """Check if a given taxonomic level exists in the data.
+        """
+        Check if a given taxonomic level exists in the data.
 
         Generally taxon levels are used for subsetting.
 
