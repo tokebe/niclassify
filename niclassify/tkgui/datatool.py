@@ -178,6 +178,20 @@ class DataPreparationTool(tk.Toplevel):
                 messagebox.showinfo, "ALIGNMENT_COMPLETE", parent=self)
         # ----- end threaded function -----
 
+        data = self.util.get_data(self.sequence_filtered.name)
+
+        # check if subsets of one will occur and warn user
+        if not self.app.sp.check.check_single_split(
+            data,
+            lambda: self.dlib.dialog(
+                messagebox.askokcancel,
+                "SINGLE_SPLIT",
+                form=(self.taxon_level_name,),
+                parent=self
+            )
+        ):
+            return
+
         # disable buttons by opening progress bar
         progress_popup = ProgressPopup(
             self,
@@ -968,6 +982,8 @@ class DataPreparationTool(tk.Toplevel):
             "Subfamily": "subfamily_name",
             "Genus": "genus_name"
         }
+
+        # TODO warn and drop files on taxon change
 
         self.taxon_level_name = self.data_sec.taxon_split_selector.get()
         self.taxon_level = levels[self.taxon_level_name]
