@@ -57,7 +57,7 @@
   },
   "ALIGN_MISMATCH": {
     "title": "Alignment Item Mismatch",
-    "message": "The given alignment contains sequence processid's which are not present in the primary data file.\nPlease ensure you have selected the correct alignment for the current data.\nprocessids missing:\n{}"
+    "message": "The given alignment contains sequence processid's which are not present in the primary data file.\nPlease ensure you have selected the correct alignment for the current data.\nA list of missing processid's has been saved to the following file:\n{}"
   },
   "PID_NOT_UNIQUE": {
     "title": "Non-Unique ProcessID",
@@ -77,10 +77,14 @@
   },
   "SINGLE_SPLIT": {
     "title": "Single-length split",
-    "message": "Splitting this data by {} will result in one or more subsets with only one sample.\nThe program cannot operate on sets of 1. It is recommended that you cancel operation and choose a broader taxonomic level.\nIf you wish to continue, subsets of 1 will be ignored (no features will be generated for those samples).\nSelect 'ok' to continue and ignore subsets of 1, or 'cancel' to cancel."
+    "message": "Splitting this data by {} will result in one or more subsets with only one sample.\nThe program cannot operate on sets of 1. It is recommended that you cancel operation and choose a broader taxonomic level.\nIf you wish to continue, subsets of 1 will be ignored (those samples will not be aligned/no features will be generated for those samples).\nSelect 'ok' to continue and ignore subsets of 1, or 'cancel' to cancel."
   },
   "RESERVED_COLUMNS": {
     "title": "Reserved column names",
     "message": "The chosen data has one or more columns using names reserved for the Sequence Data Tool (See 'Using the Sequence Data Tool' in the Manual).\nClicking 'Ok' will remove these columns from the data (your original file will not be changed). Clicking 'Cancel' will cancel the operation."
+  },
+  "TAXON_CHANGE": {
+    "title": "Potentially Incompatible Split Level",
+    "message": "The current alignment was generated splitting alignments by {}. Changing the split level now may cause errors during species delimitation. Clicking 'Ok' will confirm the change in taxonomic split level. It is recommended to generate a new alignment if you wish to continue after changing the split level."
   }
 }

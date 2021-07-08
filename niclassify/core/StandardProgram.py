@@ -174,14 +174,32 @@ def parallelize(df, func, n_cores=None):
     return df
 
 
+def mp_align(arg):
+
+    if os.stat(arg[5]).st_size == 0:  # empty alignment (for whatever reason)
+        return
+
+    try:
+        utilities.align_fasta(
+            arg[5],  # unaligned fasta
+            arg[1],  # alignment output
+            debug=False
+        )
+    except ChildProcessError:
+        raise ChildProcessError(arg[0] + " alignment")
+
+    if os.stat(arg[1]).st_size == 0:
+        raise ChildProcessError(arg[0])
+
+
 def mp_delim(arg):
 
     if os.stat(arg[1]).st_size == 0:  # empty alignment (for whatever reason)
         return
 
-    if arg[5] == "GMYC":
+    if arg[6] == "GMYC":
         delimit = utilities.delimit_species_GMYC
-    elif arg[5] == "bPTP":
+    elif arg[6] == "bPTP":
         delimit = utilities.delimit_species_bPTP
     else:
         raise KeyError("Specified delimitation method not found.")
@@ -406,7 +424,7 @@ class StandardChecks:
 
     def check_nan_taxon(self, data, cb=None):
         """
-        Check if the given data null values in a given taxon split level.
+        Check if the given data has null values in a given taxon split level.
 
         Calls cb if null values are found.
 
@@ -416,7 +434,7 @@ class StandardChecks:
                 Defaults to None.
 
         Returns:
-            [type]: [description]
+            Bool: True if check passes, otherwise False or cb return.
         """
         # check if 'no split' has been selected
         if self.sp.taxon_split == 0:
@@ -526,7 +544,8 @@ class StandardChecks:
             return True
 
     def check_taxon_exists(self, data, cb=None):
-        """Check if a given taxonomic level exists in the data.
+        """
+        Check if a given taxonomic level exists in the data.
 
         Generally taxon levels are used for subsetting.
 
@@ -625,7 +644,7 @@ class StandardProgram:
         # reference information
         self.req_cols = utilities.REQUIRED_COLUMNS
 
-    def align_fasta(self, debug=False):
+    def align_fasta(self, tax=None, debug=False):
         """
         Align the fasta file.
 
@@ -635,8 +654,24 @@ class StandardProgram:
         if not self.check.check_r_working():
             raise utilities.RNotFoundError("Rscript.exe not found")
 
-        utilities.align_fasta(
-            self.fasta_fname, self.fasta_align_fname, debug)
+        pool_files, pool_dir = self.split_by_taxon(
+            taxon_split=tax, create_align=True)
+
+        # align files, separated by taxonomic level
+        pool = Pool(
+            cpu_count() if cpu_count() > len(pool_files) else len(pool_files))
+        pool.map(mp_align, pool_files)
+
+        # make sure alignment is empty
+        open(self.fasta_align_fname, "w").close()
+
+        # merge resulting alignments into one file
+        with open(self.fasta_align_fname, "a") as merge_file:
+            for files in pool_files:
+                if os.stat(files[1]).st_size > 0:
+                    with open(files[1], "r") as part_file:
+                        part = part_file.read()
+                        merge_file.write(part)
 
         if os.stat(self.fasta_align_fname).st_size == 0:
             raise ChildProcessError("Sequence Alignment Failed")
@@ -688,47 +723,75 @@ class StandardProgram:
 
         return logname
 
-    def split_by_taxon(self, taxon_split=None):
+    def split_by_taxon(self, taxon_split=None, create_align=False):
+        """
+        Split data by a given taxonomic level, craeting temporary files.
+
+        Args:
+            taxon_split (str, optional): Taxonomic level to split by.
+                Defaults to None.
+            create_align (bool, optional): Create empty files for alignments.
+                For use prior to the creation of alignment file.
+                Defaults to False.
+
+        Returns:
+            tuple: (filenames: str[], directory: str)
+        """
         if taxon_split is None:
             taxon_split = self.taxon_split
 
         pool_dir = tempfile.TemporaryDirectory()
 
-        # get each order and its corresponding samples
+        # get each taxon and its corresponding samples
         data = utilities.get_data(self.filtered_fname)
 
         # don't split if there is no split is selected
         if taxon_split == 0:
             taxons = {"all": data["UPID"].tolist()}
         else:
-            # checks either taxon match or isna if taxon level is na
+            # assign all rows where taxon matches
+            # if taxon is null, assign all rows with null taxon to that key
             # essentially just makes sure all taxons are handled
             taxons = {
-                str(taxon): (data[data[taxon_split] == taxon]
-                             if not pd.isnull(taxon)
-                             else data[data[taxon_split].isna()])
-                ["UPID"].tolist()
+                str(taxon): (
+                    data[data[taxon_split] == taxon]
+                    if not pd.isnull(taxon)
+                    else data[data[taxon_split].isna()]
+                )["UPID"].tolist()
                 for taxon in data[taxon_split].unique()
             }
+
+        # TODO split unaligned fasta file
 
         for taxon, pids in taxons.items():
             print("{}: {}".format(taxon, len(pids)))
         print()
         # print(taxons.keys())
 
-        # split alignment file according to taxon splits
-        with open(self.fasta_align_fname, "r") as file:
-            align = file.read()
+        if not create_align:
+            # split alignment file according to taxon splits
+            with open(self.fasta_align_fname, "r") as file:
+                align = file.read()
 
-        names = re.findall("(?<=>).*(?=\n)", align)
-        seqs = re.findall("(?<=\n)(\n|[^>]+)(?=\n)", align)
+            names = re.findall("(?<=>).*(?=\n)", align)
+            seqs = re.findall("(?<=\n)(\n|[^>]+)(?=\n)", align)
+
+        else:
+            # split unaligned fasta
+            with open(self.fasta_fname, "r") as file:
+                fasta = file.read()
+
+            names = re.findall("(?<=>).*(?=\n)", fasta)
+            seqs = re.findall("(?<=\n)(\n|[^>]+)(?=\n)", fasta)
 
         delims = None
 
-        if os.stat(self.delim_fname).st_size > 0:
-            delims = utilities.get_data(self.delim_fname)
+        if not create_align:
+            if os.stat(self.delim_fname).st_size > 0:
+                delims = utilities.get_data(self.delim_fname)
 
         # make temporary alignment and tree files, and write the alignments
+        # unless splitting for
         pool_files = []
         for taxon, pids in taxons.items():
             # ignore subsets of length 1
@@ -737,6 +800,14 @@ class StandardProgram:
             if len(pids) < 2:
                 print("({}: subset of 1 ignored)".format(taxon))
                 continue
+
+            fasta_file = tempfile.NamedTemporaryFile(
+                mode="w+",
+                prefix="unaligned_{}_".format(taxon),
+                suffix=".fasta",
+                delete=False,
+                dir=pool_dir.name
+            )
 
             align_file = tempfile.NamedTemporaryFile(
                 mode="w+",
@@ -748,10 +819,15 @@ class StandardProgram:
 
             for pid in pids:
                 if pid in names:  # in case seq in data but not in align
-                    align_file.write(">{}\n".format(pid))
-                    align_file.write("{}\n".format(seqs[names.index(pid)]))
+                    if not create_align:
+                        align_file.write(">{}\n".format(pid))
+                        align_file.write("{}\n".format(seqs[names.index(pid)]))
+                    else:
+                        fasta_file.write(">{}\n".format(pid))
+                        fasta_file.write("{}\n".format(seqs[names.index(pid)]))
 
             align_file.close()
+            fasta_file.close()
 
             delim_file = tempfile.NamedTemporaryFile(
                 mode="w+",
@@ -791,7 +867,8 @@ class StandardProgram:
                     align_file.name,
                     tree_file.name,
                     delim_file.name,
-                    seq_features_file.name
+                    seq_features_file.name,
+                    fasta_file.name,
                 ]
             )
 
@@ -828,7 +905,8 @@ class StandardProgram:
         [utilities.clean_folder(path) for path in paths]
 
         # delimit species, separated by order
-        pool = Pool(len(pool_files))
+        pool = Pool(
+            cpu_count() if cpu_count() > len(pool_files) else len(pool_files))
         pool.map(mp_delim, pool_files)
 
         # merge resulting delimitations into one file and save

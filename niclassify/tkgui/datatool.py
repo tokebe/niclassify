@@ -27,6 +27,7 @@ from .wrappers import threaded, report_uncaught
 
 # TODO add any status updates that might be worthwhile
 
+
 class DataPreparationTool(tk.Toplevel):
     """A window for retrieving data from BOLD."""
 
@@ -58,6 +59,8 @@ class DataPreparationTool(tk.Toplevel):
         self.taxon_level_name = "Order"
         self.taxon_level = "order_name"
         self.app.sp.taxon_split = "order_name"
+
+        self.generated_alignment = False
 
         # tempdir for tempfiles
         self.tempdir = tempdir
@@ -117,19 +120,19 @@ class DataPreparationTool(tk.Toplevel):
                 status_cb (func): Callback function for status updates.
             """
             # prepare tempfile for aligned fasta
-            # self.fasta_align = tempfile.NamedTemporaryFile(
-            #     mode="w+",
-            #     prefix="aligned_fasta_",
-            #     suffix=".fasta",
-            #     delete=False,
-            #     dir=self.tempdir.name
-            # )
-            # self.fasta_align.close()
-            # self.app.sp.fasta_align_fname = self.fasta_align.name
+            self.fasta_align = tempfile.NamedTemporaryFile(
+                mode="w+",
+                prefix="aligned_fasta_",
+                suffix=".fasta",
+                delete=False,
+                dir=self.tempdir.name
+            )
+            self.fasta_align.close()
+            self.app.sp.fasta_align_fname = self.fasta_align.name
 
             # align the fasta file
             try:
-                self.app.sp.align_fasta(debug=False)
+                self.app.sp.align_fasta(tax=self.taxon_level, debug=False)
             except ChildProcessError:
                 self.dlib.dialog(
                     messagebox.showerror,
@@ -175,7 +178,46 @@ class DataPreparationTool(tk.Toplevel):
             # advise the user to check the alignment
             self.dlib.dialog(
                 messagebox.showinfo, "ALIGNMENT_COMPLETE", parent=self)
+
+            # note that the alignment was generated (for warnings)
+            self.generated_alignment = self.taxon_level_name
         # ----- end threaded function -----
+
+        data = self.util.get_data(self.sequence_filtered.name)
+
+        if not self.app.sp.check.check_taxon_exists(
+            data,
+            lambda: self.dlib.dialog(
+                messagebox.showerror,
+                "TAXON_NOT_PRESENT",
+                form=(self.taxon_level_name,),
+                parent=self
+            )
+        ):
+            return
+
+        if not self.app.sp.check.check_nan_taxon(
+            data,
+            lambda: self.dlib.dialog(
+                messagebox.askokcancel,
+                "NAN_TAXON",
+                form=(self.taxon_level_name,),
+                parent=self
+            )
+        ):
+            return
+
+        # check if subsets of one will occur and warn user
+        if not self.app.sp.check.check_single_split(
+            data,
+            lambda: self.dlib.dialog(
+                messagebox.askokcancel,
+                "SINGLE_SPLIT",
+                form=(self.taxon_level_name,),
+                parent=self
+            )
+        ):
+            return
 
         # disable buttons by opening progress bar
         progress_popup = ProgressPopup(
@@ -221,16 +263,16 @@ class DataPreparationTool(tk.Toplevel):
             self.fasta.close()
             self.app.sp.fasta_fname = self.fasta.name
 
-            # prepare tempfile for aligned fasta
-            self.fasta_align = tempfile.NamedTemporaryFile(
-                mode="w+",
-                prefix="aligned_fasta_",
-                suffix=".fasta",
-                delete=False,
-                dir=self.tempdir.name
-            )
-            self.fasta_align.close()
-            self.app.sp.fasta_align_fname = self.fasta_align.name
+            # # prepare tempfile for aligned fasta
+            # self.fasta_align = tempfile.NamedTemporaryFile(
+            #     mode="w+",
+            #     prefix="aligned_fasta_",
+            #     suffix=".fasta",
+            #     delete=False,
+            #     dir=self.tempdir.name
+            # )
+            # self.fasta_align.close()
+            # self.app.sp.fasta_align_fname = self.fasta_align.name
 
             # get request result tsv and prep it (filter + write fasta)
             self.app.sp.request_fname = self.last_entered_data
@@ -291,6 +333,19 @@ class DataPreparationTool(tk.Toplevel):
                 ("Tab-separated values", ".tsv"),
             ],
         }
+
+        if self.fasta_align is None:
+            # prepare tempfile for aligned fasta
+            self.fasta_align = tempfile.NamedTemporaryFile(
+                mode="w+",
+                prefix="aligned_fasta_",
+                suffix=".fasta",
+                delete=False,
+                dir=self.tempdir.name
+            )
+            self.fasta_align.close()
+            self.app.sp.fasta_align_fname = self.fasta_align.name
+
         tempfiles = {
             "alignment": self.fasta_align.name,
             "filtered": self.sequence_filtered.name,
@@ -323,16 +378,32 @@ class DataPreparationTool(tk.Toplevel):
                         # print("'{}' not found".format(name))
                         names_not_found.append(name)
 
+                missing = os.path.join(
+                    self.util.USER_PATH,
+                    "logs/missing_PIDs.log"
+                )
+
+                if os.path.exists(missing):
+                    os.remove(missing)
+
                 if len(names_not_found) > 0:
+                    open(missing, "w").close()
+
+                    with open(missing, "w") as error_log:
+                        error_log.write("\n".join(names_not_found))
+
                     self.dlib.dialog(
                         messagebox.showwarning,
                         "ALIGN_MISMATCH",
                         parent=self,
-                        form="\n".join(names_not_found)
+                        form=(missing.replace("/", "\\"),)
                     )
 
             # load file
             shutil.copy(alignfname, tempfiles[item])
+
+            # note that alignment was loaded (skips alignment split warning)
+            self.generated_alignment = False
 
             if on_finish is not None:
                 on_finish()
@@ -968,7 +1039,24 @@ class DataPreparationTool(tk.Toplevel):
             "Genus": "genus_name"
         }
 
-        self.taxon_level_name = self.data_sec.taxon_split_selector.get()
+        prev_tln = self.taxon_level_name
+        new_tln = self.data_sec.taxon_split_selector.get()
+
+        # if an alignment was already generated on this split level
+        if all([
+            self.fasta_align is not None,
+            self.generated_alignment is not False,
+            self.generated_alignment != new_tln
+        ]):
+            if not self.dlib.dialog(
+                    messagebox.askokcancel,
+                    "TAXON_CHANGE",
+                    form=(self.generated_alignment,)
+            ):
+                self.data_sec.taxon_split_selector.set(prev_tln)
+                return
+
+        self.taxon_level_name = new_tln
         self.taxon_level = levels[self.taxon_level_name]
         self.app.sp.taxon_split = self.taxon_level
 
