@@ -57,7 +57,7 @@
   },
   "ALIGN_MISMATCH": {
     "title": "Alignment Item Mismatch",
-    "message": "The given alignment contains sequence processid's which are not present in the primary data file.\nPlease ensure you have selected the correct alignment for the current data.\nprocessids missing:\n{}"
+    "message": "The given alignment contains sequence processid's which are not present in the primary data file.\nPlease ensure you have selected the correct alignment for the current data.\nA list of missing processid's has been saved to the following file:\n{}"
   },
   "PID_NOT_UNIQUE": {
     "title": "Non-Unique ProcessID",

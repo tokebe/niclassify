@@ -333,6 +333,19 @@ class DataPreparationTool(tk.Toplevel):
                 ("Tab-separated values", ".tsv"),
             ],
         }
+
+        if self.fasta_align is None:
+            # prepare tempfile for aligned fasta
+            self.fasta_align = tempfile.NamedTemporaryFile(
+                mode="w+",
+                prefix="aligned_fasta_",
+                suffix=".fasta",
+                delete=False,
+                dir=self.tempdir.name
+            )
+            self.fasta_align.close()
+            self.app.sp.fasta_align_fname = self.fasta_align.name
+
         tempfiles = {
             "alignment": self.fasta_align.name,
             "filtered": self.sequence_filtered.name,
@@ -365,12 +378,25 @@ class DataPreparationTool(tk.Toplevel):
                         # print("'{}' not found".format(name))
                         names_not_found.append(name)
 
+                missing = os.path.join(
+                    self.util.USER_PATH,
+                    "logs/missing_PIDs.log"
+                )
+
+                if os.path.exists(missing):
+                    os.remove(missing)
+
                 if len(names_not_found) > 0:
+                    open(missing, "w").close()
+
+                    with open(missing, "w") as error_log:
+                        error_log.write("\n".join(names_not_found))
+
                     self.dlib.dialog(
                         messagebox.showwarning,
                         "ALIGN_MISMATCH",
                         parent=self,
-                        form="\n".join(names_not_found)
+                        form=(missing.replace("/", "\\"),)
                     )
 
             # load file
