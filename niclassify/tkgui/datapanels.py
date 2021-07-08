@@ -138,6 +138,32 @@ class PreparationPanel(ttk.LabelFrame):
         )
         self.filter_button.pack(expand=True, fill=tk.X, padx=1, pady=1)
 
+        self.taxon_split_label = tk.Label(
+            self,
+            text="Taxonomic Split Level:"
+        )
+        self.taxon_split_label.pack(anchor=tk.W)
+
+        self.taxon_split_selector = ttk.Combobox(
+            self,
+            height=10,
+            state="readonly"
+        )
+        self.taxon_split_selector["values"] = (
+            "No Split",
+            "Phylum",
+            "Class",
+            "Order",
+            "Family",  # disabled as they generally result in too-small splits
+            "Subfamily",
+            "Genus"
+        )
+        self.taxon_split_selector.set("Order")
+        self.taxon_split_selector.pack(fill=tk.X)
+
+        self.taxon_split_selector.bind(
+            "<<ComboboxSelected>>", self.app.set_taxon_level)
+
         self.align_button = tk.Button(
             self,
             text="Align Sequences",
@@ -225,32 +251,6 @@ class PreparationPanel(ttk.LabelFrame):
         self.ref_geo_select["values"] = self.app.get_geographies()
         self.ref_geo_select.set("Continental US")
         self.ref_geo_select.pack(fill=tk.X)
-
-        self.taxon_split_label = tk.Label(
-            self,
-            text="Taxonomic Split Level:"
-        )
-        self.taxon_split_label.pack(anchor=tk.W)
-
-        self.taxon_split_selector = ttk.Combobox(
-            self,
-            height=10,
-            state="readonly"
-        )
-        self.taxon_split_selector["values"] = (
-            "No Split",
-            "Phylum",
-            "Class",
-            "Order",
-            "Family",  # disabled as they generally result in too-small splits
-            "Subfamily",
-            "Genus"
-        )
-        self.taxon_split_selector.set("Order")
-        self.taxon_split_selector.pack(fill=tk.X)
-
-        self.taxon_split_selector.bind(
-            "<<ComboboxSelected>>", self.app.set_taxon_level)
 
         self.data_prep = tk.Button(
             self,
