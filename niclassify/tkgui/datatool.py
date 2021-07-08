@@ -27,6 +27,7 @@ from .wrappers import threaded, report_uncaught
 
 # TODO add any status updates that might be worthwhile
 
+
 class DataPreparationTool(tk.Toplevel):
     """A window for retrieving data from BOLD."""
 
@@ -129,7 +130,7 @@ class DataPreparationTool(tk.Toplevel):
 
             # align the fasta file
             try:
-                self.app.sp.align_fasta(debug=False)
+                self.app.sp.align_fasta(tax=self.taxon_level, debug=False)
             except ChildProcessError:
                 self.dlib.dialog(
                     messagebox.showerror,
