@@ -291,8 +291,6 @@ class DataPreparationTool(tk.Toplevel):
                 on_finish()
         # ----- end threaded function -----
 
-        # TODO warn about overwrite if delimitation exists
-
         data = self.util.get_data(self.sequence_filtered.name)
 
         if not self.app.sp.check.check_taxon_exists(
@@ -561,8 +559,12 @@ class DataPreparationTool(tk.Toplevel):
             # check file actually reads
             try:
                 delim = self.util.get_data(delimfname)
-            except TypeError:
-                None  # TODO proper error, cancel
+            except (TypeError, ValueError):
+                self.dlib.dialog(
+                    messagebox.showerror,
+                    "INCOMPATIBLE_GENERIC",
+                    parent=self
+                )
                 on_finish()
                 return
 
@@ -573,7 +575,11 @@ class DataPreparationTool(tk.Toplevel):
             req_cols = ("Delim_spec", "sample_name")
             for col in req_cols:
                 if col not in delim.columns:
-                    None  # TODO proper error, cancel
+                    self.dlib.dialog(
+                        messagebox.showerror,
+                        "MISSING_REQUIRED_COLUMNS",
+                        parent=self
+                    )
                     on_finish()
                     return
 
