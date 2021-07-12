@@ -266,7 +266,7 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
         pd.DataFrame({
             "Delim_spec": species_expanded,
             "sample_name": samples_expanded
-        }).to_csv(outfname, sep="\t", index=False)
+        }).to_csv(outfname, index=False)
 
 
 def delimit_species_GMYC(infname, outtreefname, outfname, debug=False):
