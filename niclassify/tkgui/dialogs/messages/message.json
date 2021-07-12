@@ -9,7 +9,7 @@
     },
     "ALIGNMENT_COMPLETE": {
         "title": "Alignment Complete",
-        "message": "The sequence alignment is complete. \nIt is recommended that you review the alignment file and edit it as necessary.\nPlease load the new file after making any changes."
+    "message": "The sequence alignment is complete.\nIt is recommended that you review the alignment file and edit it as necessary.\nPlease load the new file after making any changes."
     },
     "MERGE_COMPLETE": {
         "title": "Merge Completed",
