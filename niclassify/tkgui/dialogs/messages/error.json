@@ -19,6 +19,10 @@
     "title": "Incompatible File",
     "message": "The chosen file is not a compatible AutoClassifier."
   },
+  "INCOMPATIBLE_GENERIC": {
+    "title": "Incompatible File",
+    "message": "The chosen file is not of a compatible format."
+  },
   "REPORT_GENERATE_ERR": {
     "title": "Report Log Error",
     "message": "Unable to generate report: logfile inaccessible."
