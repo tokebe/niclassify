@@ -223,7 +223,7 @@ def mp_delim(arg):
     # rename delims with order prefix
     delim = utilities.get_data(arg[3])
     delim["Delim_spec"] = arg[0] + delim["Delim_spec"].astype(str)
-    delim.to_csv(arg[3], sep="\t", index=False)
+    delim.to_csv(arg[3], index=False)
 
 
 def mp_ftgen(arg):
@@ -832,7 +832,7 @@ class StandardProgram:
             delim_file = tempfile.NamedTemporaryFile(
                 mode="w+",
                 prefix="delim_{}_".format(taxon),
-                suffix=".tsv",
+                suffix=".csv",
                 delete=False,
                 dir=pool_dir.name
             )
@@ -841,7 +841,7 @@ class StandardProgram:
             if delims is not None:
                 print(delims[delims["sample_name"].isin(pids)])
                 delims[delims["sample_name"].isin(pids)].to_csv(
-                    delim_file.name, sep="\t", index=False)
+                    delim_file.name, index=False)
 
             tree_file = tempfile.NamedTemporaryFile(
                 mode="w+",
@@ -920,7 +920,7 @@ class StandardProgram:
                     ignore_index=True,
                     sort=False
                 )
-        delim_merge.to_csv(self.delim_fname, sep="\t", index=False)
+        delim_merge.to_csv(self.delim_fname, index=False)
 
         pool_dir.cleanup()
 
