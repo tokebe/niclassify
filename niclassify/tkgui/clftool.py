@@ -922,7 +922,8 @@ class ClassifierTool(tk.Frame):
             "filtered_data": "Filtered Data",
             "raw_fasta": "Unaligned Fasta",
             "fasta_align": "Aligned Fasta",
-            "finalized": "Prepared Sequence Data"
+            "finalized": "Prepared Sequence Data",
+            "delimitation": "Delimitation File"
         }
         graphtypes = [("Portable Network Graphics image", ".png")]
         reportypes = [("Plain text file", ".txt")]
@@ -942,7 +943,8 @@ class ClassifierTool(tk.Frame):
             "filtered_data": outputtypes,
             "raw_fasta": fastatypes,
             "fasta_align": fastatypes,
-            "finalized": outputtypes
+            "finalized": outputtypes,
+            "delimitation": outputtypes
         }
         default_extensions = {
             "cm": ".png",
@@ -954,7 +956,8 @@ class ClassifierTool(tk.Frame):
             "filtered_data": ".csv",
             "raw_fasta": ".fasta",
             "fasta_align": ".fasta",
-            "finalized": ".csv"
+            "finalized": ".csv",
+            "delimitation": ".csv"
         }
         buttons = {
             "cm": self.train_sec.cm_sec.button_save,
@@ -983,6 +986,10 @@ class ClassifierTool(tk.Frame):
             ),
             "finalized": (
                 self.data_win.data_sec.final_save_button
+                if self.data_win is not None else None
+            ),
+            "delimitation": (
+                self.data_win.data_sec.delim_save_button
                 if self.data_win is not None else None
             )
         }
@@ -1013,6 +1020,10 @@ class ClassifierTool(tk.Frame):
             ),
             "finalized": (
                 self.data_win.finalized_data
+                if self.data_win is not None else None
+            ),
+            "delimitation": (
+                self.data_win.delim
                 if self.data_win is not None else None
             )
         }
