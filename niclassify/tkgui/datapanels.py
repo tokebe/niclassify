@@ -138,6 +138,29 @@ class PreparationPanel(ttk.LabelFrame):
         )
         self.filter_button.pack(expand=True, fill=tk.X, padx=1, pady=1)
 
+        self.row1 = tk.Frame(self)
+        self.row1.pack(expand=True, fill=tk.X)
+
+        self.filtered_sec = VS_Pair(
+            self.row1,
+            self.app,
+            lambda: self.app.app.view_item(self.app.sequence_filtered.name),
+            lambda: self.app.app.save_item("filtered_data"),
+            text="Filtered Data",
+            labelanchor=tk.N
+        )
+        self.filtered_sec.pack(side=tk.RIGHT, expand=True, fill=tk.X)
+
+        self.fasta_sec = VS_Pair(
+            self.row1,
+            self.app,
+            lambda: self.app.app.view_item(self.app.fasta.name),
+            lambda: self.app.app.save_item("raw_fasta"),
+            text="Raw .fasta",
+            labelanchor=tk.N
+        )
+        self.fasta_sec.pack(side=tk.RIGHT, expand=True, fill=tk.X)
+
         self.taxon_split_label = tk.Label(
             self,
             text="Taxonomic Split Level:"
@@ -196,35 +219,47 @@ class PreparationPanel(ttk.LabelFrame):
         self.align_save_button.pack(
             expand=True, fill=tk.X, side=tk.RIGHT, padx=1, pady=1)
 
-        self.row1 = tk.Frame(self)
-        self.row1.pack(expand=True, fill=tk.X)
-
-        self.filtered_sec = VS_Pair(
-            self.row1,
-            self.app,
-            lambda: self.app.app.view_item(self.app.sequence_filtered.name),
-            lambda: self.app.app.save_item("filtered_data"),
-            text="Filtered Data",
-            labelanchor=tk.N
-        )
-        self.filtered_sec.pack(side=tk.RIGHT, expand=True, fill=tk.X)
-
-        self.fasta_sec = VS_Pair(
-            self.row1,
-            self.app,
-            lambda: self.app.app.view_item(self.app.fasta.name),
-            lambda: self.app.app.save_item("raw_fasta"),
-            text="Raw .fasta",
-            labelanchor=tk.N
-        )
-        self.fasta_sec.pack(side=tk.RIGHT, expand=True, fill=tk.X)
-
         self.method_select_label = tk.Label(
             self,
             text="Species Delimitation Method:"
 
         )
         self.method_select_label.pack(anchor=tk.W)
+
+        self.delim_button = tk.Button(
+            self,
+            text="Delimit Species",
+            command=self.app.delim_species,
+            pady=5,
+            state=tk.DISABLED
+        )
+        self.delim_button.pack(expand=True, fill=tk.X, padx=1, pady=1)
+
+        self.delim_box = tk.Frame(
+            self
+        )
+        self.delim_box.pack(expand=True, fill=tk.X)
+
+        self.delim_load_button = tk.Button(
+            self.delim_box,
+            text="Load Edited Delimitation",
+            command=lambda: self.app.load_item("delimitation"),
+            state=tk.DISABLED
+        )
+        self.delim_load_button.pack(
+            expand=True, fill=tk.X, side=tk.RIGHT, padx=1, pady=1)
+
+        self.delim_save_button = tk.Button(
+            self.delim_box,
+            text="Save Delimitation For Editing",
+            command=lambda: self.app.app.save_item("delimitation"),
+            state=tk.DISABLED
+        )
+        self.delim_save_button.pack(
+            expand=True, fill=tk.X, side=tk.RIGHT, padx=1, pady=1)
+
+        self.row1 = tk.Frame(self)
+        self.row1.pack(expand=True, fill=tk.X)
 
         self.method_select = ttk.Combobox(
             self,
@@ -254,7 +289,7 @@ class PreparationPanel(ttk.LabelFrame):
 
         self.data_prep = tk.Button(
             self,
-            text="Prepare Data",
+            text="Generate Features and Lookup Statuses",
             command=self.app.prep_sequence_data,
             pady=5,
             state=tk.DISABLED

@@ -27,7 +27,7 @@
     "title": "Overwrite Warning",
     "message": "You've already loaded custom sequence data. Are you sure?"
   },
-  "INVALID_SEQUENCE_DATA": {
+  "MISSING_REQUIRED_COLUMNS": {
     "title": "Invalid data file",
     "message": "Selected data file does not contain required columns.\nPlease see help document for a list of required columns with exact names."
   },
@@ -86,5 +86,13 @@
   "TAXON_CHANGE": {
     "title": "Potentially Incompatible Split Level",
     "message": "The current alignment was generated splitting alignments by {}. Changing the split level now may cause errors during species delimitation. Clicking 'Ok' will confirm the change in taxonomic split level. It is recommended to generate a new alignment if you wish to continue after changing the split level."
+  },
+  "MISSING_PIDS": {
+    "title": "Delimitation Mismatch",
+    "message": "The chosen delimitation is lacking one or more sequence processid's which are present in the primary data file. These sequences will not have features generated in the final data.\nPlease ensure you have selected the correct delimitation for the current data.\nA list of missing processid's has been saved to the following file:\n{}"
+  },
+  "EXTRA_PIDS": {
+    "title": "Delimitation Mismatch",
+    "message": "The chosen delimitation contains sequence processid's which are not present in the primary data file.\nPlease ensure you have selected the correct delimitation for the current data.\nA list of extra processid's has been saved to the following file:\n{}"
   }
 }

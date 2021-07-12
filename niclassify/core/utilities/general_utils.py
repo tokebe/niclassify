@@ -174,25 +174,9 @@ def get_data(filename, excel_sheet=None):
                 # engine="python"
             )
 
-    elif ".csv" in os.path.splitext(filename)[1]:  # using csv
-        raw_data = pd.read_csv(
-            filename,
-            na_values=NANS,
-            keep_default_na=True,
-            engine="python"
-        )
-
-    elif ".tsv" in os.path.splitext(filename)[1]:  # using tsv
-        raw_data = pd.read_csv(
-            filename,
-            na_values=NANS,
-            keep_default_na=True,
-            sep="\t",
-            engine="python"
-        )
-
-    # using txt; must figure out delimiter
-    elif ".txt" in os.path.splitext(filename)[1]:
+    elif (os.path.splitext(filename)[1] in [".csv", ".tsv", ".txt"]):
+        # use python engine to guess separator each time
+        # because who trusts file extensions?
         raw_data = pd.read_csv(
             filename,
             na_values=NANS,
@@ -200,6 +184,7 @@ def get_data(filename, excel_sheet=None):
             sep=None,
             engine="python"
         )
+
     else:  # invalid extension
         raise TypeError(
             "data file type is unsupported, or file extension not included")

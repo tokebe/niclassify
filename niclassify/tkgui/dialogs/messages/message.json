@@ -1,46 +1,50 @@
 {
-    "EXCEL_DETECTED": {
-        "title": "Excel Sheet Detected",
-        "message": "You will have to specify the sheet to proceed."
-    },
-    "NO_DEFAULT_PROGRAM": {
-        "title": "No Default Program",
-        "message": "The file could not be opened becase there is no default program associated with the filetype <{}>. \nAn explorer window with the file selected will be opened so you may select a program."
-    },
-    "ALIGNMENT_COMPLETE": {
-        "title": "Alignment Complete",
-        "message": "The sequence alignment is complete. \nIt is recommended that you review the alignment file and edit it as necessary.\nPlease load the new file after making any changes."
-    },
-    "MERGE_COMPLETE": {
-        "title": "Merge Completed",
-        "message": "Data merged successfully."
-    },
-    "DATA_PREP_COMPLETE": {
-        "title": "Data Preparation Complete",
-        "message": "{} observations were classified by online lookup.\nData is ready for use with classifier tool."
-    },
-    "BOLD_SEARCH_COMPLETE": {
-        "title": "BOLD Lookup Complete",
-        "message": "BOLD lookup returned {} observations."
-    },
-    "CONFIRM_SEARCH_TERMS": {
-        "title": "Confirm Search Terms",
-        "message": "Please confirm the search terms:\nGeography: {} \nTaxonomy: {}"
-    },
-    "EXISTING_MERGE_BOLD": {
-        "title": "Existing Merged Data",
-        "message": "Merged data already exists. \nDo you wish to merge additional data? Selecting 'No' will Merge current BOLD results with the previous BOLD lookup, overwriting any currently merged data."
-    },
-    "EXISTING_MERGE_USER": {
-        "title": "Existing Merged Data",
-        "message": "Merged data already exists. \nDo you wish to merge additional data? Selecting 'No' will Merge current user data with BOLD data, overwriting any curerntly merged data."
-    },
-    "TRAIN_COMPLETE": {
-        "title": "Classifier Training Complete",
-        "message": "The classifier has finished training.\nPlease review the report and confusion matrix to verify the applicability of this model."
-    },
-    "PREDICT_COMPLETE": {
-        "title": "Prediction Complete",
-        "message": "The classifier has finished making predictions on the data."
-    }
+  "EXCEL_DETECTED": {
+    "title": "Excel Sheet Detected",
+    "message": "You will have to specify the sheet to proceed."
+  },
+  "NO_DEFAULT_PROGRAM": {
+    "title": "No Default Program",
+    "message": "The file could not be opened because there is no default program associated with the filetype <{}>. \nAn explorer window with the file selected will be opened so you may select a program."
+  },
+  "ALIGNMENT_COMPLETE": {
+    "title": "Alignment Complete",
+    "message": "The sequence alignment is complete.\nIt is recommended that you review the alignment file and edit it as necessary.\nPlease load the new file after making any changes."
+  },
+  "DELIM_COMPLETE": {
+    "title": "Delimitation Complete",
+    "message": "The species delimitation is complete!"
+  },
+  "MERGE_COMPLETE": {
+    "title": "Merge Completed",
+    "message": "Data merged successfully."
+  },
+  "DATA_PREP_COMPLETE": {
+    "title": "Data Preparation Complete",
+    "message": "{} observations were classified by online lookup.\nData is ready for use with classifier tool."
+  },
+  "BOLD_SEARCH_COMPLETE": {
+    "title": "BOLD Lookup Complete",
+    "message": "BOLD lookup returned {} observations."
+  },
+  "CONFIRM_SEARCH_TERMS": {
+    "title": "Confirm Search Terms",
+    "message": "Please confirm the search terms:\nGeography: {} \nTaxonomy: {}"
+  },
+  "EXISTING_MERGE_BOLD": {
+    "title": "Existing Merged Data",
+    "message": "Merged data already exists. \nDo you wish to merge additional data? Selecting 'No' will Merge current BOLD results with the previous BOLD lookup, overwriting any currently merged data."
+  },
+  "EXISTING_MERGE_USER": {
+    "title": "Existing Merged Data",
+    "message": "Merged data already exists. \nDo you wish to merge additional data? Selecting 'No' will Merge current user data with BOLD data, overwriting any curerntly merged data."
+  },
+  "TRAIN_COMPLETE": {
+    "title": "Classifier Training Complete",
+    "message": "The classifier has finished training.\nPlease review the report and confusion matrix to verify the applicability of this model."
+  },
+  "PREDICT_COMPLETE": {
+    "title": "Prediction Complete",
+    "message": "The classifier has finished making predictions on the data."
+  }
 }

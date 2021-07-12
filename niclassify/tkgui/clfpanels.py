@@ -372,7 +372,7 @@ class TrainPanel(OperationsPanel):
             to=float('inf'),
             validate="all",
             validatecommand=validate_input)
-        self.n_input.set(1000)
+        self.n_input.set(100)
         self.n_input.pack(fill=tk.X)
 
         # button to train the classifier

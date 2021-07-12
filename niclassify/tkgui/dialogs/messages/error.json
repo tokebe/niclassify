@@ -19,6 +19,10 @@
     "title": "Incompatible File",
     "message": "The chosen file is not a compatible AutoClassifier."
   },
+  "INCOMPATIBLE_GENERIC": {
+    "title": "Incompatible File",
+    "message": "The chosen file is not of a compatible format."
+  },
   "REPORT_GENERATE_ERR": {
     "title": "Report Log Error",
     "message": "Unable to generate report: logfile inaccessible."
@@ -65,7 +69,7 @@
   },
   "R_SCRIPT_FAILED": {
     "title": "R Script Error",
-    "message": "the operation could not be completed due to an error in the relevant R script.\nPlease register an issue on the repository stating that the R script failed during the step you were trying to complete."
+    "message": "The operation could not be completed due to an error in the relevant R script.\nPlease register an issue on the repository stating that the R script failed during the step you were trying to complete."
   },
   "RESPONSE_DECODE_ERR": {
     "title": "Response Decode Error",
@@ -74,5 +78,17 @@
   "UNHANDLED_EXCEPTION": {
     "title": "Unhandled Exception Caught",
     "message": "An unhandled exception has occurred. A traceback has been saved to the following file:\n{}.\n\nAs uncaught exceptions may lead to unexpected behavior, it is recommended you save any progress possible and re-launch the program."
+  },
+  "EMPTY_FILE": {
+    "title": "Empty File",
+    "message": "The chosen file is empty. Please select a non-empty file."
+  },
+  "INVALID_DELIM": {
+    "title": "Invalid Delimitation",
+    "message": "The selected delimitation file contains duplicate assignments for one or more samples. Please check the file and try again."
+  },
+  "DELIM_MISSING_ENTRIES": {
+    "title": "Blank Entries",
+    "message": "The chosen delimitation file has one or more blank entries. Please check the file and try again."
   }
 }

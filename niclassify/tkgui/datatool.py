@@ -165,12 +165,9 @@ class DataPreparationTool(tk.Toplevel):
             self.data_sec.align_load_button["state"] = tk.ACTIVE
             self.data_sec.align_save_button["state"] = tk.ACTIVE
 
-            # enable other saving buttons
-            self.data_sec.filtered_sec.enable_buttons()
-            self.data_sec.fasta_sec.enable_buttons()
-
             # enable next step
-            self.data_sec.data_prep["state"] = tk.ACTIVE
+            self.data_sec.delim_button["state"] = tk.ACTIVE
+            self.data_sec.delim_load_button["state"] = tk.ACTIVE
 
             if on_finish is not None:
                 on_finish()
@@ -234,6 +231,116 @@ class DataPreparationTool(tk.Toplevel):
         )
 
     @report_uncaught
+    def delim_species(self):
+        """Delimit Species, splitting by taxonomic level."""
+        # ----- threaded function -----
+
+        def _delim_species(self, status_cb, on_finish=None):
+            data = self.util.get_data(self.sequence_filtered.name)
+
+            method = self.data_sec.method_select.get()
+
+            # create delim tempfile
+            self.delim = tempfile.NamedTemporaryFile(
+                mode="w+",
+                prefix="species_delim_",
+                suffix=".csv",
+                delete=False,
+                dir=self.tempdir.name
+            )
+            self.delim.close()
+            self.app.sp.delim_fname = self.delim.name
+
+            # delimit the species
+            print("DELIMITING SPECIES...")
+            try:
+                self.app.sp.delimit_species(
+                    method, tax=self.taxon_level, debug=False)
+            except (ChildProcessError, FileNotFoundError, IndexError) as err:
+                self.dlib.dialog(
+                    messagebox.showerror,
+                    "DELIM_ERR",
+                    form=(self.taxon_level_name, str(err)),
+                    parent=self
+                )
+                if on_finish is not None:
+                    on_finish()
+                return
+            except self.util.RScriptFailedError:
+                self.dlib.dialog(
+                    messagebox.showerror,
+                    "R_SCRIPT_FAILED",
+                    parent=self
+                )
+                if on_finish is not None:
+                    on_finish()
+                return
+
+            # note that alignment was loaded (skips alignment split warning)
+            self.generated_delim = True
+
+            # enable buttons
+            self.data_sec.data_prep["state"] = tk.ACTIVE
+            self.data_sec.delim_save_button["state"] = tk.ACTIVE
+
+            # advise the user to check the delimitation
+            self.dlib.dialog(
+                messagebox.showinfo, "DELIM_COMPLETE", parent=self)
+
+            if on_finish is not None:
+                on_finish()
+        # ----- end threaded function -----
+
+        data = self.util.get_data(self.sequence_filtered.name)
+
+        if not self.app.sp.check.check_taxon_exists(
+            data,
+            lambda: self.dlib.dialog(
+                messagebox.showerror,
+                "TAXON_NOT_PRESENT",
+                form=(self.taxon_level_name,),
+                parent=self
+            )
+        ):
+            return
+
+        if not self.app.sp.check.check_nan_taxon(
+            data,
+            lambda: self.dlib.dialog(
+                messagebox.askokcancel,
+                "NAN_TAXON",
+                form=(self.taxon_level_name,),
+                parent=self
+            )
+        ):
+            return
+
+        if not self.app.sp.check.check_single_split(
+            data,
+            lambda: self.dlib.dialog(
+                messagebox.askokcancel,
+                "SINGLE_SPLIT",
+                form=(self.taxon_level_name,),
+                parent=self
+            )
+        ):
+            return
+
+        # make popup to keep user from pressing buttons and breaking it
+        progress = ProgressPopup(
+            self,
+            "Data Preparation",
+            "Delimiting species..."
+        )
+
+        # run time-consuming items in thread
+        _delim_species(
+            self,
+            progress.set_status,
+            on_finish=progress.complete
+        )
+
+    @report_uncaught
     def filter_seq_data(self):
         """Filter Sequence Data"""
         # ----- threaded function -----
@@ -287,6 +394,10 @@ class DataPreparationTool(tk.Toplevel):
             self.data_sec.align_button["state"] = tk.ACTIVE
             self.data_sec.align_load_button["state"] = tk.ACTIVE
 
+            # enable other saving buttons
+            self.data_sec.filtered_sec.enable_buttons()
+            self.data_sec.fasta_sec.enable_buttons()
+
             if on_finish is not None:
                 on_finish()
         # ----- end threaded function -----
@@ -320,18 +431,18 @@ class DataPreparationTool(tk.Toplevel):
         Args:
             item (str): key for which item to load.
         """
+
+        table = [
+            ("All files", ".*"),
+            ("Comma-separated values", ".csv"),
+            ("Tab-separated values", ".tsv"),
+        ]
+
         filetypes = {
             "alignment": [("FASTA formatted sequence data", ".fasta")],
-            "filtered": [
-                ("All files", ".*"),
-                ("Comma-separated values", ".csv"),
-                ("Tab-separated values", ".tsv"),
-            ],
-            "finalized": [
-                ("All files", ".*"),
-                ("Comma-separated values", ".csv"),
-                ("Tab-separated values", ".tsv"),
-            ],
+            "filtered": table,
+            "finalized": table,
+            "delimitation": table,
         }
 
         if self.fasta_align is None:
@@ -346,11 +457,28 @@ class DataPreparationTool(tk.Toplevel):
             self.fasta_align.close()
             self.app.sp.fasta_align_fname = self.fasta_align.name
 
+        if self.delim is None and item == "delimitation":
+            # create delim tempfile
+            self.delim = tempfile.NamedTemporaryFile(
+                mode="w+",
+                prefix="species_delim_",
+                suffix=".csv",
+                delete=False,
+                dir=self.tempdir.name
+            )
+            self.delim.close()
+            self.app.sp.delim_fname = self.delim.name
+
         tempfiles = {
             "alignment": self.fasta_align.name,
             "filtered": self.sequence_filtered.name,
-            "finalized": (self.finalized_data.name
-                          if self.finalized_data is not None else None)
+            "finalized": (
+                self.finalized_data.name
+                if self.finalized_data is not None else None
+            ),
+            "delimitation": (
+                self.delim.name if self.delim is not None else None
+            )
         }
         # ----- threaded function -----
 
@@ -367,37 +495,37 @@ class DataPreparationTool(tk.Toplevel):
                 for line in file.readlines():
                     names.extend(re.findall("(?<=>).*(?=\n)", line))
 
-                # print(names)
+            # print(names)
 
-                names_not_found = []
+            names_not_found = []
 
-                status_cb("Checking sample UPIDs...")
+            status_cb("Checking sample UPIDs...")
 
-                for name in names:
-                    if name not in data["UPID"].unique():
-                        # print("'{}' not found".format(name))
-                        names_not_found.append(name)
+            for name in names:
+                if name not in data["UPID"].unique():
+                    # print("'{}' not found".format(name))
+                    names_not_found.append(name)
 
-                missing = os.path.join(
-                    self.util.USER_PATH,
-                    "logs/missing_PIDs.log"
+            missing = os.path.join(
+                self.util.USER_PATH,
+                "logs/missing_PIDs.log"
+            )
+
+            if os.path.exists(missing):
+                os.remove(missing)
+
+            if len(names_not_found) > 0:
+                open(missing, "w").close()
+
+                with open(missing, "w") as error_log:
+                    error_log.write("\n".join(names_not_found))
+
+                self.dlib.dialog(
+                    messagebox.showwarning,
+                    "ALIGN_MISMATCH",
+                    parent=self,
+                    form=(missing.replace("/", "\\"),)
                 )
-
-                if os.path.exists(missing):
-                    os.remove(missing)
-
-                if len(names_not_found) > 0:
-                    open(missing, "w").close()
-
-                    with open(missing, "w") as error_log:
-                        error_log.write("\n".join(names_not_found))
-
-                    self.dlib.dialog(
-                        messagebox.showwarning,
-                        "ALIGN_MISMATCH",
-                        parent=self,
-                        form=(missing.replace("/", "\\"),)
-                    )
 
             # load file
             shutil.copy(alignfname, tempfiles[item])
@@ -409,6 +537,148 @@ class DataPreparationTool(tk.Toplevel):
                 on_finish()
 
         # ----- end threaded function -----
+
+        # ----- threaded function -----
+
+        @threaded
+        @report_uncaught
+        def _load_delim(self, delimfname, status_cb, on_finish=None):
+            # load raw data to check alignment against
+            data = self.util.get_data(self.sequence_filtered.name)
+
+            # check chosen file is not empty
+            if os.stat(delimfname).st_size == 0:
+                self.dlib.dialog(
+                    messagebox.showwarning,
+                    "EMPTY_FILE",
+                    parent=self
+                )
+                on_finish()
+                return
+
+            # check file actually reads
+            try:
+                delim = self.util.get_data(delimfname)
+            except (TypeError, ValueError):
+                self.dlib.dialog(
+                    messagebox.showerror,
+                    "INCOMPATIBLE_GENERIC",
+                    parent=self
+                )
+                on_finish()
+                return
+
+            missing_upids = []
+            extra_upids = []
+
+            # check file has valid columns
+            req_cols = ("Delim_spec", "sample_name")
+            for col in req_cols:
+                if col not in delim.columns:
+                    self.dlib.dialog(
+                        messagebox.showerror,
+                        "MISSING_REQUIRED_COLUMNS",
+                        parent=self
+                    )
+                    on_finish()
+                    return
+
+            # Get a list of pids which are ignored due to single split
+            # These don't need to be in the delimitation
+            ignored = (
+                data
+                .groupby(self.taxon_level)
+                .filter(lambda g: len(g) == 1)["UPID"]
+                .tolist()
+            )
+            # check if each upid from data is in user delim
+            for upid in data["UPID"].values:
+                if upid not in delim["sample_name"].values:
+                    if upid not in ignored:
+                        missing_upids.append(upid)
+            # check if each upid in user delim is in data
+            for name in delim["sample_name"].values:
+                if name not in data["UPID"].values:
+                    extra_upids.append(name)
+            # make sure nothing appears more than once
+            counts = delim["sample_name"].value_counts()
+            if sum(counts) != len(counts):
+                self.dlib.dialog(
+                    messagebox.showwarning,
+                    "INVALID_DELIM",
+                    parent=self
+                )
+                on_finish()
+                return
+            # ensure no empty entries
+            if delim.isnull().values.any():
+                self.dlib.dialog(
+                    messagebox.showwarning,
+                    "DELIM_MISSING_ENTRIES",
+                    parent=self
+                )
+                on_finish()
+                return
+
+            missing = os.path.join(
+                self.util.USER_PATH,
+                "logs/missing_PIDs.log"
+            )
+
+            if os.path.exists(missing):
+                os.remove(missing)
+
+            extra = os.path.join(
+                self.util.USER_PATH,
+                "logs/extra_PIDs.log"
+            )
+
+            if os.path.exists(extra):
+                os.remove(extra)
+
+            # if any pids are missing warn user and cancel load
+            if len(missing_upids) > 0:
+                open(missing, "w").close()
+
+                with open(missing, "w") as error_log:
+                    error_log.write("\n".join(missing_upids))
+
+                self.dlib.dialog(
+                    messagebox.showwarning,
+                    "MISSING_PIDS",
+                    parent=self,
+                    form=(missing.replace("/", "\\"),)
+                )
+                # on_finish()
+                # return
+
+            # if any pids are not in data warn user and cancel load
+            if len(extra_upids) > 0:
+                open(extra, "w").close()
+
+                with open(extra, "w") as error_log:
+                    error_log.write("\n".join(extra_upids))
+
+                self.dlib.dialog(
+                    messagebox.showwarning,
+                    "EXTRA_PIDS",
+                    parent=self,
+                    form=(extra.replace("/", "\\"),)
+                )
+                # on_finish()
+                # return
+
+            # load file
+            shutil.copy(delimfname, tempfiles[item])
+
+            # note that delim was loaded (skips delim split warning)
+            self.generated_delim = False
+
+            if on_finish is not None:
+                on_finish()
+
+        # ----- end threaded function -----
+
         self.app.status_bar.set_status("Awaiting user file selection...")
 
         # prompt the user for the classifier file
@@ -436,17 +706,41 @@ class DataPreparationTool(tk.Toplevel):
 
             def finish(self, on_finish):  # specify self for report_uncaught
                 self.data_sec.align_load_button["state"] = tk.ACTIVE
-                self.data_sec.data_prep["state"] = tk.ACTIVE
+                # enable next step
+                self.data_sec.delim_button["state"] = tk.ACTIVE
+                self.data_sec.delim_load_button["state"] = tk.ACTIVE
                 self.app.status_bar.set_status("Awaiting user input.")
                 on_finish()
 
-            # enable next step
             _load_alignment(
                 self,
                 file,
                 progress.set_status,
                 on_finish=lambda: finish(self, progress.complete)
             )
+        elif item == "delimitation":
+            self.data_sec.delim_load_button["state"] = tk.DISABLED
+
+            progress = ProgressPopup(
+                self,
+                "Reading Delimitation",
+                "Reading file..."
+            )
+
+            def finish(self, on_finish):  # specify self for report_uncaught
+                self.data_sec.delim_load_button["state"] = tk.ACTIVE
+                # enable next step
+                self.data_sec.data_prep["state"] = tk.ACTIVE
+                self.app.status_bar.set_status("Awaiting user input.")
+                on_finish()
+
+            _load_delim(
+                self,
+                file,
+                progress.set_status,
+                on_finish=lambda: finish(self, progress.complete)
+            )
+
         else:
             # overwrite the alignment file
             shutil.copy(file, tempfiles[item])
@@ -505,7 +799,7 @@ class DataPreparationTool(tk.Toplevel):
         if not self.app.sp.check.check_required_columns(
             data,
             lambda: self.dlib.dialog(
-                messagebox.showwarning, "INVALID_SEQUENCE_DATA", parent=self)
+                messagebox.showwarning, "MISSING_REQUIRED_COLUMNS", parent=self)
         ):
             self.app.status_bar.set_status("Awaiting user input.")
             return
@@ -545,6 +839,7 @@ class DataPreparationTool(tk.Toplevel):
         self.data_sec.align_button["state"] = tk.DISABLED
         self.data_sec.align_load_button["state"] = tk.DISABLED
         self.data_sec.align_save_button["state"] = tk.DISABLED
+        self.data_sec.delim_button["state"] = tk.DISABLED
         self.data_sec.data_prep["state"] = tk.DISABLED
         self.data_sec.use_data_button["state"] = tk.DISABLED
         self.data_sec.final_load_button["state"] = tk.DISABLED
@@ -632,6 +927,7 @@ class DataPreparationTool(tk.Toplevel):
             self.data_sec.align_button["state"] = tk.DISABLED
             self.data_sec.align_load_button["state"] = tk.DISABLED
             self.data_sec.align_save_button["state"] = tk.DISABLED
+            self.data_sec.delim_button["state"] = tk.DISABLED
             self.data_sec.data_prep["state"] = tk.DISABLED
             self.data_sec.use_data_button["state"] = tk.DISABLED
             self.data_sec.final_load_button["state"] = tk.DISABLED
@@ -677,20 +973,20 @@ class DataPreparationTool(tk.Toplevel):
         @threaded
         @report_uncaught
         def _prep_sequence_data(self, status_cb, on_finish=None):
-            data = self.util.get_data(self.sequence_filtered.name)
+            # data = self.util.get_data(self.sequence_filtered.name)
 
-            method = self.data_sec.method_select.get()
+            # method = self.data_sec.method_select.get()
 
-            # create delim tempfile
-            self.delim = tempfile.NamedTemporaryFile(
-                mode="w+",
-                prefix="species_delim_",
-                suffix=".tsv",
-                delete=False,
-                dir=self.tempdir.name
-            )
-            self.delim.close()
-            self.app.sp.delim_fname = self.delim.name
+            # # create delim tempfile
+            # self.delim = tempfile.NamedTemporaryFile(
+            #     mode="w+",
+            #     prefix="species_delim_",
+            #     suffix=".tsv",
+            #     delete=False,
+            #     dir=self.tempdir.name
+            # )
+            # self.delim.close()
+            # self.app.sp.delim_fname = self.delim.name
 
             self.seq_features = tempfile.NamedTemporaryFile(
                 mode="w+",
@@ -712,30 +1008,30 @@ class DataPreparationTool(tk.Toplevel):
             self.finalized_data.close()
             self.app.sp.finalized_fname = self.finalized_data.name
 
-            # delimit the species
-            print("DELIMITING SPECIES...")
-            try:
-                self.app.sp.delimit_species(
-                    method, tax=self.taxon_level, debug=False)
-            except (ChildProcessError, FileNotFoundError, IndexError) as err:
-                self.dlib.dialog(
-                    messagebox.showerror,
-                    "DELIM_ERR",
-                    form=(self.taxon_level_name, str(err)),
-                    parent=self
-                )
-                if on_finish is not None:
-                    on_finish()
-                return
-            except self.util.RScriptFailedError:
-                self.dlib.dialog(
-                    messagebox.showerror,
-                    "R_SCRIPT_FAILED",
-                    parent=self
-                )
-                if on_finish is not None:
-                    on_finish()
-                return
+            # # delimit the species
+            # print("DELIMITING SPECIES...")
+            # try:
+            #     self.app.sp.delimit_species(
+            #         method, tax=self.taxon_level, debug=False)
+            # except (ChildProcessError, FileNotFoundError, IndexError) as err:
+            #     self.dlib.dialog(
+            #         messagebox.showerror,
+            #         "DELIM_ERR",
+            #         form=(self.taxon_level_name, str(err)),
+            #         parent=self
+            #     )
+            #     if on_finish is not None:
+            #         on_finish()
+            #     return
+            # except self.util.RScriptFailedError:
+            #     self.dlib.dialog(
+            #         messagebox.showerror,
+            #         "R_SCRIPT_FAILED",
+            #         parent=self
+            #     )
+            #     if on_finish is not None:
+            #         on_finish()
+            #     return
 
             status_cb("Generating species features (This will take some time)...")
             print("GENERATING FEATURES...")
