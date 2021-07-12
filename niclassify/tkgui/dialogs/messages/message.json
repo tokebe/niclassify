@@ -5,7 +5,7 @@
     },
     "NO_DEFAULT_PROGRAM": {
         "title": "No Default Program",
-        "message": "The file could not be opened becase there is no default program associated with the filetype <{}>. \nAn explorer window with the file selected will be opened so you may select a program."
+    "message": "The file could not be opened because there is no default program associated with the filetype <{}>. \nAn explorer window with the file selected will be opened so you may select a program."
     },
     "ALIGNMENT_COMPLETE": {
         "title": "Alignment Complete",
