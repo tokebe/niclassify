@@ -11,6 +11,10 @@
         "title": "Alignment Complete",
     "message": "The sequence alignment is complete.\nIt is recommended that you review the alignment file and edit it as necessary.\nPlease load the new file after making any changes."
     },
+  "DELIM_COMPLETE": {
+    "title": "Delimitation Complete",
+    "message": "The species delimitation is complete!"
+  },
     "MERGE_COMPLETE": {
         "title": "Merge Completed",
         "message": "Data merged successfully."
