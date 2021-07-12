@@ -31,5 +31,5 @@ if (length(args) > 2) {
     # Run splits to delimit species
     GMYC <- gmyc(UPGMA)
     # Save results to given file
-    write_delim(spec.list(GMYC), args[3], delim = "\t")
+    write_csv(spec.list(GMYC), args[3])
 }

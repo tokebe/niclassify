@@ -31,7 +31,7 @@ args <- commandArgs(trailingOnly = TRUE)
 seq_alignment<-read.FASTA(args[1], type="DNA")
 
 ## Pull in Species Assignments from FNAME_SPECIES ##
-speciesNames <- read_tsv(args[2])
+speciesNames <- read_csv(args[2])
 
 print(speciesNames)
 
