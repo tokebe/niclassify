@@ -27,7 +27,7 @@
     "title": "Overwrite Warning",
     "message": "You've already loaded custom sequence data. Are you sure?"
   },
-  "INVALID_SEQUENCE_DATA": {
+  "MISSING_REQUIRED_COLUMNS": {
     "title": "Invalid data file",
     "message": "Selected data file does not contain required columns.\nPlease see help document for a list of required columns with exact names."
   },

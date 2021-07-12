@@ -793,7 +793,7 @@ class DataPreparationTool(tk.Toplevel):
         if not self.app.sp.check.check_required_columns(
             data,
             lambda: self.dlib.dialog(
-                messagebox.showwarning, "INVALID_SEQUENCE_DATA", parent=self)
+                messagebox.showwarning, "MISSING_REQUIRED_COLUMNS", parent=self)
         ):
             self.app.status_bar.set_status("Awaiting user input.")
             return
