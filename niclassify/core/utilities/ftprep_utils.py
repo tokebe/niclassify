@@ -79,7 +79,9 @@ RESERVED_COLUMNS = [
     "dnaSim_med",
     "dnaSim_std",
     "dnaSim_min",
-    "dnaSim_max"
+    "dnaSim_max",
+    "index",
+    "level_0"
 ]
 
 
