@@ -74,5 +74,25 @@
   "UNHANDLED_EXCEPTION": {
     "title": "Unhandled Exception Caught",
     "message": "An unhandled exception has occurred. A traceback has been saved to the following file:\n{}.\n\nAs uncaught exceptions may lead to unexpected behavior, it is recommended you save any progress possible and re-launch the program."
+  },
+  "EMPTY_FILE": {
+    "title": "Empty File",
+    "message": "The chosen file is empty. Please select a non-empty file."
+  },
+  "INVALID_DELIM": {
+    "title": "Invalid Delimitation",
+    "message": "The selected delimitation file contains duplicate assignments for one or more samples. Please check the file and try again."
+  },
+  "DELIM_MISSING_ENTRIES": {
+    "title": "Blank Entries",
+    "message": "The chosen delimitation file has one or more blank entries. Please check the file and try again."
+  },
+  "MISSING_PIDS": {
+    "title": "Delimitation Mismatch",
+    "message": "The chosen delimitation is lacking one or more sequence processid's which are present in the primary data file.\nPlease ensure you have selected the correct delimitation for the current data.\nA list of missing processid's has been saved to the following file:\n{}"
+  },
+  "EXTRA_PIDS": {
+    "title": "Delimitation Mismatch",
+    "message": "The chosen delimitation contains sequence processid's which are not present in the primary data file.\nPlease ensure you have selected the correct delimitation for the current data.\nA list of extra processid's has been saved to the following file:\n{}"
   }
 }
