@@ -361,6 +361,8 @@ def generate_measures(fastafname, delimfname, outfname, debug=False):
     else:
         proc = subprocess.run(
             ftgen_call,
+            stdout=logfile,
+            stderr=logfile,
             env=os.environ.copy(),
             creationflags=(
                 0 if PLATFORM != 'Windows' else subprocess.CREATE_NO_WINDOW)
