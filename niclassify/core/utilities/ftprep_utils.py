@@ -751,7 +751,7 @@ def filter_sequence_data(data):
         errors='ignore'
     )
 
-    return data.reset_index()
+    return data.reset_index(drop=True)
 
 
 def write_fasta(data, filename):
