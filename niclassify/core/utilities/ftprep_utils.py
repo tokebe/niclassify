@@ -26,10 +26,10 @@ from .general_utils import MAIN_PATH, USER_PATH, REGIONS, R_LOC, RNotFoundError,
 from ..bPTP_interface import bPTP
 
 REQUIRED_COLUMNS = [
-    ["processid", "UPID"],  # can have one or the other
+    ["processid", "UPID", ""],  # can have one or the other
     "nucleotides",
     ["marker_codes", ""],  # empty means it's optional
-    "species_name"
+    ["species_name", ""]
 ]
 
 RESERVED_COLUMNS = [
@@ -742,6 +742,12 @@ def filter_sequence_data(data):
                 + "_"
                 + bad_UPID.groupby(bad_UPID).cumcount().add(1).astype(str)
             )
+
+    # neither provided, make new
+    else:
+        data.insert(0, "UPID", (
+            "SN" + data.reset_index()["index"].astype(str)
+        ))  # SN stands for Sample Number
 
     # drop columns which may interfere with operation
     # TODO add a warning about reserved columns in manual
