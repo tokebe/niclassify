@@ -565,7 +565,8 @@ class StandardChecks:
         Returns:
             Bool: True if check passes, otherwise False.
         """
-        if self.sp.taxon_split not in data.columns:
+        if (self.sp.taxon_split not in data.columns
+                and self.sp.taxon_split != 0):
             if cb is not None:
                 cb()
             return False
