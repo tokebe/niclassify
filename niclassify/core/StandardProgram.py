@@ -366,6 +366,14 @@ class StandardChecks:
 
         return True
 
+    def check_has_species_name(self, data, cb=None):
+        if "species_name" not in data.columns:
+            if cb is not None:
+                cb()
+            return False
+        else:
+            return True
+
     def check_inbalance(self, data, cb=None):
         """
         Check if the given data has a high class inbalance.

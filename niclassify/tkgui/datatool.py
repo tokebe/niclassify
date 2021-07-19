@@ -845,6 +845,13 @@ class DataPreparationTool(tk.Toplevel):
         ):
             return
 
+        # check if species_name is provided
+        self.app.sp.check.check_has_species_name(
+            data,
+            lambda: self.dlib.dialog(
+                messagebox.showinfo, "NO_SPECIES_NAME", parent=self)
+        )
+
         # set file location
         self.user_sequence_raw = file
         self.last_entered_data = self.user_sequence_raw
@@ -1090,58 +1097,62 @@ class DataPreparationTool(tk.Toplevel):
                     on_finish()
                 return
 
-            status_cb(
-                "Looking up known species statuses (this will take some time)...")
-            print("EXECUTING STATUS LOOKUP...")
-            # get statuses
-            try:
-                self.app.sp.ref_geo = self.data_sec.ref_geo_select.get()
-                self.app.sp.lookup_status()
-            except ChildProcessError:
-                self.dlib.dialog(
-                    messagebox.showerror,
-                    "GEO_LOOKUP_ERR",
-                    parent=self
-                )
-                if on_finish is not None:
-                    on_finish()
-                return
+            final = self.util.get_data(self.finalized_data.name)
+            if "species_name" in final.columns:
+                status_cb(
+                    "Looking up known species statuses (this will take some time)...")
+                print("EXECUTING STATUS LOOKUP...")
+                # get statuses
+                try:
+                    self.app.sp.ref_geo = self.data_sec.ref_geo_select.get()
+                    self.app.sp.lookup_status()
+                except ChildProcessError:
+                    self.dlib.dialog(
+                        messagebox.showerror,
+                        "GEO_LOOKUP_ERR",
+                        parent=self
+                    )
+                    if on_finish is not None:
+                        on_finish()
+                    return
 
             final = self.util.get_data(self.finalized_data.name)
-            n_classified = final.count()["final_status"]
+            if "final_status" in final:
+                n_classified = final.count()["final_status"]
 
             self.data_sec.final_save_button["state"] = tk.ACTIVE
             self.data_sec.final_load_button["state"] = tk.ACTIVE
             self.data_sec.use_data_button["state"] = tk.ACTIVE
 
-            # check if there are at least 2 classes
-            if self.app.sp.check.check_enough_classes(
-                final["final_status"],
-                lambda: self.dlib.dialog(
-                    messagebox.showwarning,
-                    "NOT_ENOUGH_CLASSES",
-                    parent=self
-                )
-            ):
-                # check that enough samples were classified
-                self.app.sp.check.check_enough_classified(
+            if "final_status" in final:
+                # check if there are at least 2 classes
+                if self.app.sp.check.check_enough_classes(
                     final["final_status"],
                     lambda: self.dlib.dialog(
                         messagebox.showwarning,
-                        "LOW_CLASS_COUNT",
-                        form=(n_classified,),
+                        "NOT_ENOUGH_CLASSES",
                         parent=self
                     )
-                )
-
-                # check for extreme inbalance using stdev as a heuristic
-                self.app.sp.check.check_inbalance(
-                    final["final_status"],
-                    lambda: self.dlib.dialog(
-                        messagebox.showwarning,
-                        "HIGH_IMBALANCE"
+                ):
+                    # check that enough samples were classified
+                    self.app.sp.check.check_enough_classified(
+                        final["final_status"],
+                        lambda: self.dlib.dialog(
+                            messagebox.showwarning,
+                            "LOW_CLASS_COUNT",
+                            form=(n_classified,),
+                            parent=self
+                        )
                     )
-                )
+
+                    # check for extreme inbalance using stdev as a heuristic
+                    self.app.sp.check.check_inbalance(
+                        final["final_status"],
+                        lambda: self.dlib.dialog(
+                            messagebox.showwarning,
+                            "HIGH_IMBALANCE"
+                        )
+                    )
 
                 # notify of completion
                 self.dlib.dialog(
