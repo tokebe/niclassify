@@ -815,12 +815,12 @@ class DataPreparationTool(tk.Toplevel):
                 return
 
         # check if user data has any reserved columns
-            if not self.app.sp.check.check_reserved_columns(
-                data,
-                lambda: self.dlib.dialog(
-                    messagebox.askokcancel, "RESERVED_COLUMNS", parent=self)
-            ):
-                return
+        if not self.app.sp.check.check_reserved_columns(
+            data,
+            lambda: self.dlib.dialog(
+                messagebox.askokcancel, "RESERVED_COLUMNS", parent=self)
+        ):
+            return
 
         # set file location
         self.user_sequence_raw = file
