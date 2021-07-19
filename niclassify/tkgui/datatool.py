@@ -390,6 +390,29 @@ class DataPreparationTool(tk.Toplevel):
             # save filtered data for later use
             data.to_csv(self.sequence_filtered.name, sep="\t", index=False)
 
+            # TODO set to "no split" if no appropriate column
+            # TODO also set it to order or the next lowest level if there is
+
+            levels = [  # ordered by preference
+                "order_name",
+                "family_name",
+                "subfamily_name",
+                "genus_name",
+                "phylum_name",
+            ]
+
+            if "order_name" not in data.columns:
+                for level in levels:
+                    if level in data.columns:
+                        self.data_sec.taxon_split_selector.set(
+                            level.split("_")[0].capitalize()
+                        )
+                        break
+                else:  # a level was not set
+                    self.data_sec.taxon_split_selector.set("No Split")
+            else:  # first preference, set it
+                self.data_sec.taxon_split_selector.set("Order")
+
             # enable alignment buttons
             self.data_sec.align_button["state"] = tk.ACTIVE
             self.data_sec.align_load_button["state"] = tk.ACTIVE
