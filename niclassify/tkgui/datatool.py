@@ -431,7 +431,20 @@ class DataPreparationTool(tk.Toplevel):
             "Filtering Sequences..."
         )
 
-        _filter_seq_data(self, on_finish=progress_popup.complete)
+        def finish(self, on_finish):
+            self.app.status_bar.set_status("Awaiting user input.")
+            self.status_bar.progress.stop()
+            self.status_bar.progress["mode"] = "determinate"
+            on_finish()
+
+        self.app.status_bar.set_status("Filtering sequences.")
+        self.status_bar.progress["mode"] = "indeterminate"
+        self.status_bar.progress.start()
+
+        _filter_seq_data(
+            self,
+            on_finish=lambda: finish(self, progress_popup.complete)
+        )
 
     @report_uncaught
     def get_geographies(self):
