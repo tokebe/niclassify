@@ -6,7 +6,6 @@ functions such as access to the inner-layer StandardProgram.
 """
 import csv
 import os
-from os.path import normcase
 import re
 import requests
 import shutil
@@ -1359,6 +1358,11 @@ class DataPreparationTool(tk.Toplevel):
 
     @report_uncaught
     def set_taxon_level(self, event):
+        """
+        Set the taxonomic level to the user selection.
+
+        event is kept as argument to avoid too many arguments error.
+        """
         levels = {
             "No Split": 0,
             "Phylum": "phylum_name",
