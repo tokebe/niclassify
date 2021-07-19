@@ -806,7 +806,7 @@ class DataPreparationTool(tk.Toplevel):
             self.app.status_bar.set_status("Awaiting user input.")
             return
 
-        # check that file has required column names
+        # read in data for other checks and make sure it reads
         self.app.status_bar.set_status("Checking user sequence file...")
         try:
             data = self.util.get_data(file)
