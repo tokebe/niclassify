@@ -245,14 +245,7 @@ class ClassifierTool(tk.Frame):
 
                 # in case there's a read or parse error of some kind
                 try:
-                    column_names = pd.read_csv(
-                        data_file,
-                        na_values=self.util.NANS,
-                        keep_default_na=True,
-                        sep=None,
-                        nrows=0,
-                        engine="python"
-                    ).columns.values.tolist()
+                    column_names = self.util.get_data(data_file).columns
                 except (
                         OSError, IOError, KeyError,
                         TypeError, ValueError, csv.Error
