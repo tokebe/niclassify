@@ -174,9 +174,41 @@ def get_data(filename, excel_sheet=None):
                 # engine="python"
             )
 
-    elif (os.path.splitext(filename)[1] in [".csv", ".tsv", ".txt"]):
-        # use python engine to guess separator each time
-        # because who trusts file extensions?
+    elif os.path.splitext(filename)[1] == ".csv":
+        raw_data = pd.read_csv(
+            filename,
+            na_values=NANS,
+            keep_default_na=True,
+            engine="python"
+        )
+        # chances are something went wrong if there's only one column
+        if raw_data.shape[1] == 1:
+            raw_data = pd.read_csv(
+                filename,
+                na_values=NANS,
+                keep_default_na=True,
+                sep="\t",
+                engine="python"
+            )  # it's either actually 1 column or now it'll read correctly
+
+    elif os.path.splitext(filename)[1] == ".tsv":
+        raw_data = pd.read_csv(
+            filename,
+            na_values=NANS,
+            keep_default_na=True,
+            sep="\t",
+            engine="python"
+        )
+        # chances are something went wrong if there's only one column
+        if raw_data.shape[1] == 1:
+            raw_data = pd.read_csv(
+                filename,
+                na_values=NANS,
+                keep_default_na=True,
+                engine="python"
+            )  # it's either actually 1 column or now it'll read correctly
+
+    elif (os.path.splitext(filename)[1] == ".txt"):
         raw_data = pd.read_csv(
             filename,
             na_values=NANS,
