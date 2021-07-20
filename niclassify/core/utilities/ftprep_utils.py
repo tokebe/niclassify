@@ -720,18 +720,8 @@ def filter_sequence_data(data):
     # drop legitimate duplicate rows
     data.drop_duplicates(inplace=True)
 
-    # make new ID column (fix any duplicate processid's)
-    if "processid" in data.columns:
-        if data["processid"].is_unique:
-            data.insert(0, "UPID", data["processid"])
-        else:
-            data.insert(0, "UPID", (
-                data["processid"].astype(str)
-                + "_"
-                + data.groupby("processid").cumcount().add(1).astype(str)
-            ))
     # in case user already had UPID
-    elif "UPID" in data.columns:
+    if "UPID" in data.columns:
         # make new UPID if UPID is not unique
         if not data["UPID"].is_unique:
             bad_UPID = data["UPID"]
@@ -742,6 +732,18 @@ def filter_sequence_data(data):
                 + "_"
                 + bad_UPID.groupby(bad_UPID).cumcount().add(1).astype(str)
             )
+
+    # make new ID column (fix any duplicate processid's)
+    elif "processid" in data.columns:
+        if data["processid"].is_unique:
+            data.insert(0, "UPID", data["processid"])
+        else:
+            data.insert(0, "UPID", (
+                data["processid"].astype(str)
+                + "_"
+                + data.groupby("processid").cumcount().add(1).astype(str)
+            ))
+
 
     # neither provided, make new
     else:
