@@ -72,13 +72,23 @@ def impute_data(data):
     """
     # drop completely empty columns
     data.dropna(how="all", axis=1, inplace=True)
+
+    # get column order for order preservation
+    col_order = data.columns.values
+
     # get categorical columns for dummy variable encoding
     category_cols = list(data.select_dtypes(
         exclude=[np.number]).columns.values)
-    data = pd.get_dummies(
-        data,
-        columns=category_cols,
-        prefix=category_cols, drop_first=True)
+
+    # split data into categorical and numerical
+    categorical = data[category_cols]
+    data = data.drop(columns=category_cols)
+
+    # impute categorical by frequency
+    categorical = categorical.apply(
+        lambda col: col.fillna(col.value_counts().index[0])
+    )
+
     feature_cols = data.columns.values
     data = data.to_numpy()
     imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')
@@ -86,6 +96,12 @@ def impute_data(data):
     # return to dataframe
     data = pd.DataFrame(data)  # removed a scaler fit-transform here
     data.columns = feature_cols
+
+    # combine imputed categorical with numerical
+    data = pd.concat([data, categorical], axis='columns')
+
+    # reorder to match original
+    data = data[col_order]
 
     return data
 
