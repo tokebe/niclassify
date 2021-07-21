@@ -70,6 +70,8 @@ def impute_data(data):
         DataFrame: The imputed data.
 
     """
+    # drop completely empty columns
+    data.dropna(how="all", axis=1, inplace=True)
     # get categorical columns for dummy variable encoding
     category_cols = list(data.select_dtypes(
         exclude=[np.number]).columns.values)
