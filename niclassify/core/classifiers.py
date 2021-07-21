@@ -370,6 +370,11 @@ class AutoClassifier:
                 x_train, x_test, y_train, y_test = self._get_test_train_splits(
                     features_known, classes_known)
 
+                # impute the data
+                # TODO review whether this should remain
+                x_train = utilities.impute_data(x_train)
+                x_test = utilities.impute_data(x_test)
+
                 print(
                     "    testing classifier {} of {}...".format(
                         m + 1, multirun),
