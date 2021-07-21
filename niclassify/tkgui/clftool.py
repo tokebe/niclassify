@@ -245,7 +245,8 @@ class ClassifierTool(tk.Frame):
 
                 # in case there's a read or parse error of some kind
                 try:
-                    column_names = self.util.get_data(data_file).columns
+                    column_names = self.util.get_data(
+                        data_file).columns.values.tolist()
                 except (
                         OSError, IOError, KeyError,
                         TypeError, ValueError, csv.Error
