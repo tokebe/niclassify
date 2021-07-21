@@ -98,7 +98,8 @@ def impute_data(data):
     data.columns = feature_cols
 
     # combine imputed categorical with numerical
-    data = pd.concat([data, categorical], axis='columns')
+    if categorical.shape[1] > 0:
+        data = pd.concat([data, categorical], axis='columns')
 
     # reorder to match original
     data = data[col_order]
