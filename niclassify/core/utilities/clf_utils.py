@@ -76,7 +76,7 @@ def impute_data(data):
     # get column order for order preservation
     col_order = data.columns.values
 
-    # get categorical columns for dummy variable encoding
+    # get categorical columns
     category_cols = list(data.select_dtypes(
         exclude=[np.number]).columns.values)
 
@@ -346,17 +346,31 @@ def scale_data(data):
     """
     # scale data
     logging.info("scaling data...")
-    # get categorical columns for dummy variable encoding
-    category_cols = list(
-        data.select_dtypes(exclude=[np.number]).columns.values)
-    data = pd.get_dummies(
-        data,
-        columns=category_cols,
-        prefix=category_cols, drop_first=True)
+   # drop completely empty columns
+    data.dropna(how="all", axis=1, inplace=True)
+
+    # get column order for order preservation
+    col_order = data.columns.values
+
+    # get categorical columns
+    category_cols = list(data.select_dtypes(
+        exclude=[np.number]).columns.values)
+
+    # split data into categorical and numerical
+    categorical = data[category_cols]
+    data = data.drop(columns=category_cols)
+
     feature_cols = data.columns.values  # save column names
     data = data.to_numpy()
     scaler = preprocessing.MinMaxScaler()
-    data_norm = pd.DataFrame(scaler.fit_transform(data))
-    data_norm.columns = feature_cols  # add column names back
+    data = pd.DataFrame(scaler.fit_transform(data))
+    data.columns = feature_cols  # add column names back
 
-    return data_norm
+    # combine imputed categorical with numerical
+    if categorical.shape[1] > 0:
+        data = pd.concat([data, categorical], axis='columns')
+
+    # reorder to match original
+    data = data[col_order]
+
+    return data
