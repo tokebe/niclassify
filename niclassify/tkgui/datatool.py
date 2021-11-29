@@ -222,11 +222,21 @@ class DataPreparationTool(tk.Toplevel):
             "Aligning Sequences..."
         )
 
+        def finish(self, on_finish):
+            self.app.status_bar.set_status("Awaiting user input.")
+            self.app.status_bar.progress.stop()
+            self.app.status_bar.progress["mode"] = "determinate"
+            on_finish()
+
+        self.app.status_bar.set_status("Aligning sequences...")
+        self.app.status_bar.progress["mode"] = "indeterminate"
+        self.app.status_bar.progress.start()
+
         # start threaded function
         _align_seq_data(
             self,
             progress_popup.set_status,
-            on_finish=progress_popup.complete
+            lambda: finish(self, on_finish=progress_popup.complete)
         )
 
     @report_uncaught
@@ -234,6 +244,8 @@ class DataPreparationTool(tk.Toplevel):
         """Delimit Species, splitting by taxonomic level."""
         # ----- threaded function -----
 
+        @threaded
+        @report_uncaught
         def _delim_species(self, status_cb, on_finish=None):
             data = self.util.get_data(self.sequence_filtered.name)
 
@@ -332,11 +344,21 @@ class DataPreparationTool(tk.Toplevel):
             "Delimiting species..."
         )
 
+        def finish(self, on_finish):
+            self.app.status_bar.set_status("Awaiting user input.")
+            self.app.status_bar.progress.stop()
+            self.app.status_bar.progress["mode"] = "determinate"
+            on_finish()
+
+        self.app.status_bar.set_status("Delimiting species...")
+        self.app.status_bar.progress["mode"] = "indeterminate"
+        self.app.status_bar.progress.start()
+
         # run time-consuming items in thread
         _delim_species(
             self,
             progress.set_status,
-            on_finish=progress.complete
+            on_finish=lambda: finish(self, progress.complete)
         )
 
     @report_uncaught
@@ -433,13 +455,13 @@ class DataPreparationTool(tk.Toplevel):
 
         def finish(self, on_finish):
             self.app.status_bar.set_status("Awaiting user input.")
-            self.status_bar.progress.stop()
-            self.status_bar.progress["mode"] = "determinate"
+            self.app.status_bar.progress.stop()
+            self.app.status_bar.progress["mode"] = "determinate"
             on_finish()
 
-        self.app.status_bar.set_status("Filtering sequences.")
-        self.status_bar.progress["mode"] = "indeterminate"
-        self.status_bar.progress.start()
+        self.app.status_bar.set_status("Filtering sequences...")
+        self.app.status_bar.progress["mode"] = "indeterminate"
+        self.app.status_bar.progress.start()
 
         _filter_seq_data(
             self,
@@ -1114,6 +1136,7 @@ class DataPreparationTool(tk.Toplevel):
                 status_cb(
                     "Looking up known species statuses (this will take some time)...")
                 print("EXECUTING STATUS LOOKUP...")
+                self.app.status_bar.set_status("Looking up statuses...")
                 # get statuses
                 try:
                     self.app.sp.ref_geo = self.data_sec.ref_geo_select.get()
@@ -1217,14 +1240,24 @@ class DataPreparationTool(tk.Toplevel):
         progress = ProgressPopup(
             self,
             "Data Preparation",
-            "Delimiting species..."
+            "Preparing sequence data..."
         )
+
+        def finish(self, on_finish):
+            self.app.status_bar.set_status("Awaiting user input.")
+            self.app.status_bar.progress.stop()
+            self.app.status_bar.progress["mode"] = "determinate"
+            on_finish()
+
+        self.app.status_bar.set_status("Generating features...")
+        self.app.status_bar.progress["mode"] = "indeterminate"
+        self.app.status_bar.progress.start()
 
         # run time-consuming items in thread
         _prep_sequence_data(
             self,
             progress.set_status,
-            on_finish=progress.complete
+            on_finish=lambda: finish(self, progress.complete)
         )
 
     @report_uncaught
