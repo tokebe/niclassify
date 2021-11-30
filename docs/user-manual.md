@@ -65,7 +65,7 @@ Below is an overview of the Sequence Data Tool, with an explanation of each inpu
 
 **C: Sequence Alignment Section:** This section is used to filter and align the raw data, and export various files from those steps. Buttons only become available as each step is completed.
 
-9. **Filter Sequences Button:** Filters the raw data. Sequences missing the marker code COI-5P, or with fewer than 350 base pairs, as well as complete duplicates (all rows, not just the sequence, are the same), are dropped. Additionally, a new column, UPID (Unique Process ID) is created to distinguish each sample uniquely.
+9. **Filter Sequences Button:** Filters the raw data. Sequences missing the marker code COI-5P, or with fewer than 350 (or a custom number of) base pairs, as well as complete duplicates (all rows, not just the sequence, are the same), are dropped. Additionally, a new column, UPID (Unique Process ID) is created to distinguish each sample uniquely.
 10. **Align Sequences Button:** Generates a FASTA-formatted alignment of all sample sequences.
 11. **Save Alignment Button:** Opens a file dialog to save the alignment to a location of your choosing.
 12. **Load Alignment Button:** Opens a file dialog to load a previously saved alignment. You may elect to do this instead of pressing the Align Sequences Button (C10) if you have previously aligned your given data.
@@ -100,7 +100,7 @@ The first step is to either look up data from BOLD or to import custom data from
 When importing data, there are a number of required columns. At minimum, the following columns (with the specified names exactly) are required:
 
 - Either `processid` or `UPID`. If `UPID`, the values in the column must be guaranteed to be unique for each row, or the program may encounter errors or output unexpected data.
-- `nucleotides` containing nucleotide sequences. Sequences with less than 350 base pairs will be dropped. These sequences need not be aligned.
+- `nucleotides` containing nucleotide sequences. Sequences with less than 350 (or a custom number of) base pairs will be dropped. These sequences need not be aligned.
 - `marker_codes` (optional) containing marker code information. Rows not containing the marker code `COI-5P` will be dropped.
 - `species_name` containing the name of the species for the given sample.
 

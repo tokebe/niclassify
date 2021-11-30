@@ -1243,7 +1243,7 @@ AutoClassifier")
 
         return features, metadata
 
-    def filter_sequence_data(self, data):
+    def filter_sequence_data(self, data, bp=350):
         """
         Prepare sequence data.
 
@@ -1254,7 +1254,7 @@ AutoClassifier")
             DataFrame: Prepared sequence data.
 
         """
-        data = utilities.filter_sequence_data(data)
+        data = utilities.filter_sequence_data(data, bp)
         utilities.write_fasta(data, self.fasta_fname)
         return data
 

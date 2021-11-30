@@ -405,8 +405,12 @@ class DataPreparationTool(tk.Toplevel):
             # get request result tsv and prep it (filter + write fasta)
             self.app.sp.request_fname = self.last_entered_data
 
+            bp = self.data_sec.filter_size.get()
+
+            bp = int(bp) if bp is not None else 0
+
             data = self.app.sp.filter_sequence_data(
-                self.app.sp.get_sequence_data())
+                self.app.sp.get_sequence_data(), bp)
 
             # save filtered data for later use
             data.to_csv(self.sequence_filtered.name, sep="\t", index=False)

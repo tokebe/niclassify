@@ -129,6 +129,24 @@ class PreparationPanel(ttk.LabelFrame):
 
         self.app = app
 
+        self.filter_size_label = tk.Label(
+            self,
+            text="Fragment Length (bp)"
+        )
+        self.filter_size_label.pack(anchor=tk.W)
+
+        validate_input = (self.app.parent.register(
+            self.validate_n_input), '%P')
+
+        self.filter_size = ttk.Spinbox(
+            self,
+            from_=1,
+            to=float('inf'),
+            validate="all",
+            validatecommand=validate_input)
+        self.filter_size.set(350)
+        self.filter_size.pack(fill=tk.X)
+
         self.filter_button = tk.Button(
             self,
             text="Filter Sequences",
@@ -330,3 +348,23 @@ class PreparationPanel(ttk.LabelFrame):
             state=tk.DISABLED
         )
         self.use_data_button.pack(expand=True, fill=tk.X, padx=1, pady=1)
+
+    def validate_n_input(self, value):
+        """
+        Validate that the given input is a number.
+
+        Args:
+            value (str): Input value.
+
+        Returns:
+            bool: True if value is number or blank else False.
+
+        """
+        if value == "":
+            return True
+        elif not value.isdigit():
+            return False
+        elif int(value) < 1:
+            return False
+        else:
+            return True

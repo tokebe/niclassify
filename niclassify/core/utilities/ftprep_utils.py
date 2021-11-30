@@ -680,7 +680,7 @@ def make_genetic_measures(infname, outfname=None):
     print(dm)
 
 
-def filter_sequence_data(data):
+def filter_sequence_data(data, bp=350):
     """
     Prepare sequence data previously saved from API.
 
@@ -707,11 +707,11 @@ def filter_sequence_data(data):
         data["marker_codes"] = data["marker_codes"].astype(str)
         data = data[data["marker_codes"].str.contains("COI-5P", na=False)]
 
-    # remove rows with less than 350 base pairs
+    # remove rows with less than bp (350 default) base pairs
     data = data[
         data.apply(
             (lambda x: True
-             if len([i for i in x["nucleotides"] if i.isalpha()]) >= 350
+             if len([i for i in x["nucleotides"] if i.isalpha()]) >= bp
              else False),
             axis=1
         )
