@@ -37,7 +37,7 @@ setup(
         "isodate==0.6.0",
         "joblib==0.11",
         "kiwisolver==1.3.1",
-        "lxml==4.6.3",
+        "lxml==4.6.5",
         "matplotlib==3.3.3",
         "mccabe==0.6.1",
         "newick==1.0.0",
