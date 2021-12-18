@@ -167,7 +167,7 @@ def parallelize(df, func, n_cores=None):
         n_cores = cpu_count() if df.shape[0] >= cpu_count() else df.shape[0]
 
     df_split = np.array_split(df, n_cores)
-    pool = Pool(n_cores)
+    pool = Pool(processes=n_cores)
     df = pd.concat(pool.map(func, df_split))
     pool.close()
     pool.join()
