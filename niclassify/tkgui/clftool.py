@@ -1159,12 +1159,32 @@ class ClassifierTool(tk.Frame):
             # get the data prepared
             features, metadata = self.sp.prep_data()
 
+            cols = features.columns.to_list()
+            rows = metadata[metadata[self.sp.class_column].notnull()].shape[0]
+
             self.status_bar.progress.step(20)
             self.status_bar.set_status("Splitting known data...")
 
             # get known for making cm
             features, metadata = self.util.get_known(
                 features, metadata, self.sp.class_column)
+
+            removed_cols = [col for col in cols if col not in features.columns]
+            removed_rows = rows - metadata.shape[0]
+
+            if len(removed_cols) > 0:
+                self.dlib.dialog(
+                    messagebox.showwarning,
+                    "REMOVED_COLS_NO_DATA",
+                    form=('\n'.join(removed_cols),)
+                )
+
+            if removed_rows > 0:
+                self.dlib.dialog(
+                    messagebox.showwarning,
+                    "REMOVED_ROWS_NO_DATA",
+                    form=(removed_rows,)
+                )
 
             # make sure there are at least 2 classes
             if not self.sp.check.check_enough_classes(

@@ -48,14 +48,31 @@ def get_known(features, metadata, class_column):
     metadata.reset_index(drop=True, inplace=True)
 
     # remove null rows from known data
-    logging.info("extracting fully known data...")
-    features = features.dropna()
+    logging.info("extracting known data...")
+    NA_rows = features.index[features.isnull().all(1)]  # rows w/ all NA
+    NA_cols = features.columns[features.isnull().all()]  # cols w/ all NA
+
+    if len(NA_cols) > 0:
+        logging.warning(
+            f"removing column{'s' if len(NA_cols) > 1 else ''} due to all NA values: {' '.join(NA_cols.to_list())}"
+        )
+        features = features.drop(NA_cols, axis=1)
+    if len(NA_rows) > 0:
+        if 'UPID' in metadata.columns:
+            logging.warning(
+                f"removing row{'s' if len(NA_rows) > 1 else ''} due to all NA values {' '.join(metadata.iloc[NA_rows]['UPID'].to_list())} "
+            )
+        else:
+            logging.warning(
+                f"removing {len(NA_rows)} row{'s' if len(NA_rows) > 1 else ''} due to all NA values"
+            )
+        features = features.drop(NA_rows, axis=0)
     metadata = metadata.iloc[features.index]
     features.reset_index(drop=True, inplace=True)
     metadata.reset_index(drop=True, inplace=True)
 
     # features and metadata now only contain rows with known class labels
-    # as well as only fully known data (no NA feature values)
+    # as well as only rows/columns with at least partial data
     return features, metadata
 
 
@@ -71,7 +88,7 @@ def impute_data(data):
 
     """
     # drop completely empty columns
-    data.dropna(how="all", axis=1, inplace=True)
+    data = data.dropna(how="all", axis=1)
 
     # get column order for order preservation
     col_order = data.columns.values
@@ -153,6 +170,8 @@ def make_confm(clf, features_known, class_labels):
     if (type(class_labels) is not pd.DataFrame
             and type(class_labels) is not pd.Series):
         raise TypeError("Cannot save: metadata_known is not DataFrame.")
+
+    features_known = impute_data(features_known)
 
     fig, ax = plt.pyplot.subplots(nrows=1, ncols=1)
     metrics.plot_confusion_matrix(

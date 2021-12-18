@@ -98,5 +98,13 @@
   "NO_SPECIES_NAME": {
     "title": "Species names not provided",
     "message": "The selected data does not provide species names. Automated species status lookup will be skipped."
+  },
+  "REMOVED_COLS_NO_DATA": {
+      "title": "Some feature columns were removed",
+      "message": "The following feature columns had no data for known classes, and will not be used in training. Please note these columns as you will not be able to use them in prediction:\n{}"
+  },
+  "REMOVED_ROWS_NO_DATA": {
+      "title": "Some rows were removed",
+      "message": "{} rows with known statuses were removed as they had no feature data to train with."
   }
 }
