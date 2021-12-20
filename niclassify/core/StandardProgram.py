@@ -668,7 +668,7 @@ class StandardProgram:
 
         # align files, separated by taxonomic level
         pool = Pool(
-            cpu_count() if cpu_count() > len(pool_files) else len(pool_files))
+            cpu_count() if cpu_count() < len(pool_files) else len(pool_files))
         pool.map(mp_align, pool_files)
 
         # make sure alignment is empty
@@ -915,7 +915,7 @@ class StandardProgram:
 
         # delimit species, separated by order
         pool = Pool(
-            cpu_count() if cpu_count() > len(pool_files) else len(pool_files))
+            cpu_count() if cpu_count() < len(pool_files) else len(pool_files))
         pool.map(mp_delim, pool_files)
 
         # merge resulting delimitations into one file and save
@@ -952,7 +952,7 @@ class StandardProgram:
         )
 
         pool = Pool(
-            cpu_count() if cpu_count() > len(pool_files) else len(pool_files))
+            cpu_count() if cpu_count() < len(pool_files) else len(pool_files))
         pool.map(mp_ftgen, pool_files)
 
         features = pd.DataFrame()
