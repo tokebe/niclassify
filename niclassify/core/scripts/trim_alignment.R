@@ -17,10 +17,10 @@ alignment <- read.FASTA(args[1], type = "DNA")
 for (offset in 1:4) {
     alignmentAA <- trans(alignment, codonstart = offset)
     # check for stop codons
-    if (!grepl("*", alignmentAA[[names(alignmentAA)[1]]], fixed = TRUE)) {
+    if (!(TRUE %in% grepl("*", alignmentAA[[names(alignmentAA)[1]]], fixed = TRUE))) {
         break
     }
-    # check if we've surpased the potential 3 codon offset (meaning file is somehow broken)
+    # check if we've surpassed the potential 3 codon offset (meaning file is somehow broken)
     if (offset == 4) {
         writeLines("ERROR", file(args[2]))
     }
