@@ -459,7 +459,7 @@ class RandomForestAC(AutoClassifier):
         """
         super().__init__(
             clf=RandomForestClassifier(
-                class_weight="balanced", oob_score=True, n_estimators=1000
+                class_weight="balanced_subsample", oob_score=True, n_estimators=1000
             ),
             hyperparams={
                 'max_depth': list(np.linspace(10, 50).astype(int)),
