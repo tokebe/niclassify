@@ -20,7 +20,7 @@ lxml==4.6.5
 matplotlib==3.3.3
 mccabe==0.6.1
 newick==1.0.0
-numpy==1.19.3
+numpy==1.22.0
 packaging==20.7
 pandas==1.2.3
 pillow

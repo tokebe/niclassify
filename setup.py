@@ -16,7 +16,7 @@ setup(
         "": ["*.json", "*.ico", "*.jpg", "*.pdf", "*.R"],
     },
     setup_requires=[
-        "numpy==1.19.3",
+        "numpy==1.22.0",
     ],
     install_requires=[
         "atomicwrites==1.4.0",
@@ -41,7 +41,7 @@ setup(
         "matplotlib==3.3.3",
         "mccabe==0.6.1",
         "newick==1.0.0",
-        "numpy==1.19.3",
+        "numpy==1.22.0",
         "packaging==20.7",
         "pandas==1.2.3",
         "pillow",
