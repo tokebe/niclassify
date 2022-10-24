@@ -45,14 +45,14 @@ fi
 echo "Checking status of Python and related dependencies..."
 if [ ! -e "$DIR/scripts/.python3installed" ];
 then
-    osascript -e 'display alert "Python 3 installation" message "Before clicking ok, please install Python 3.9.x from the official Python website. If you have already done so, you may safetly ignore this notification." '
+    osascript -e 'display alert "Python 3 installation" message "Before clicking ok, please install Python >=3.8 from the official Python website or using `brew`. If you have already done so, you may safetly ignore this notification." '
     touch "$DIR/scripts/.python3installed"
 fi
 
 # check if python version is acceptable and inform user if not
 if ! python3 "$DIR/scripts/check_version.py"
 then
-    echo "The Python version is not supported. Please install Python 3.7.x - 3.9.x"
+    echo "The Python version is not supported. Please install Python >= 3.8"
     exit 1
 fi
 
