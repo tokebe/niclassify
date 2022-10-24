@@ -10,7 +10,7 @@ The main point of this project has been to provide a straightforward GUI to use 
 
 ## Installation
 
-1. Install [Python](https://www.python.org/downloads/) 3.8 or greater.
+1. Install [Python](https://www.python.org/downloads/) 3.8.x - 3.9.x.
 2. Install [the R base](https://cloud.r-project.org/) (Any version _should_ work).
 3. Download the latest [Release](https://github.com/tokebe/niclassify/releases) or clone the repository.
     a. If you are installing on MacOS, navigate to `niclassify/bin` and ctrl-click on `muscle3.8.31_i86darwin64` to open it. You will be prompted about allowing a program from an unknown author to run. Allow the program to run, and then close it (This is necessary to make the program run properly on Mac).
