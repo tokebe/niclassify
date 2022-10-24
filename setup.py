@@ -35,7 +35,7 @@ setup(
         "idna==2.10",
         "iniconfig==1.1.1",
         "isodate==0.6.0",
-        "joblib==0.11",
+        "joblib==1.2.0",
         "kiwisolver==1.3.1",
         "lxml==4.9.1",
         "matplotlib==3.3.3",
