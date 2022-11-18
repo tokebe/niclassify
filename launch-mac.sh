@@ -21,7 +21,7 @@ venvSetupFailure() {
 setup_venv() {
     if [ -e "$DIR/niclassifyenv" ];
     then
-        sudo rm -rf "$DIR/niclassifyenv"
+        rm -rf "$DIR/niclassifyenv"
     fi
     python3 -m venv "$DIR/niclassifyenv"
     "$DIR/niclassifyenv/bin/python3" -m pip install --upgrade pip && : || venvSetupFailure
@@ -82,7 +82,7 @@ if ! Rscript "$DIR/scripts/check_r_reqs.R" &>/dev/null
 then
     echo "required R packages not installed. This installation may take some time..."
     sleep 0.5
-    sudo Rscript scripts/install_r_reqs.R && : || rInstallationFailure
+    Rscript scripts/install_r_reqs.R && : || rInstallationFailure
     if ! Rscript "$DIR/scripts/check_r_reqs.R"
     then
         echo "Something has gone wrong with automated R/package installation. Please see above output for debug purposes."
