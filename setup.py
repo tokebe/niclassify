@@ -22,7 +22,7 @@ setup(
         "atomicwrites==1.4.0",
         "attrs==20.3.0",
         "biopython==1.78",
-        "certifi==2020.12.5",
+        "certifi==2022.12.7",
         "chardet==3.0.4",
         "clldutils==3.6.0",
         "colorama==0.4.4",
