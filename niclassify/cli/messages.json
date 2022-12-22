@@ -1,0 +1,256 @@
+{
+  "error": {
+    "EXCEL_READ_ERR": {
+      "title": "Excel Read Error",
+      "message": "Unable to read excel file.\nThe file may be corrupted, or otherwise unable to be read."
+    },
+    "FILE_READ_ERR": {
+      "title": "File Read Error",
+      "message": "Unable to read specified file.\nThe file may be corrupted, invalid or otherwise unable to be read.\nIf applicable, try opening the file in excel and saving it before attempting to re-open in this program."
+    },
+    "FILE_READ_ERR_AFTER_SUCCESS": {
+      "title": "File Read Error",
+      "message": "Unable to read file.\nThe file may have been corrupted, deleted, or renamed since being selected."
+    },
+    "FILE_WRITE_ERR": {
+      "title": "File Write Error",
+      "message": "Unable to save file.\nThe data may have been corrupted, or the save location is inaccessible."
+    },
+    "INCOMPATIBLE_NOT_CLF": {
+      "title": "Incompatible File",
+      "message": "The chosen file is not a compatible AutoClassifier."
+    },
+    "INCOMPATIBLE_GENERIC": {
+      "title": "Incompatible File",
+      "message": "The chosen file is not of a compatible format."
+    },
+    "REPORT_GENERATE_ERR": {
+      "title": "Report Log Error",
+      "message": "Unable to generate report: logfile inaccessible."
+    },
+    "FEATURE_ERR_NUM": {
+      "title": "Feature Data Error",
+      "message": "The classifier expects different number of features than selected."
+    },
+    "FEATURE_ERR_NAMES": {
+      "title": "Feature Data Error",
+      "message": "Given feature names do not match those expected by the classfier."
+    },
+    "BOLD_SEARCH_ERR": {
+      "title": "Connection Error",
+      "message": "There was an error searching BOLD. \nPlease check your connection and the status of the BOLD servers."
+    },
+    "BOLD_FILE_ERR": {
+      "title": "Download Error",
+      "message": "Download from BOLD returned an erroneous file, please try again."
+    },
+    "NAN_DUMP_ERR": {
+      "title": "File Save Error",
+      "message": "Unable to save the NANs file due to unknown error.\nPlease ensure the NANs file has not been corrupted."
+    },
+    "ALIGN_ERR": {
+      "title": "Sequence Alignment Error",
+      "message": "Sequence Alignment failed or was cancelled.\nPlease ensure that given sequences are alignable."
+    },
+    "DELIM_ERR": {
+      "title": "Species Delimitation Error",
+      "message": "The species delimitation failed or was cancelled.\nPlease ensure that the alignment is valid.\nError caught in delimitation of {} {}."
+    },
+    "FEATURE_GEN_ERR": {
+      "title": "Feature Generation Error",
+      "message": "Feature generation script failed or was cancelled.\nPlease check the alignment, or register an issue on the project repository.\nError caught in ftgen of {} {}."
+    },
+    "R_NOT_FOUND": {
+      "title": "Rscript executable not found",
+      "message": "The Rscript executable file was not found. Please verify that R is installed and that the program has its proper location."
+    },
+    "TAXON_NOT_PRESENT": {
+      "title": "Chosen Split Level Not Present",
+      "message": "The chosen split level ({}) is not present in the data.\nPlease choose a taxon split level that is present in the data."
+    },
+    "R_SCRIPT_FAILED": {
+      "title": "R Script Error",
+      "message": "The operation could not be completed due to an error in the relevant R script.\nPlease register an issue on the repository stating that the R script failed during the step you were trying to complete."
+    },
+    "RESPONSE_DECODE_ERR": {
+      "title": "Response Decode Error",
+      "message": "There was an error while decoding the server response. Please try again. If this operation fails repeatedly please check the status of BOLD servers and/or register an issue on the repository with the exact search terms used."
+    },
+    "UNHANDLED_EXCEPTION": {
+      "title": "Unhandled Exception Caught",
+      "message": "An unhandled exception has occurred. A traceback has been saved to the following file:\n{}.\n\nAs uncaught exceptions may lead to unexpected behavior, it is recommended you save any progress possible and re-launch the program."
+    },
+    "EMPTY_FILE": {
+      "title": "Empty File",
+      "message": "The chosen file is empty. Please select a non-empty file."
+    },
+    "INVALID_DELIM": {
+      "title": "Invalid Delimitation",
+      "message": "The selected delimitation file contains duplicate assignments for one or more samples. Please check the file and try again."
+    },
+    "DELIM_MISSING_ENTRIES": {
+      "title": "Blank Entries",
+      "message": "The chosen delimitation file has one or more blank entries. Please check the file and try again."
+    }
+  },
+  "warning": {
+    "OVERWRITE_CLF": {
+      "title": "Overwrite Warning",
+      "message": "This will delete unsaved classifier and results."
+    },
+    "NO_PAIRPLOT_OVERLOAD": {
+      "title": "Pairplot Overload",
+      "message": "Due to software limitations, a pairplot will not be generated."
+    },
+    "NO_PAIRPLOT_USELESS": {
+      "title": "Pairplot Size",
+      "message": "Due to the number of variables, a pairplot will not be generated."
+    },
+    "NO_COLUMNS_SELECTED": {
+      "title": "No Data Columns Selected",
+      "message": "Please select at least one feature column."
+    },
+    "PREDICTION_OVERWRITE": {
+      "title": "Overwrite Warning",
+      "message": "This will delete unsaved prediction results."
+    },
+    "ERR_OVERLAP_FEATURES_CLASS": {
+      "title": "Known Class And Feature Columns Overlap",
+      "message": "Class column must not be a selected feature column."
+    },
+    "SEQUENCE_OVERWRITE": {
+      "title": "Overwrite Warning",
+      "message": "You've already loaded custom sequence data. Are you sure?"
+    },
+    "MISSING_REQUIRED_COLUMNS": {
+      "title": "Invalid data file",
+      "message": "Selected data file does not contain required columns.\nPlease see help document for a list of required columns with exact names."
+    },
+    "LOW_CLASS_COUNT": {
+      "title": "Low Classification Count",
+      "message": "Only {} observations were succesfully classified by online search. This may result in an inaccurate classifier if used for training.\nAdditional manual classification, if possible, is recommended."
+    },
+    "BOLD_NO_OBSERVATIONS": {
+      "title": "No Observations Found",
+      "message": "No observations were found. Please check your search terms."
+    },
+    "MISSING_SEARCH_TERMS": {
+      "title": "Missing Search Term(s)",
+      "message": "Please fill in both search terms before requesting data."
+    },
+    "NOT_ENOUGH_CLASSES_TO_TRAIN": {
+      "title": "Not Enough Known Classes",
+      "message": "The data contains fewer than two classes, and cannot be used for training a classifier.\nDid you mean to use this data for prediction with a saved classifier?"
+    },
+    "NOT_ENOUGH_KNOWN_SAMPLES": {
+      "title": "Too Few Known Class Samples",
+      "message": "The program requires a minimum of 4 known samples per class label. Please provide more known samples. It is recommended to train using significantly more than 4 known samples per label."
+    },
+    "NOT_ENOUGH_CLASSES": {
+      "title": "Not Enough Known Classes",
+      "message": "Automatic status lookup returned fewer than 2 status types (native, introduced).\nThis data will not be useable for training without manual status entry to ensure a minimum of 2 status types."
+    },
+    "ALIGN_MISMATCH": {
+      "title": "Alignment Item Mismatch",
+      "message": "The given alignment contains sequence processid's which are not present in the primary data file.\nPlease ensure you have selected the correct alignment for the current data.\nA list of missing processid's has been saved to the following file:\n{}"
+    },
+    "PID_NOT_UNIQUE": {
+      "title": "Non-Unique ProcessID",
+      "message": "The processid column of the data contains duplicates.\nThe UPID column will be generated with suffixes to ensure unique IDs per row."
+    },
+    "UPID_NOT_UNIQUE": {
+      "title": "Non-Unique UPID",
+      "message": "The UPID column of the data contains duplicates.\nIf you wish to continue, it will be overwritten with unique values."
+    },
+    "HIGH_IMBALANCE": {
+      "title": "High Known Class Imbalance",
+      "message": "The data's known classifications have an extreme imbalance that may result in extreme classifier bias.\nIt is recommended that more known classifications are added. Train at your own risk."
+    },
+    "NAN_TAXON": {
+      "title": "Unknown Taxonomy",
+      "message": "The data contains blank entries in the specified Taxonomic Split Level ({}).\nThis may result in poor feature generation or other unexpected data behavior for those samples.\nProceed?"
+    },
+    "SINGLE_SPLIT": {
+      "title": "Single-length split",
+      "message": "Splitting this data by {} will result in one or more subsets with only one sample.\nThe program cannot operate on sets of 1. It is recommended that you cancel operation and choose a broader taxonomic level.\nIf you wish to continue, subsets of 1 will be ignored (those samples will not be aligned/no features will be generated for those samples).\nSelect 'ok' to continue and ignore subsets of 1, or 'cancel' to cancel."
+    },
+    "RESERVED_COLUMNS": {
+      "title": "Reserved column names",
+      "message": "The chosen data has one or more columns using names reserved for the Sequence Data Tool (See 'Using the Sequence Data Tool' in the Manual).\nClicking 'Ok' will remove these columns from the data (your original file will not be changed). Clicking 'Cancel' will cancel the operation."
+    },
+    "TAXON_CHANGE": {
+      "title": "Potentially Incompatible Split Level",
+      "message": "The current alignment was generated splitting alignments by {}. Changing the split level now may cause errors during species delimitation. Clicking 'Ok' will confirm the change in taxonomic split level. It is recommended to generate a new alignment if you wish to continue after changing the split level."
+    },
+    "MISSING_PIDS": {
+      "title": "Delimitation Mismatch",
+      "message": "The chosen delimitation is lacking one or more sequence processid's which are present in the primary data file. These sequences will not have features generated in the final data.\nPlease ensure you have selected the correct delimitation for the current data.\nA list of missing processid's has been saved to the following file:\n{}"
+    },
+    "EXTRA_PIDS": {
+      "title": "Delimitation Mismatch",
+      "message": "The chosen delimitation contains sequence processid's which are not present in the primary data file.\nPlease ensure you have selected the correct delimitation for the current data.\nA list of extra processid's has been saved to the following file:\n{}"
+    },
+    "NO_SPECIES_NAME": {
+      "title": "Species names not provided",
+      "message": "The selected data does not provide species names. Automated species status lookup will be skipped."
+    },
+    "REMOVED_COLS_NO_DATA": {
+      "title": "Some feature columns were removed",
+      "message": "The following feature columns had no data for known classes, and will not be used in training. Please note these columns as you will not be able to use them in prediction:\n{}"
+    },
+    "REMOVED_ROWS_NO_DATA": {
+      "title": "Some rows were removed",
+      "message": "{} rows with known statuses were removed as they had no feature data to train with."
+    }
+  },
+  "message": {
+    "EXCEL_DETECTED": {
+      "title": "Excel Sheet Detected",
+      "message": "You will have to specify the sheet to proceed."
+    },
+    "NO_DEFAULT_PROGRAM": {
+      "title": "No Default Program",
+      "message": "The file could not be opened because there is no default program associated with the filetype <{}>. \nAn explorer window with the file selected will be opened so you may select a program."
+    },
+    "ALIGNMENT_COMPLETE": {
+      "title": "Alignment Complete",
+      "message": "The sequence alignment is complete.\nIt is recommended that you review the alignment file and edit it as necessary.\nPlease load the new file after making any changes."
+    },
+    "DELIM_COMPLETE": {
+      "title": "Delimitation Complete",
+      "message": "The species delimitation is complete!"
+    },
+    "MERGE_COMPLETE": {
+      "title": "Merge Completed",
+      "message": "Data merged successfully."
+    },
+    "DATA_PREP_COMPLETE": {
+      "title": "Data Preparation Complete",
+      "message": "{} observations were classified by online lookup.\nData is ready for use with classifier tool."
+    },
+    "BOLD_SEARCH_COMPLETE": {
+      "title": "BOLD Lookup Complete",
+      "message": "BOLD lookup returned {} observations."
+    },
+    "CONFIRM_SEARCH_TERMS": {
+      "title": "Confirm Search Terms",
+      "message": "Please confirm the search terms:\nGeography: {} \nTaxonomy: {}"
+    },
+    "EXISTING_MERGE_BOLD": {
+      "title": "Existing Merged Data",
+      "message": "Merged data already exists. \nDo you wish to merge additional data? Selecting 'No' will Merge current BOLD results with the previous BOLD lookup, overwriting any currently merged data."
+    },
+    "EXISTING_MERGE_USER": {
+      "title": "Existing Merged Data",
+      "message": "Merged data already exists. \nDo you wish to merge additional data? Selecting 'No' will Merge current user data with BOLD data, overwriting any curerntly merged data."
+    },
+    "TRAIN_COMPLETE": {
+      "title": "Classifier Training Complete",
+      "message": "The classifier has finished training.\nPlease review the report and confusion matrix to verify the applicability of this model."
+    },
+    "PREDICT_COMPLETE": {
+      "title": "Prediction Complete",
+      "message": "The classifier has finished making predictions on the data."
+    }
+  }
+}

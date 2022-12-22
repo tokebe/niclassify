@@ -12,7 +12,7 @@ Step reorganization:
 
 - `match` shall handle looking up sequences against BOLD for species identification
   - will only accept identifications with given certainty (sensible default required)
-- `get` shall handle BOLD lookups to get new data
+- `search` shall handle BOLD lookups to get new data
   - option to append to provided output file, doesn't fail if file doesn't exist
 - `intake` shall cover everything up through 'filter sequences'
   - multiple input files, handles merging and prompting
@@ -32,3 +32,40 @@ Step reorganization:
 # Rebuild the GUI
 
 IDK, either just take the current one and clean it up or write a whole Electron frontend I couldn't say atm
+
+
+# prompts planning
+
+note: provide exit options basically everywhere
+
+niclassify skip \<segment> to skip to specific step, or if none provided, interactive menu to choose step
+
+- bold lookup? (loop)
+- load custom data? (loop)
+  - attempt to identify species by bold? (current not implemented)
+- filter sequence options
+- set taxonomic split level for rest of work
+- align sequences (automatic)
+- species delimitation options
+- data preparation (automatic)
+- data column selection
+- known class column selection
+- n classifiers to compare
+- train (automatic)
+- predict (automatic)
+- done! output files at $location
+
+atomic operation layer
+
+interface layer composes ops and calls on UI interface for messages and dialogs
+
+one folder per interface, includes all atomic ops?
+
+
+TODO handler
+
+handler.log
+handler.message
+handler.warn
+handler.error
+handler.ask
