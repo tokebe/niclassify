@@ -6,7 +6,18 @@ from pathlib import Path
 from enum import Enum
 from typer.core import TyperGroup
 
-from niclassify.cli import _get, _identify, _lookup, _filter, _align, _delimit, _featgen, _train, _predict, _column_select
+from niclassify.cli import (
+    _get,
+    _identify,
+    _lookup,
+    _filter,
+    _align,
+    _delimit,
+    _featgen,
+    _train,
+    _predict,
+    _column_select,
+)
 
 # Order commands in order defined
 class NaturalOrderGroup(TyperGroup):
@@ -28,6 +39,8 @@ app.command(name="predict")(_predict)
 
 # TODO figure out what to call the composition of all data prep command?
 
+# TODO debug logging
+
 # TODO add argument to prompt instead of defaults when using interactive mode
 # maybe just --interactive?
 
@@ -40,6 +53,7 @@ app.command(name="predict")(_predict)
 # TODO write full niclassify composition
 
 # TODO in composed interactive mode, ask if user would prefer to input file or use file browser (if there's a module to support that)
+
 
 @app.callback(invoke_without_command=True)
 def default(ctx: typer.Context):

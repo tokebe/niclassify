@@ -126,10 +126,6 @@
       "title": "Invalid data file",
       "message": "Selected data file does not contain required columns.\nPlease see help document for a list of required columns with exact names."
     },
-    "MISSING_NUCLEOTIDES_COLUMN": {
-      "title": "Invalid data file",
-      "message": "Selected data file does not contain required column [bold]nucleotide[/]."
-    },
     "LOW_CLASS_COUNT": {
       "title": "Low Classification Count",
       "message": "Only {} observations were succesfully classified by online search. This may result in an inaccurate classifier if used for training.\nAdditional manual classification, if possible, is recommended."
@@ -194,13 +190,9 @@
       "title": "Delimitation Mismatch",
       "message": "The chosen delimitation contains sequence processid's which are not present in the primary data file.\nPlease ensure you have selected the correct delimitation for the current data.\nA list of extra processid's has been saved to the following file:\n{}"
     },
-    "SKIP_NO_SPECIES_NAME": {
+    "NO_SPECIES_NAME": {
       "title": "Species names not provided",
       "message": "The selected data does not provide species names. Automated species status lookup will be skipped."
-    },
-    "NO_SPECIES_NAME": {
-      "title": "Column species_name missing",
-      "message": "The provided dataa does not include column species_name. Cannot lookup species status."
     },
     "REMOVED_COLS_NO_DATA": {
       "title": "Some feature columns were removed",

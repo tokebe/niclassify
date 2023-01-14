@@ -8,4 +8,4 @@ from .featgen import _featgen
 from .column_select import _column_select
 from .train import _train
 from .predict import _predict
-from .handler import Handler
+from .handler import CLIHandler

@@ -6,6 +6,7 @@ from pathlib import Path
 from enum import Enum
 from .enums import TaxonomicHierarchy, Methods
 
+
 def _column_select(
     input_file: Path = typer.Option(
         ...,
@@ -38,4 +39,5 @@ def _column_select(
         rich_help_panel="Requirements",
     ),
 ):
+    """Generate a text file containing column selections."""
     print(locals())

@@ -1,0 +1,2022 @@
+<matches>
+    <match>
+        <ID>HCBNS018-03</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena canadensis</taxonomicidentification>
+        <similarity>1</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=HCBNS018-03
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>45.12</lat>
+                    <lon>-64.273</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>BEECC063-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena canadensis</taxonomicidentification>
+        <similarity>1</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=BEECC063-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>45.135</lat>
+                    <lon>-64.489</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>HCBNS017-03</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena canadensis</taxonomicidentification>
+        <similarity>0.9952</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=HCBNS017-03
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>45.12</lat>
+                    <lon>-64.2</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>BBHEC103-09</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena nubecula</taxonomicidentification>
+        <similarity>0.9923</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=BBHEC103-09
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>45.661</lat>
+                    <lon>-65.138</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>HCBNS023-03</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena nubecula</taxonomicidentification>
+        <similarity>0.9919</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=HCBNS023-03
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>44.319</lat>
+                    <lon>-64.016</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>HCBNS024-03</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena nubecula</taxonomicidentification>
+        <similarity>0.9915</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=HCBNS024-03
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>44.319</lat>
+                    <lon>-64.016</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>HDBNS026-03</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena nubecula</taxonomicidentification>
+        <similarity>0.9913</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=HDBNS026-03
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>44.989</lat>
+                    <lon>-64.997</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>JSHYO388-11</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena nubecula</taxonomicidentification>
+        <similarity>0.9908</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=JSHYO388-11
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>44.621</lat>
+                    <lon>-75.773</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>NGNAX2043-14</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena columbiana</taxonomicidentification>
+        <similarity>0.9282</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=NGNAX2043-14
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>50.663</lat>
+                    <lon>-120.504</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>INRMA3148-15</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena surda</taxonomicidentification>
+        <similarity>0.9279</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=INRMA3148-15
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>49.095</lat>
+                    <lon>-119.527</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>NGNAI474-13</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena costillensis</taxonomicidentification>
+        <similarity>0.9223</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=NGNAI474-13
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>50.663</lat>
+                    <lon>-120.504</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>BCBEE574-22</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena columbiana</taxonomicidentification>
+        <similarity>0.9221</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=BCBEE574-22
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>53.929</lat>
+                    <lon>-122.75</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>BBHYL325-10</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena costillensis</taxonomicidentification>
+        <similarity>0.9201</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=BBHYL325-10
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>52.808</lat>
+                    <lon>-118.023</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>BBHYL342-10</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena costillensis</taxonomicidentification>
+        <similarity>0.9201</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=BBHYL342-10
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>52.892</lat>
+                    <lon>-118.091</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>RBINA4920-13</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena hirticincta</taxonomicidentification>
+        <similarity>0.9195</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=RBINA4920-13
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>43.8157</lat>
+                    <lon>-79.207</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>BEECC060-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena hirticincta</taxonomicidentification>
+        <similarity>0.9167</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=BEECC060-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>45.12</lat>
+                    <lon>-64.273</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>TTHYW171-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena peckhami</taxonomicidentification>
+        <similarity>0.9155</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=TTHYW171-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>49.182</lat>
+                    <lon>-107.687</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>MBIOI1011-13</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena hirticincta</taxonomicidentification>
+        <similarity>0.9155</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=MBIOI1011-13
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>43.528</lat>
+                    <lon>-80.229</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>SMTPS931-16</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena hirticincta</taxonomicidentification>
+        <similarity>0.9155</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=SMTPS931-16
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>43.4961</lat>
+                    <lon>-80.622</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>BEECC061-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena hirticincta</taxonomicidentification>
+        <similarity>0.9154</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=BEECC061-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>45.215</lat>
+                    <lon>-64.366</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>QUEBE008-06</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena hirticincta</taxonomicidentification>
+        <similarity>0.9143</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=QUEBE008-06
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>45.75</lat>
+                    <lon>-74.692</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>TTHYW912-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena hirticincta</taxonomicidentification>
+        <similarity>0.914</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=TTHYW912-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>43.537</lat>
+                    <lon>-80.134</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>BBHYE203-10</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena hirticincta</taxonomicidentification>
+        <similarity>0.914</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=BBHYE203-10
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>46.81</lat>
+                    <lon>-64.907</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>GMOKH551-15</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena hirticincta</taxonomicidentification>
+        <similarity>0.914</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=GMOKH551-15
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>43.478</lat>
+                    <lon>-80.588</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>IBBP032-10</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena fuscipes</taxonomicidentification>
+        <similarity>0.9034</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=IBBP032-10
+</url>
+            <collectionlocation>
+                <country>Ireland</country>
+                <coord>
+                    <lat />
+                    <lon />
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>IBBP033-10</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena fuscipes</taxonomicidentification>
+        <similarity>0.9034</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=IBBP033-10
+</url>
+            <collectionlocation>
+                <country>Ireland</country>
+                <coord>
+                    <lat />
+                    <lon />
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>IBBP034-10</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena fuscipes</taxonomicidentification>
+        <similarity>0.9034</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=IBBP034-10
+</url>
+            <collectionlocation>
+                <country>Ireland</country>
+                <coord>
+                    <lat />
+                    <lon />
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>BEEEE238-15</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena fuscipes</taxonomicidentification>
+        <similarity>0.9032</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=BEEEE238-15
+</url>
+            <collectionlocation>
+                <country>United Kingdom</country>
+                <coord>
+                    <lat>51.434</lat>
+                    <lon>-0.232</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>IBBP026-10</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena denticulata</taxonomicidentification>
+        <similarity>0.8988</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=IBBP026-10
+</url>
+            <collectionlocation>
+                <country>Ireland</country>
+                <coord>
+                    <lat>53.1924</lat>
+                    <lon>-6.16</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>IBBP027-10</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena denticulata</taxonomicidentification>
+        <similarity>0.8988</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=IBBP027-10
+</url>
+            <collectionlocation>
+                <country>Ireland</country>
+                <coord>
+                    <lat>53.195</lat>
+                    <lon>-6.1779</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>BEEEE257-15</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena denticulata</taxonomicidentification>
+        <similarity>0.8986</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=BEEEE257-15
+</url>
+            <collectionlocation>
+                <country>United Kingdom</country>
+                <coord>
+                    <lat>51.2938</lat>
+                    <lon>-0.386482</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>IBBP039-10</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena helvola</taxonomicidentification>
+        <similarity>0.8975</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=IBBP039-10
+</url>
+            <collectionlocation>
+                <country>United Kingdom</country>
+                <coord>
+                    <lat />
+                    <lon />
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>IBBP028-10</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena denticulata</taxonomicidentification>
+        <similarity>0.8953</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=IBBP028-10
+</url>
+            <collectionlocation>
+                <country>Ireland</country>
+                <coord>
+                    <lat>53.195</lat>
+                    <lon>-6.1779</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>BEEEE345-16</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena apicata</taxonomicidentification>
+        <similarity>0.8863</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=BEEEE345-16
+</url>
+            <collectionlocation>
+                <country>United Kingdom</country>
+                <coord>
+                    <lat>51.511</lat>
+                    <lon>-1.125</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>IBBP008-10</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena apicata</taxonomicidentification>
+        <similarity>0.8863</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=IBBP008-10
+</url>
+            <collectionlocation>
+                <country>Ireland</country>
+                <coord>
+                    <lat>53.195</lat>
+                    <lon>-6.1779</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>IBBP009-10</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena apicata</taxonomicidentification>
+        <similarity>0.8863</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=IBBP009-10
+</url>
+            <collectionlocation>
+                <country>Ireland</country>
+                <coord>
+                    <lat>53.195</lat>
+                    <lon>-6.1779</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>HCBNS040-03</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena vicina</taxonomicidentification>
+        <similarity>0.8862</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=HCBNS040-03
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>44.989</lat>
+                    <lon>-64.997</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>BEEEE011-15</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena fulva</taxonomicidentification>
+        <similarity>0.8848</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=BEEEE011-15
+</url>
+            <collectionlocation>
+                <country>United Kingdom</country>
+                <coord>
+                    <lat>51.496</lat>
+                    <lon>-0.179</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>DSHYP056-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena vicina</taxonomicidentification>
+        <similarity>0.8841</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=DSHYP056-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>49.681</lat>
+                    <lon>-99.576</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>BEEMH221-06</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena vicina</taxonomicidentification>
+        <similarity>0.8837</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=BEEMH221-06
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat />
+                    <lon />
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>SMTPL2709-15</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena frigida</taxonomicidentification>
+        <similarity>0.8837</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=SMTPL2709-15
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>43.495</lat>
+                    <lon>-80.624</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>KNWRA088-12</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena clarkella</taxonomicidentification>
+        <similarity>0.883</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=KNWRA088-12
+</url>
+            <collectionlocation>
+                <country>United States</country>
+                <coord>
+                    <lat>60.465</lat>
+                    <lon>-151.074</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>SMTPB10134-13</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena frigida</taxonomicidentification>
+        <similarity>0.8824</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=SMTPB10134-13
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>44.3871</lat>
+                    <lon>-79.719</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>DSHYP128-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena thaspii</taxonomicidentification>
+        <similarity>0.882</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=DSHYP128-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>49.681</lat>
+                    <lon>-99.554</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>DSHYP130-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena vicina</taxonomicidentification>
+        <similarity>0.8817</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=DSHYP130-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>49.681</lat>
+                    <lon>-99.576</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>DSHYP132-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena vicina</taxonomicidentification>
+        <similarity>0.8817</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=DSHYP132-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>49.681</lat>
+                    <lon>-99.554</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>DSHYP134-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena vicina</taxonomicidentification>
+        <similarity>0.8817</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=DSHYP134-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>49.681</lat>
+                    <lon>-99.554</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>DSHYP137-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena vicina</taxonomicidentification>
+        <similarity>0.8817</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=DSHYP137-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>49.681</lat>
+                    <lon>-99.554</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>DSHYP138-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena vicina</taxonomicidentification>
+        <similarity>0.8817</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=DSHYP138-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>49.683</lat>
+                    <lon>-99.611</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>BBHYG693-10</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena vicina</taxonomicidentification>
+        <similarity>0.8817</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=BBHYG693-10
+</url>
+            <collectionlocation>
+                <country>United States</country>
+                <coord>
+                    <lat>38.7069</lat>
+                    <lon>-104.836</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>HDBNS154-04</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena mandibularis</taxonomicidentification>
+        <similarity>0.8817</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=HDBNS154-04
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat />
+                    <lon />
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>DSHYP105-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena vicina</taxonomicidentification>
+        <similarity>0.8815</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=DSHYP105-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>49.681</lat>
+                    <lon>-99.554</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>NOBEE017-09</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena clarkella</taxonomicidentification>
+        <similarity>0.8814</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=NOBEE017-09
+</url>
+            <collectionlocation>
+                <country>Norway</country>
+                <coord>
+                    <lat>59.8225</lat>
+                    <lon>10.655</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>GBMIN71550-17</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena mitis</taxonomicidentification>
+        <similarity>0.8812</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=GBMIN71550-17
+</url>
+            <collectionlocation>
+                <country>Germany</country>
+                <coord>
+                    <lat />
+                    <lon />
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>ANDPH005-21</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena frigida</taxonomicidentification>
+        <similarity>0.8803</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=ANDPH005-21
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>45.3822</lat>
+                    <lon>-75.2255</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>DSHYP126-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena thaspii</taxonomicidentification>
+        <similarity>0.8802</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=DSHYP126-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>49.681</lat>
+                    <lon>-99.554</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>DSHYP131-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena vicina</taxonomicidentification>
+        <similarity>0.8802</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=DSHYP131-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>49.681</lat>
+                    <lon>-99.554</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>DSHYP133-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena vicina</taxonomicidentification>
+        <similarity>0.8802</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=DSHYP133-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>49.681</lat>
+                    <lon>-99.554</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>DSHYP136-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena vicina</taxonomicidentification>
+        <similarity>0.8802</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=DSHYP136-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>49.683</lat>
+                    <lon>-99.611</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>BEEEE180-15</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena synadelpha</taxonomicidentification>
+        <similarity>0.8802</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=BEEEE180-15
+</url>
+            <collectionlocation>
+                <country>United Kingdom</country>
+                <coord>
+                    <lat>51.471</lat>
+                    <lon>0.201</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>DSHYP127-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena thaspii</taxonomicidentification>
+        <similarity>0.8801</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=DSHYP127-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>49.681</lat>
+                    <lon>-99.554</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>TTHYW073-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena mandibularis</taxonomicidentification>
+        <similarity>0.88</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=TTHYW073-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>49.153</lat>
+                    <lon>-107.517</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>BCBEE326-22</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena vicina</taxonomicidentification>
+        <similarity>0.88</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=BCBEE326-22
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>53.588</lat>
+                    <lon>-122.7</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>BEEEE115-15</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena clarkella</taxonomicidentification>
+        <similarity>0.8795</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=BEEEE115-15
+</url>
+            <collectionlocation>
+                <country>United Kingdom</country>
+                <coord>
+                    <lat>52.325</lat>
+                    <lon>-2.896</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>BEECA652-06</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena frigida</taxonomicidentification>
+        <similarity>0.8793</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=BEECA652-06
+</url>
+            <collectionlocation>
+                <country />
+                <coord>
+                    <lat />
+                    <lon />
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>CNFNR3874-14</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena mandibularis</taxonomicidentification>
+        <similarity>0.8793</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=CNFNR3874-14
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>48.857</lat>
+                    <lon>-64.376</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>HCBNS039-03</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena vicina</taxonomicidentification>
+        <similarity>0.879</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=HCBNS039-03
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>44.319</lat>
+                    <lon>-64.016</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>BEEEE266-16</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena lapponica</taxonomicidentification>
+        <similarity>0.8789</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=BEEEE266-16
+</url>
+            <collectionlocation>
+                <country>United Kingdom</country>
+                <coord>
+                    <lat>53.91</lat>
+                    <lon>-1.819</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>OPPDC376-17</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena mandibularis</taxonomicidentification>
+        <similarity>0.8786</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=OPPDC376-17
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>44.6286</lat>
+                    <lon>-78.8614</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>OPPAM1928-17</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena mandibularis</taxonomicidentification>
+        <similarity>0.8786</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=OPPAM1928-17
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>45.2561</lat>
+                    <lon>-77.1922</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>CNGBL041-14</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena mandibularis</taxonomicidentification>
+        <similarity>0.8786</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=CNGBL041-14
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>44.8515</lat>
+                    <lon>-79.8744</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>DSHYP121-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena thaspii</taxonomicidentification>
+        <similarity>0.8786</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=DSHYP121-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>49.683</lat>
+                    <lon>-99.611</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>DSHYP122-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena thaspii</taxonomicidentification>
+        <similarity>0.8786</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=DSHYP122-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>49.683</lat>
+                    <lon>-99.611</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>DSHYP125-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena thaspii</taxonomicidentification>
+        <similarity>0.8786</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=DSHYP125-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>49.681</lat>
+                    <lon>-99.576</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>DSHYP135-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena vicina</taxonomicidentification>
+        <similarity>0.8786</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=DSHYP135-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>49.681</lat>
+                    <lon>-99.554</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>BEEEE021-15</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena synadelpha</taxonomicidentification>
+        <similarity>0.8786</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=BEEEE021-15
+</url>
+            <collectionlocation>
+                <country>United Kingdom</country>
+                <coord>
+                    <lat>51.475</lat>
+                    <lon>0.012</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>GBMNE698-21</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena vicina</taxonomicidentification>
+        <similarity>0.8785</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=GBMNE698-21
+</url>
+            <collectionlocation>
+                <country />
+                <coord>
+                    <lat />
+                    <lon />
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>HCBNS038-03</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena vicina</taxonomicidentification>
+        <similarity>0.8782</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=HCBNS038-03
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>45.063</lat>
+                    <lon>-64.488</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>GMORC187-19</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena mandibularis</taxonomicidentification>
+        <similarity>0.8781</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=GMORC187-19
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>65.2791</lat>
+                    <lon>-126.83</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>NOBEE003-09</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena lapponica</taxonomicidentification>
+        <similarity>0.8781</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=NOBEE003-09
+</url>
+            <collectionlocation>
+                <country>Norway</country>
+                <coord>
+                    <lat>69.5356</lat>
+                    <lon>30.1364</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>MPGJ2957-19</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena prolixa</taxonomicidentification>
+        <similarity>0.8769</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=MPGJ2957-19
+</url>
+            <collectionlocation>
+                <country>United States</country>
+                <coord>
+                    <lat>46.7</lat>
+                    <lon>-113.978</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>CNKJA565-14</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena carolina</taxonomicidentification>
+        <similarity>0.8763</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=CNKJA565-14
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>44.4066</lat>
+                    <lon>-65.2455</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>BBHEC577-09</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena thaspii</taxonomicidentification>
+        <similarity>0.8762</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=BBHEC577-09
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>48.604</lat>
+                    <lon>-53.943</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>SSKOA168-15</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena carolina</taxonomicidentification>
+        <similarity>0.8756</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=SSKOA168-15
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>46.812</lat>
+                    <lon>-64.951</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>JSYKA180-10</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena lapponica</taxonomicidentification>
+        <similarity>0.8756</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=JSYKA180-10
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>69.1744</lat>
+                    <lon>-140.164</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>BEEEE350-16</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena lapponica</taxonomicidentification>
+        <similarity>0.8756</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=BEEEE350-16
+</url>
+            <collectionlocation>
+                <country>United Kingdom</country>
+                <coord>
+                    <lat>52.567</lat>
+                    <lon>-2.946</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>BEEEE351-16</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena lapponica</taxonomicidentification>
+        <similarity>0.8756</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=BEEEE351-16
+</url>
+            <collectionlocation>
+                <country>United Kingdom</country>
+                <coord>
+                    <lat>52.567</lat>
+                    <lon>-2.946</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>JSYKA181-10</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena lapponica</taxonomicidentification>
+        <similarity>0.8754</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=JSYKA181-10
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>69.1744</lat>
+                    <lon>-140.164</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>HYMBB019-09</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena vicina</taxonomicidentification>
+        <similarity>0.8742</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=HYMBB019-09
+</url>
+            <collectionlocation>
+                <country>United States</country>
+                <coord>
+                    <lat>43.532</lat>
+                    <lon>-86.114</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>DSHYP123-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena thaspii</taxonomicidentification>
+        <similarity>0.874</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=DSHYP123-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>49.683</lat>
+                    <lon>-99.611</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>DSHYP124-08</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena thaspii</taxonomicidentification>
+        <similarity>0.874</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=DSHYP124-08
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>49.683</lat>
+                    <lon>-99.611</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>NGNAG1537-13</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena thaspii</taxonomicidentification>
+        <similarity>0.874</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=NGNAG1537-13
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>50.663</lat>
+                    <lon>-120.504</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>NOBEE001-09</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena lapponica</taxonomicidentification>
+        <similarity>0.874</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=NOBEE001-09
+</url>
+            <collectionlocation>
+                <country>Norway</country>
+                <coord>
+                    <lat>69.5356</lat>
+                    <lon>30.1364</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>JSYKA182-10</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena lapponica</taxonomicidentification>
+        <similarity>0.874</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=JSYKA182-10
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>69.2846</lat>
+                    <lon>-140.328</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>JSYKA183-10</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena lapponica</taxonomicidentification>
+        <similarity>0.874</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=JSYKA183-10
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>69.2836</lat>
+                    <lon>-140.305</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>JSYKA184-10</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena lapponica</taxonomicidentification>
+        <similarity>0.874</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=JSYKA184-10
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>69.2846</lat>
+                    <lon>-140.328</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>JSYKA159-10</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena lapponica</taxonomicidentification>
+        <similarity>0.874</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=JSYKA159-10
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>69.2881</lat>
+                    <lon>-140.342</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>JSYKA160-10</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena lapponica</taxonomicidentification>
+        <similarity>0.874</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=JSYKA160-10
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>69.2881</lat>
+                    <lon>-140.342</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>JSYKA161-10</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena lapponica</taxonomicidentification>
+        <similarity>0.874</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=JSYKA161-10
+</url>
+            <collectionlocation>
+                <country>Canada</country>
+                <coord>
+                    <lat>69.2836</lat>
+                    <lon>-140.305</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>BEEEE016-15</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena lapponica</taxonomicidentification>
+        <similarity>0.874</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=BEEEE016-15
+</url>
+            <collectionlocation>
+                <country>United Kingdom</country>
+                <coord>
+                    <lat>52.567</lat>
+                    <lon>-2.946</lon>
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+    <match>
+        <ID>GBMNE574-21</ID>
+        <sequencedescription>COI-5P</sequencedescription>
+        <database>BOLD: Public Records</database>
+        <citation>BOLD Systems, 2023</citation>
+        <taxonomicidentification>Andrena frigida</taxonomicidentification>
+        <similarity>0.8738</similarity>
+        <specimen>
+            <url>
+                http://www.boldsystems.org/index.php/Public_RecordView?processid=GBMNE574-21
+</url>
+            <collectionlocation>
+                <country />
+                <coord>
+                    <lat />
+                    <lon />
+                </coord>
+            </collectionlocation>
+        </specimen>
+    </match>
+</matches>

@@ -4,7 +4,7 @@ from rich import print
 from typing import List, Optional
 from pathlib import Path
 from enum import Enum
-from .handler import Handler
+from .handler import CLIHandler
 from ..core.get import get
 from ..core.utils import confirm_overwrite
 
@@ -15,7 +15,7 @@ def _get(
         "--geography",
         "-g",
         help="geographic location (e.g. Massachusetts).",
-        prompt=True,
+        prompt="geographic location (e.g. Massachusetts).",
         show_default=False,
         rich_help_panel="Requirements",
     ),
@@ -24,7 +24,7 @@ def _get(
         "--taxonomy",
         "-t",
         help="Taxonomic label (e.g. hemiptera).",
-        prompt=True,
+        prompt="Taxonomic label (e.g. hemiptera).",
         show_default=False,
         rich_help_panel="Requirements",
     ),
@@ -35,7 +35,7 @@ def _get(
         "--output",
         "-o",
         help="Output .tsv file.",
-        prompt=True,
+        prompt="Output .tsv file.",
         show_default=False,
         exists=False,
         file_okay=True,
@@ -45,11 +45,23 @@ def _get(
         resolve_path=True,
         rich_help_panel="Requirements",
     ),
-):
+    pre_confirm: bool = typer.Option(
+        False,
+        "--yes",
+        "-y",
+        help="Automatically confirm dialogs such as file overwrite confirmations.",
+    ),
+    debug: bool = typer.Option(
+        False,
+        "--debug",
+        help="Output debug logs to stdout.",
+    ),
+) -> None:
     """
     Search for sequence data from Barcode of Life Data System.
 
-    Options marked [red]\[required][/] will be prompted for if not provided.
+    Options in the 'Requirements' section will be prompted for if not provided.
     """
-    if confirm_overwrite(output, Handler, abort=True):
-        get(geography, taxonomy, output, Handler)
+    handler = CLIHandler(debug=debug)
+    if pre_confirm or confirm_overwrite(output, handler, abort=True):
+        get(geography, taxonomy, output, handler)
