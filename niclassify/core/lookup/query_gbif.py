@@ -5,32 +5,55 @@ from .get_ref_hierarchy import get_ref_hierarchy
 from .geo_contains import geo_contains
 import re
 from typing import Optional
+from time import sleep
 
 
-@RateLimiter(max_calls=10, period=1)
-def query_gbif(species_name: str, geography: str, handler: Handler) -> Optional[str]:
-    code_url = "http://api.gbif.org/v1/species?name="
+@RateLimiter(max_calls=1, period=1)
+def query_gbif(species_name: str, ref_geo: str, handler: Handler) -> Optional[str]:
+    """Query GBIF to determine if a species is native or introduced to a reference geography."""
+    taxon_key_url = "http://api.gbif.org/v1/species?name="
     records_url = "http://api.gbif.org/v1/species/"
 
-    # get taxonKey
-    request = f"{code_url}{species_name.lower().replace(' ', '%20')}"
+    tries = 3
 
-    response = requests.get(request)
-    response.raise_for_status()
+    while tries > 0:
+        try:
+            # get taxonKey
+            request = f"{taxon_key_url}{species_name.lower().replace(' ', '%20')}"
+            response = requests.get(request)
+            response.raise_for_status()
 
-    # search for "taxonID":"gbif:" with some numbers, getting the numbers
-    taxonKey = re.search('(?<="taxonID":"gbif:)\\d+', response.text)
+            # search for "taxonID":"gbif:" with some numbers, getting the numbers
+            taxon_key = re.search('(?<="taxonID":"gbif:)\\d+', response.text)
 
-    if taxonKey is None:
-        handler.debug(f"  (Unknown) GBIF: {species_name}: No data")
-        return None
-    taxonKey = taxonKey.group()
+            if taxon_key is None:
+                handler.debug(f"  (Unknown) GBIF: {species_name}: No data")
+                return None
+            taxon_key = taxon_key.group()
 
-    # get native range
-    request = f"{records_url}{taxonKey}/descriptions"
+            # get native range
+            request = f"{records_url}{taxon_key}/descriptions"
+            response = requests.get(request)
+            response.raise_for_status()
 
-    response = requests.get(request)
-    response.raise_for_status()
+            break
+
+        except (
+            ConnectionError,
+            ConnectionRefusedError,
+            ConnectionAbortedError,
+            ConnectionResetError,
+        ) as error:
+            handler.debug(f"Failed on attempt {4 - tries}. See error below.")
+            handler.debug(error)
+            tries -= 1
+            sleep(3)
+
+    if tries < 1:
+        handler.error(
+            "Connection Error, GBIF may be having issues. Please try again later.",
+            abort=True,
+        )
 
     try:
         results = response.json()
@@ -38,58 +61,66 @@ def query_gbif(species_name: str, geography: str, handler: Handler) -> Optional[
         handler.debug(f"  (Unknown) GBIF: {species_name}: No data")
         return None
 
-    lookup = [
+    native_ranges = [
         res["description"]
         for res in results["results"]
         if res["type"] == "native range"
     ]
 
-    if len(lookup) == 0:
+    if len(native_ranges) == 0:
         handler.debug(f"  (Unknown) GBIF: {species_name}: No data")
         return None
-    nranges = lookup
 
     cryptogenic = False
 
     check = 1
 
-    for nrange in nranges:
-        if nrange == "Cosmopolitan, Cryptogenic":
+    for native_range in native_ranges:
+        if native_range == "Cosmopolitan, Cryptogenic":
             handler.debug(f"  (Unknown) GBIF: {species_name}: cryptogenic")
             cryptogenic = True
             continue
-        if nrange == "Pantropical, Circumtropical":
-            ref_hierarchy = get_ref_hierarchy(geography)
-            if ref_hierarchy["Pantropical"] is True:
+        if native_range == "Pantropical, Circumtropical":
+            reference_hierarchy = get_ref_hierarchy(ref_geo)
+            if reference_hierarchy["Pantropical"] is True:
                 handler.debug(f"  (Native) GBIF: {species_name}: Pantropical")
                 return "Native"
             handler.debug(f"  (Introduced) GBIF: {species_name}: Pantropical")
             continue
-        if nrange == "Subtropics":
-            ref_hierarchy = get_ref_hierarchy(geography)
-            if ref_hierarchy["Subtropics"] is True:
+        if native_range == "Subtropics":
+            reference_hierarchy = get_ref_hierarchy(ref_geo)
+            if reference_hierarchy["Subtropics"] is True:
                 handler.debug(f"  (Native) GBIF: {species_name}: Subtropical")
                 return "Native"
             handler.debug(f"  (Introduced) GBIF: {species_name}: Subtropical")
             continue
 
-        if nrange == geography:
+        if native_range == ref_geo:
             handler.debug(
-                f"  (Native) GBIF: {species_name}: directly native to reference geography {nrange}"
+                f"  (Native) GBIF: {species_name}:",
+                f"directly native to reference geography {native_range}",
             )
             return "Native"
-        if geo_contains(geography, nrange) or geo_contains(nrange, geography):
+        if geo_contains(ref_geo, native_range) or geo_contains(native_range, ref_geo):
             handler.debug(
-                f"  (Native) GBIF: {species_name}: reference geography {geography} <=> native range {nrange}"
+                f"  (Native) GBIF: {species_name}:",
+                f"reference geography {ref_geo} <=> native range {native_range}",
             )
             return "Native"
         handler.debug(
-            f"  (Mismatch) GBIF: {species_name} (attempt {check}): reference geography {geography} <!=> native range {nrange}"
+            f"  (Mismatch) GBIF: {species_name} (attempt {check}):",
+            f"reference geography {ref_geo} <!=> native range {native_range}",
         )
         check += 1
 
     # if it hasn't found a reason to call it native
+    species_status = "(Unknown)" if cryptogenic else "(Introduced)"
+    if cryptogenic:
+        status_description = "cryptogenic"
+    else:
+        status_description = f"not native to reference geography {ref_geo}"
+
     handler.debug(
-        f"  {'(Unknown)' if cryptogenic else '(Introduced)'} GBIF: {species_name}: species is {'cryptogenic' if cryptogenic else f'not native to reference geography {geography}'}"
+        f"  {species_status} GBIF: {species_name}: species is {status_description}"
     )
     return "Introduced" if not cryptogenic else None

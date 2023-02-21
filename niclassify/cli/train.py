@@ -4,7 +4,7 @@ from rich import print
 from typing import List, Optional
 from pathlib import Path
 from enum import Enum
-from .enums import TaxonomicHierarchy, Methods
+from ..core.enums import TaxonomicHierarchy, Methods
 
 
 def _train(
