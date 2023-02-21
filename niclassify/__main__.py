@@ -37,6 +37,15 @@ app.command(name="select")(_column_select)
 app.command(name="train")(_train)
 app.command(name="predict")(_predict)
 
+# TODO get rid of globals, just pass in though map_partition and apply args
+
+# TODO refactor confirm_overwrite to be a method of handler
+
+# TODO add "leave blank to use system file browser"
+
+# TODO for the lead-up to training, try to add some sort of weight so you don't have to worry about data duplication
+# basically, minimize how much data needs to be loaded to memory for training purposes.
+
 # TODO figure out what to call the composition of all data prep command?
 
 # TODO debug logging
@@ -54,6 +63,10 @@ app.command(name="predict")(_predict)
 
 # TODO in composed interactive mode, ask if user would prefer to input file or use file browser (if there's a module to support that)
 
+# TODO type annotate everything that seems reasonable to
+
+# TODO move away from handler prefabs?
+
 
 @app.callback(invoke_without_command=True)
 def default(ctx: typer.Context):
@@ -65,3 +78,8 @@ def default(ctx: typer.Context):
 
 if __name__ == "__main__":
     app()
+
+
+# LATERER IDEAS
+# - some sort of automated script for retrieving all sequences from same species/identified species?
+#   essentially something to 'bolster' existing sequences...not sure if totally useful

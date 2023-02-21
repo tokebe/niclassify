@@ -4,14 +4,25 @@ from rich import print
 from typing import List, Optional
 from pathlib import Path
 from enum import Enum
-from .enums import TaxonomicHierarchy
+from ..core.enums import TaxonomicHierarchy
+from multiprocessing import cpu_count
+from ..core.utils import confirm_overwrite
+from .handler import CLIHandler
+
+
+n_cpus = cpu_count()
+
+# TODO add arguments to output all files (add documentation that it'll all output with prefixes)
+# otherwise it's all tempfiles and only the one output
+# add warning that it'll generate n files and list files which will be overwritten
+
 
 def _align(
-    input_fasta: Path = typer.Option(
+    input_file: Path = typer.Option(
         ...,
         "--input",
         "-i",
-        help="Input FASTA file.",
+        help="Input (.tsv) file.",
         prompt=True,
         show_default=False,
         exists=True,
@@ -26,7 +37,7 @@ def _align(
         ...,
         "--output",
         "-o",
-        help="Output file.",
+        help="Output aligned FASTA (.fasta) file.",
         prompt=True,
         show_default=False,
         exists=False,
@@ -44,16 +55,41 @@ def _align(
         help="Taxonomic level on which to split data for computation",
         case_sensitive=False,
     ),
+    output_all: bool = typer.Option(
+        False,
+        "--output-all",
+        "-a",
+        help="Output all FASTA (.fasta) files, aligned and unaligned, separately for each split."
+    ),
+    cores: int = typer.Option(
+        n_cpus,
+        "--cores",
+        "-c",
+        help="Number of cores to use. Defaults to system core count (i.e. the default changes).",
+        min=1,
+        max=n_cpus,
+    ),
+    pre_confirm: bool = typer.Option(
+        False,
+        "--yes",
+        "-y",
+        help="Automatically confirm dialogs such as file overwrite confirmations.",
+    ),
+    debug: bool = typer.Option(
+        False,
+        "--debug",
+        help="Output debug logs to stdout.",
+    ),
 ):
     """
-    Align a given FASTA file using MUSCLE.
+    Generate an aligned FASTA file using MUSCLE.
 
-    Options marked [red]\[required][/] will be prompted for if not provided.
+    The specified [italic]split_level[/] must be present in the data (for example, default order requires [bold]order_name[/]). If the appropriate column is not provided, you will be asked whether to continue or not.
+
+    If splitting occurs, the output file will be a single combined FASTA file, where each group is labeled by the split level, with each group being aligned, but with no guarantee groups are aligned to one another. This file will be useable by the other steps without modification.
+
+    Options in the 'Requirements' section will be prompted for if not provided.
     """
-    if input_fasta is None:
-        input_fasta = typer.prompt("Input FASTA file")
-    if output is None:
-        output = typer.prompt("Output FASTA file")
-    if split_level is None:
-        split_level = typer.prompt("Taxonomic level to split data (e.g. order)")
-    print(input_fasta, output, split_level)
+    handler = CLIHandler(pre_confirm=pre_confirm, debug=debug)
+
+    confirm_overwrite(output, handler, abort=True)
