@@ -8,6 +8,10 @@ from .handler import CLIHandler
 from ..core.get import get
 from ..core.utils import confirm_overwrite
 
+from multiprocessing import cpu_count
+
+n_cpus = cpu_count()
+
 
 def _get(
     geography: str = typer.Option(
@@ -34,8 +38,8 @@ def _get(
         ...,
         "--output",
         "-o",
-        help="Output .tsv file.",
-        prompt="Output .tsv file.",
+        help="Output (.tsv) file.",
+        prompt="Output (.tsv) file.",
         show_default=False,
         exists=False,
         file_okay=True,
@@ -44,6 +48,14 @@ def _get(
         writable=True,
         resolve_path=True,
         rich_help_panel="Requirements",
+    ),
+    cores: int = typer.Option(
+        n_cpus,
+        "--cores",
+        "-c",
+        help="Number of cores to use. Defaults to system core count (i.e. the default changes).",
+        min=1,
+        max=n_cpus,
     ),
     pre_confirm: bool = typer.Option(
         False,
@@ -62,6 +74,6 @@ def _get(
 
     Options in the 'Requirements' section will be prompted for if not provided.
     """
-    handler = CLIHandler(debug=debug)
-    if pre_confirm or confirm_overwrite(output, handler, abort=True):
-        get(geography, taxonomy, output, handler)
+    handler = CLIHandler(pre_confirm=pre_confirm, debug=debug)
+    confirm_overwrite(output, handler, abort=True)
+    get(geography, taxonomy, output, handler, cores)

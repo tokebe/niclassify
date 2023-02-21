@@ -9,14 +9,17 @@ import numpy as np
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 from itertools import repeat
-
-RESERVED_COLUMNS = {"gbif_status", "itis_status", "final_status"}
-
-# TODO more explicit branch logging
+from threading import Lock
 
 
-def lookup(input_file: Path, output: Path, geography: str, handler: Handler) -> None:
-    handler.log("Looking up statuses for known species...")
+def lookup(
+    input_file: Path,
+    output: Path,
+    geography: str,
+    handler: Handler,
+    cores: int = cpu_count(),
+) -> None:
+    RESERVED_COLUMNS = {"gbif_status", "itis_status"}
     data = read_data(input_file)
 
     if "species_name" not in data.columns:
@@ -25,34 +28,84 @@ def lookup(input_file: Path, output: Path, geography: str, handler: Handler) -> 
 
     if not RESERVED_COLUMNS.isdisjoint(set(data.columns)):
         if not handler.confirm(
-            f"columns {', '.join(RESERVED_COLUMNS.intersection(set(data.columns)))} will be overwitten. Continue?"
+            f"columns "
+            f"{', '.join(RESERVED_COLUMNS.intersection(set(data.columns)))} "
+            "will be overwitten. Continue?"
         ):
             return
+    RESERVED_COLUMNS.add("final_status")  # won't be overwritten, just the null updated
 
-    species_names = data["species_name"].unique().dropna().compute()
+    handler.log("Looking up statuses for known species...")
+
     # get all species statuses, avoiding duplicates
-    with ThreadPool() as pool:
-        species = pool.starmap(get_status, zip(species_names, repeat(geography), repeat(handler)))
-    # for species_name in species_names:
-    #     if not pd.isna(species_name) and species_name not in species:
-    #         species[species_name] = get_status(species_name, geography, handler)
+    species_names = data["species_name"].unique().dropna().compute(num_workers=cores)
 
-    statuses = (
-        pd.DataFrame(species)
-        .set_axis(
-            [
-                "species_name",
-                "gbif_status",
-                "itis_status",
-                "final_status",
-            ],
-            axis="columns",
-            copy=False,
+    lock = Lock()
+
+    with handler.progress(percent=True) as status:
+        task = status.add_task(
+            description="Looking up status", total=species_names.size
         )
+
+        def get_status_with_progress(*args):
+            status_info = get_status(*args)
+            with lock:
+                status.advance(task)
+            return status_info
+
+        with ThreadPool() as pool:
+            species = pool.starmap(
+                get_status_with_progress,
+                zip(species_names, repeat(geography), repeat(handler)),
+            )
+    species_identified = [
+        species_name
+        for species_name, *_, final_status in species
+        if final_status is not None
+    ]
+
+    statuses = pd.DataFrame(species).set_axis(
+        [
+            "species_name",
+            "gbif_status",
+            "itis_status",
+            "final_status",
+        ],
+        axis="columns",
+        copy=False,
     )
-    statuses = dd.from_pandas(statuses, chunksize=1000000)
-    # avoid duplicating column if it exists
-    data.drop(RESERVED_COLUMNS, axis="columns", errors="ignore").merge(
-        statuses, how="left", on="species_name"
-    ).to_csv(output, single_file=True, index=False)
-    # TODO figure out merging back into file and writing to output
+
+    def merge_statuses(df):
+        with_new_statuses = df.drop(
+            RESERVED_COLUMNS, axis="columns", errors="ignore"
+        ).merge(statuses, how="left", on="species_name")
+        missing_columns = 0
+        for column in RESERVED_COLUMNS:
+            if column not in df.columns:
+                missing_columns += 1
+                df[column] = with_new_statuses[column]
+        if missing_columns < len(RESERVED_COLUMNS):
+            df.update(with_new_statuses, overwrite=False)
+        return df
+
+    data.map_partitions(
+        merge_statuses,
+        meta={
+            **{column: "object" for column in data.columns},
+            **{
+                column: "object"
+                for column in RESERVED_COLUMNS
+                if column not in data.columns
+            },
+        },
+    ).to_csv(
+        output,
+        single_file=True,
+        index=False,
+        sep="\t",
+        compute_kwargs={"num_workers": cores},
+    )
+
+    handler.log(
+        f"Successfully retrieved statuses for {len(species_identified)} species."
+    )

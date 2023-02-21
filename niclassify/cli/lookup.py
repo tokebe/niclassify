@@ -11,6 +11,9 @@ from .completion import complete_geography
 from ..core.utils import confirm_overwrite
 from .columnize import columnize
 from .handler import CLIHandler
+from multiprocessing import cpu_count
+
+n_cpus = cpu_count()
 
 
 def list_geographies(value: bool):
@@ -39,7 +42,7 @@ def _lookup(
         None,
         "--output",
         "-o",
-        help="Output data with any known statuses added.",
+        help="Output (.tsv) data with any known statuses added.",
         prompt=True,
         show_default=False,
         exists=False,
@@ -69,6 +72,14 @@ def _lookup(
         callback=list_geographies,
         is_eager=True,
     ),
+    cores: int = typer.Option(
+        n_cpus,
+        "--cores",
+        "-c",
+        help="Number of cores to use. Defaults to system core count (i.e. the default changes).",
+        min=1,
+        max=n_cpus,
+    ),
     pre_confirm: bool = typer.Option(
         False,
         "--yes",
@@ -84,9 +95,12 @@ def _lookup(
     """
     Establish any known species statuses as native or introduced using Global Biodiversity Information Facility and Integrated Taxonomic Information System.
 
+    Requires [bold]species_name[/] column.
+    If [bold]final_status[/] column is provided, any existing statuses will be preserved.
+
     Options in the 'Requirements' section will be prompted for if not provided.
     """
-    handler = CLIHandler(debug=debug)
+    handler = CLIHandler(pre_confirm=pre_confirm, debug=debug)
     geographies = get_geographies()
     # try to parse int input
     try:
@@ -109,5 +123,5 @@ def _lookup(
                 )
             geography = geographies[index - 1]
 
-    if pre_confirm or confirm_overwrite(output, handler, abort=True):
-        lookup(input_file, output, geography, handler)
+    confirm_overwrite(output, handler, abort=True)
+    lookup(input_file, output, geography, handler, cores)

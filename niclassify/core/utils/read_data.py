@@ -2,6 +2,9 @@ from pathlib import Path
 import dask.dataframe as dd
 import json
 
+import multiprocessing
+
+
 NANS = []
 
 with open(Path(__file__).parent.parent.parent / "config/nans.json") as nansfile:
@@ -32,7 +35,16 @@ def read_data(file: Path) -> dd.DataFrame:
             na_values=NANS,
             keep_default_na=True,
             engine="python",
-            sep='\t',
+            sep="\t",
             dtype="object",
         )
+
+    core_count = multiprocessing.cpu_count()
+
+    part_count = 0
+    for part in data.partitions:
+        part_count += 1
+
+    if part_count < core_count:
+        return data.repartition(npartitions=core_count)
     return data

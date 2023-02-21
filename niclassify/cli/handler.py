@@ -4,63 +4,86 @@ import json
 from pathlib import Path
 import niclassify.core.interfaces.handler as handler
 from contextlib import contextmanager
-from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.progress import (
+    Progress,
+    SpinnerColumn,
+    TextColumn,
+    BarColumn,
+    TimeRemainingColumn,
+    MofNCompleteColumn,
+    TimeElapsedColumn,
+)
 
-# TODO figure out if you want special formatting/etc
-# TODO create a CONTEXT manager that provides a spinner
-# probably needs to be updatable, can set if transient? possibly etc.
 
-# BUFFER
-BUFFER = []
 # CONTEXT
 CONTEXT = {"context": None}
 
+
 class CLIHandler(handler.Handler):
+    def __init__(self, pre_confirm: bool = False, debug: bool = False):
+        self.pre_confirm = pre_confirm
+        self._debug = debug
 
-    def __init__(self, debug: bool = False):
-        self.debug = debug
+    def prefix_with_indent(*message, prefix: str) -> str:
+        """Return message with prefix, respecting indent."""
+        indent = len(message[0]) - len(message[0].lstrip())
+        lstripped = " ".join(
+            [part.lstrip() if i == 0 else part for i, part in enumerate(message)]
+        )
+        return f"{' ' * indent}{prefix} {lstripped}"
 
-    def debug(self, message: str):
-        if self.debug:
-            self.log(f"[italics]DEBUG: {message}[/]")
-
-    @staticmethod
-    def log(message: str):
-        if CONTEXT["context"] is not None:
-            BUFFER.append({"func": CLIHandler.log, "args": [message]})
-            return
-        print(message)
-
-    @staticmethod
-    def message(message: str):
-        if CONTEXT["context"] is not None:
-            BUFFER.append({"func": CLIHandler.message, "args": [message]})
-            return
-        print(message)
+    def debug(self, *message: str):
+        """Print message only if debugging is enabled."""
+        if self._debug:
+            self.log(
+                f"[italic bright_black]{CLIHandler.prefix_with_indent(*message, prefix='DEBUG:')}[/]"
+            )
 
     @staticmethod
-    def warning(message: str):
+    def log(*message: str):
+        """Log a message."""
         if CONTEXT["context"] is not None:
-            BUFFER.append({"func": CLIHandler.warning, "args": [message]})
-            return
-        print(message)
+            CONTEXT["context"].console.print(" ".join(message))
+        else:
+            print(" ".join(message))
 
     @staticmethod
-    def error(error: str, should_exit=False):
-        if CONTEXT["context"] is not None:
-            BUFFER.append({"func": CLIHandler.log, "args": [error, should_exit]})
-            return
-        print(error)
-        if should_exit:
+    def message(*message: str):
+        """Log a message and wait for the user to acknowledge."""
+        CLIHandler.log(*message)
+        typer.prompt("Enter to continue", hide_input=True)
+
+    @staticmethod
+    def warning(*message: str):
+        """Log a message with a warning prefix to grab user attention."""
+        CLIHandler.log(
+            CLIHandler.prefix_with_indent(*message, prefix="[bold yellow]WARNING:[/]")
+        )
+
+    @staticmethod
+    def error(*error: str, abort=False):
+        """Log a message with an error prefix and exit if required."""
+        CLIHandler.log(
+            CLIHandler.prefix_with_indent(*error, prefix="[bold red]ERROR:[/]")
+        )
+        if abort:
             typer.Exit(code=1)
 
-    @staticmethod
-    def confirm(message: str, abort=False):
-        return typer.confirm(message, abort=abort)
+    def confirm(self, *message: str, abort=False, allow_pre_confirm=True):
+        """Get a simply yes/no response from the user."""
+
+        if (allow_pre_confirm and self.pre_confirm):
+            CLIHandler.log(f"[italic bright_black]{' '.join(message)}: y[/]")
+            return True
+
+        return typer.confirm(
+            ' '.join(message), abort=abort
+        )
 
     @staticmethod
     @contextmanager
     def spin(transient=False):
+        """Create a context which allows for one or more spinners to display that something is in progress."""
         if CONTEXT["context"] is not None:
             yield CONTEXT["context"]
         try:
@@ -73,6 +96,29 @@ class CLIHandler(handler.Handler):
                 yield progress
         finally:
             CONTEXT["context"] = None
-            while len(BUFFER) > 0:
-                buffered_item = BUFFER.pop(0)
-                buffered_item["func"](*buffered_item["args"])
+
+    @staticmethod
+    @contextmanager
+    def progress(transient=False, percent=False):
+        """Create a context which allows for one or more spinners with progress bars."""
+
+        if percent:
+            progress_text = "{task.percentage:>3.0f}% | time remaining"
+        else:
+            progress_text = "{task.completed}/{task.total} | time remaining"
+
+        if CONTEXT["context"] is not None:
+            yield CONTEXT["context"]
+        try:
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                TextColumn(progress_text),
+                TimeRemainingColumn(elapsed_when_finished=True),
+                transient=transient
+            ) as progress:
+                CONTEXT["context"] = progress
+                yield progress
+        finally:
+            CONTEXT["context"] = None

@@ -39,9 +39,9 @@ class Handler:
     def warning(message: str):
         print(message)
 
-    def error(error: str, should_exit=False):
+    def error(error: str, abort=False):
         print(error)
-        if should_exit:
+        if abort:
             typer.Exit(code=1)
 
     def confirm(message, abort=False):

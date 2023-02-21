@@ -5,9 +5,10 @@ from xml.etree import ElementTree
 from ratelimiter import RateLimiter
 from .get_ref_hierarchy import get_ref_hierarchy
 from .geo_contains import geo_contains
+from time import sleep
 
 
-@RateLimiter(max_calls=10, period=1)
+@RateLimiter(max_calls=1, period=1)
 def query_itis(species_name: str, geography: str, handler: Handler) -> Optional[str]:
 
     tsn_url = "http://www.itis.gov/ITISWebService/services/ITISService/\
@@ -15,45 +16,73 @@ getITISTermsFromScientificName?srchKey="
     jurisdiction_url = "http://www.itis.gov/ITISWebService/services/ITISService/\
 getJurisdictionalOriginFromTSN?tsn="
 
-    # get TSN
-    req = f"{tsn_url}{species_name.replace(' ', '%20')}"
+    tries = 3
 
-    response = requests.get(req)
-    response.raise_for_status()
-    # get xml tree from response
-    tree = ElementTree.fromstring(response.content)
-    # get any TSN's
-    vals = [
-        i.text for i in tree.iter("{http://data.itis_service.itis.usgs.gov/xsd}tsn")
-    ]
+    while tries > 0:
+        try:
 
-    if vals is None:  # skip if there's no tsn to be found
-        handler.debug(f"  (Unknown) ITIS: {species_name}: no data")
-        return None
+            # get TSN
+            request = f"{tsn_url}{species_name.replace(' ', '%20')}"
 
-    elif len(vals) != 1:  # skip if tsn is empty or there are more than one
-        handler.debug(f"  (Unknown) ITIS: {species_name}: no data")
-        return None
+            response = requests.get(request)
+            response.raise_for_status()
+            # get xml tree from response
+            result_tree = ElementTree.fromstring(response.content)
+            # get any TSN's
+            matched_TSNs = [
+                i.text
+                for i in result_tree.iter(
+                    "{http://data.itis_service.itis.usgs.gov/xsd}tsn"
+                )
+            ]
 
-    tsn = vals[0]  # tsn captured
+            if matched_TSNs is None:  # skip if there's no tsn to be found
+                handler.debug(f"  (Unknown) ITIS: {species_name}: no data")
+                return None
 
-    # get jurisdiction
-    req = f"{jurisdiction_url}{tsn}"
+            elif (
+                len(matched_TSNs) != 1
+            ):  # skip if tsn is empty or there are more than one
+                handler.debug(f"  (Unknown) ITIS: {species_name}: no data")
+                return None
 
-    response = requests.get(req)
+            tsn = matched_TSNs[0]  # tsn captured
 
-    response.raise_for_status()
+            # get jurisdiction
+            request = f"{jurisdiction_url}{tsn}"
+            response = requests.get(request)
+            response.raise_for_status()
+            break
+
+        except (
+            ConnectionError,
+            ConnectionRefusedError,
+            ConnectionAbortedError,
+            ConnectionResetError,
+        ) as error:
+            handler.debug(f"Failed on attempt {4 - tries}. See error below.")
+            handler.debug(error)
+            tries -= 1
+            sleep(3)
+
+    if tries < 1:
+        handler.error(
+            "Connection Error, GBIF may be having issues. Please try again later.",
+            abort=True,
+        )
 
     try:
-        tree = ElementTree.fromstring(response.content)
+        result_tree = ElementTree.fromstring(response.content)
     except UnicodeDecodeError:
         return None
 
     jurisdictions = {
         j.text: n.text
         for j, n in zip(
-            tree.iter("{http://data.itis_service.itis.usgs.gov/xsd}jurisdictionValue"),
-            tree.iter("{http://data.itis_service.itis.usgs.gov/xsd}origin"),
+            result_tree.iter(
+                "{http://data.itis_service.itis.usgs.gov/xsd}jurisdictionValue"
+            ),
+            result_tree.iter("{http://data.itis_service.itis.usgs.gov/xsd}origin"),
         )
     }
 
@@ -65,7 +94,8 @@ getJurisdictionalOriginFromTSN?tsn="
         # simple first: check if jurisdiction is just current reference geo
         if jurisdiction == geography:
             handler.debug(
-                f"  (Native) ITIS: {species_name}: directly native to reference geography {geography}"
+                f"  ({status}) ITIS: {species_name}:",
+                f"directly {status.lower()} to reference geography {geography}",
             )
             return status if status != "Native&Introduced" else None
         # otherwise if one contains the other it's native
@@ -73,12 +103,11 @@ getJurisdictionalOriginFromTSN?tsn="
             jurisdiction, geography
         ):
             handler.debug(
-                f"  (Native) ITIS: {species_name}: reference geography {geography} <=> native range {jurisdiction}"
+                f"  ({status}) ITIS: {species_name}:",
+                f"reference geography",
+                f"{geography} <=> {status.lower()} range {jurisdiction}",
             )
             return status if status != "Native&Introduced" else None
-        handler.debug(
-            f"  (Introduced) ITIS: {species_name}: reference geography {geography} <!=> native range {jurisdiction}"
-        )
 
     # if it hasn't found a reason to call it native
     return None

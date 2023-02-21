@@ -9,6 +9,10 @@ from ..core.identify import identify
 
 from .handler import CLIHandler
 
+from multiprocessing import cpu_count
+
+n_cpus = cpu_count()
+
 
 def _identify(
     input_file: Path = typer.Option(
@@ -30,7 +34,7 @@ def _identify(
         ...,
         "--output",
         "-o",
-        help="Output data with any identifiable species added.",
+        help="Output (.tsv) data with any identifiable species added.",
         prompt=True,
         show_default=False,
         exists=False,
@@ -46,12 +50,24 @@ def _identify(
         "--min-similarity",
         "-s",
         help="Minimum similarity for a match to be considered, from 0 to 1.",
+        min=0,
+        max=1,
     ),
     agreement: float = typer.Option(
         float(1),
         "--min-agreement",
         "-a",
         help="Minimum proportion of highest-similarity matches that must agree for successful identification (if multiple exceed minimum, highest proportion will be used).",
+        min=0,
+        max=1,
+    ),
+    cores: int = typer.Option(
+        n_cpus,
+        "--cores",
+        "-c",
+        help="Number of cores to use. Defaults to system core count (i.e. the default changes).",
+        min=1,
+        max=n_cpus,
     ),
     pre_confirm: bool = typer.Option(
         False,
@@ -68,9 +84,12 @@ def _identify(
     """
     Identify species by looking up sequences on the Barcode of Life Data System (WARNING: SLOW).
 
+    Requires [bold]nucleotides[/] column with sequences.
+    If [bold]species_name[/] column is provided, pre-identified species will be skipped.
+    If [bold]order_name[/] column is provided, any mismatching orders will produce warnings.
 
     Options in the 'Requirements' section will be prompted for if not provided.
     """
-    handler = CLIHandler()
-    if pre_confirm or confirm_overwrite(output, handler, abort=True):
-        identify(input_file, output, similarity, agreement, handler)
+    handler = CLIHandler(pre_confirm=pre_confirm, debug=debug)
+    confirm_overwrite(output, handler, abort=True)
+    identify(input_file, output, similarity, agreement, handler, cores)
