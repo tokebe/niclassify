@@ -4,6 +4,15 @@ from rich import print
 from typing import List, Optional
 from pathlib import Path
 from enum import Enum
+from ..core.filter import filter_fasta
+from .handler import CLIHandler
+from ..core.utils import confirm_overwrite
+
+
+from multiprocessing import cpu_count
+
+n_cpus = cpu_count()
+
 
 def _filter(
     input_file: List[Path] = typer.Option(
@@ -21,6 +30,21 @@ def _filter(
         resolve_path=True,
         rich_help_panel="Requirements",
     ),
+    output: Path = typer.Option(
+        ...,
+        "--output",
+        "-o",
+        help="Output (.tsv) data, filtered.",
+        prompt=True,
+        show_default=False,
+        exists=False,
+        file_okay=True,
+        dir_okay=False,
+        readable=False,
+        writable=True,
+        resolve_path=True,
+        rich_help_panel="Requirements",
+    ),
     marker_codes: Optional[str] = typer.Option(
         "COI-5P",
         "--marker-codes",
@@ -30,40 +54,37 @@ def _filter(
     base_pairs: Optional[int] = typer.Option(
         350, "--base-pairs", "-b", help="Minimum base pair count allowed.", min=0
     ),
-    output: Path = typer.Option(
-        ...,
-        "--output",
-        "-o",
-        help="Output file.",
-        prompt=True,
-        show_default=False,
-        exists=False,
-        file_okay=True,
-        dir_okay=False,
-        readable=False,
-        writable=True,
-        resolve_path=True,
-        rich_help_panel="Requirements",
+    cores: int = typer.Option(
+        n_cpus,
+        "--cores",
+        "-c",
+        help="Number of cores to use. Defaults to system core count (i.e. the default changes).",
+        min=1,
+        max=n_cpus,
     ),
-    fasta_output: Optional[str] = typer.Option(
-        ...,
-        "--output-fasta",
-        "-f",
-        help="FASTA output file.",
-        prompt=True,
-        show_default=False,
-        exists=False,
-        file_okay=True,
-        dir_okay=False,
-        readable=False,
-        writable=True,
-        resolve_path=True,
-        rich_help_panel="Requirements",
+    pre_confirm: bool = typer.Option(
+        False,
+        "--yes",
+        "-y",
+        help="Automatically confirm dialogs such as file overwrite confirmations.",
+    ),
+    debug: bool = typer.Option(
+        False,
+        "--debug",
+        help="Output debug logs to stdout.",
     ),
 ):
     """
-    Filter input data and prepare a FASTA file of the kept sequences.
+    Filter input data. See options for default filtering cases.
 
-    Options marked [red]\[required][/] will be prompted for if not provided.
+    If [bold]marker_codes[/] column is provided, only allowed marker codes will be kept.
+    If [bold]base_pairs[] column is provided, only sequences longer than --base-pairs will
+
+    Options in the 'Requirements' section will be prompted for if not provided.
     """
-    print(locals())
+    handler = CLIHandler(pre_confirm=pre_confirm, debug=debug)
+
+    confirm_overwrite(output, handler, abort=True)
+    filter_fasta(
+        input_file, output, marker_codes, base_pairs, handler, cores
+    )
