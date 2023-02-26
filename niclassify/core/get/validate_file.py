@@ -19,10 +19,10 @@ def validate_file(file: Path, handler: Handler, cores: int = cpu_count()) -> Non
             data = read_data(file)
             retrieved_count = data.shape[0].compute(num_workers=cores)
         except ParserError:
-            handler.error(handler.prefab.BOLD_FILE_ERR)
+            handler.error(handler.prefab.BOLD_FILE_ERR, abort=True)
         except EmptyDataError:
-            handler.error(handler.prefab.BOLD_NO_OBSERVATIONS)
+            handler.error(handler.prefab.BOLD_NO_OBSERVATIONS, abort=True)
         except UnicodeDecodeError:
-            handler.error(handler.prefab.RESPONSE_DECODE_ERR)
+            handler.error(handler.prefab.RESPONSE_DECODE_ERR, abort=True)
         spinner.update(task, description="Validating file...done.", completed=1)
     handler.log(f"Successfully retrieved {retrieved_count} samples.")
