@@ -35,7 +35,7 @@ def filter_fasta(
         )
 
     if "nucleotides" not in data.columns:
-        handler.error(handler.prefab.MISSING_NUCLEOTIDES_COLUMN)
+        handler.error(handler.prefab.MISSING_NUCLEOTIDES_COLUMN, abort=True)
         return
 
     # Remove rows missing allowed marker_codes
@@ -66,7 +66,7 @@ def filter_fasta(
                 return f"ID_{count}"
 
         def make_ids(df, lock):
-            uid = df.apply(count_id, lock, axis="columns", )
+            uid = df.apply(count_id, axis="columns", args=(lock,))
             df.insert(0, "UID", uid)
             return df
 
