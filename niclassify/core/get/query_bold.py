@@ -2,6 +2,8 @@ from pathlib import Path
 from typing import Callable
 import requests
 import shutil
+from tempfile import NamedTemporaryFile
+import os
 
 from ..interfaces import Handler
 
@@ -18,29 +20,31 @@ def query_bold(geography: str, taxonomy: str, output: Path, handler: Handler) ->
                 handler.error(TimeoutError("boldsystems.com keeps timing out"))
                 break
             try:
-                with open(output, "wb") as file, requests.get(
-                    request, stream=True
-                ) as response:
-                    with handler.spin() as spinner:
-                        task = spinner.add_task(description="Querying BOLD...", total=1)
-
+                with handler.spin() as spinner:
+                    task = spinner.add_task(description="Querying BOLD...", total=1)
+                    with open(output, "w", encoding="utf8") as file, requests.get(
+                        request, stream=True
+                    ) as response:
                         # error if response isn't success
-                        # TODO better handling?
+                        # TODO better error handling for this whole module
                         try:
                             response.raise_for_status()
-                        except Exception as e:
-                            handler.error(e)
+                        except Exception as error:
+                            handler.error(error)
                             handler.error(
                                 requests.RequestException(
                                     handler.prefab.BOLD_SEARCH_ERR
                                 )
                             )
                             return
-                        shutil.copyfileobj(response.raw, file)
+                        for chunk in response.iter_content(chunk_size=int(1e9)):
+                            # streamed result is (probably) ANSI encoded
+                            file.write(chunk.decode("ansi"))
 
-                        task = spinner.update(
-                            task, description="Querying BOLD...done.", completed=1
-                        )
+                    task = spinner.update(
+                        task, description="Querying BOLD...done.", completed=1
+                    )
+
                 # handler.log("Success!")
                 return
             except requests.exceptions.Timeout:
@@ -51,21 +55,23 @@ def query_bold(geography: str, taxonomy: str, output: Path, handler: Handler) ->
                     )
                 )
                 pass
-            except requests.exceptions.RequestException as e:
-                # handler.error(e)
+            except requests.exceptions.RequestException as error:
+                handler.debug(error)
                 handler.error(
                     requests.exceptions.RequestException(handler.prefab.BOLD_SEARCH_ERR)
                 )
                 break
 
-    except UnicodeDecodeError as e:
-        # handler.error(e)
-        handler.error(Exception(handler.prefab.RESPONSE_DECODE_ERR))
+    except UnicodeDecodeError as error:
+        handler.error(error)
+        handler.error(Exception(handler.prefab.RESPONSE_DECODE_ERR), abort=True)
 
-    except requests.RequestException:
-        # handler.error(e)
-        handler.error(requests.RequestException(handler.prefab.BOLD_SEARCH_ERR))
+    except requests.RequestException as error:
+        handler.error(error)
+        handler.error(
+            requests.RequestException(handler.prefab.BOLD_SEARCH_ERR), abort=True
+        )
 
-    except (OSError, IOError, KeyError, TypeError, ValueError) as e:
-        # handler.error(e)
-        handler.error(OSError(handler.prefab.BOLD_SEARCH_ERR))
+    except (OSError, IOError, KeyError, TypeError, ValueError) as error:
+        handler.error(error)
+        handler.error(OSError(handler.prefab.BOLD_SEARCH_ERR), abort=True)
