@@ -8,7 +8,7 @@ from .geo_contains import geo_contains
 from time import sleep
 
 
-@RateLimiter(max_calls=1, period=1)
+@RateLimiter(max_calls=60, period=60)
 def query_itis(species_name: str, geography: str, handler: Handler) -> Optional[str]:
 
     tsn_url = "http://www.itis.gov/ITISWebService/services/ITISService/\
@@ -99,12 +99,12 @@ getJurisdictionalOriginFromTSN?tsn="
             )
             return status if status != "Native&Introduced" else None
         # otherwise if one contains the other it's native
-        if geo_contains(geography, jurisdiction) or geo_contains(
-            jurisdiction, geography
+        if geo_contains(geography, jurisdiction, handler) or geo_contains(
+            jurisdiction, geography, handler
         ):
             handler.debug(
                 f"  ({status}) ITIS: {species_name}:",
-                f"reference geography",
+                "reference geography",
                 f"{geography} <=> {status.lower()} range {jurisdiction}",
             )
             return status if status != "Native&Introduced" else None

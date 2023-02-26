@@ -8,7 +8,7 @@ from typing import Optional
 from time import sleep
 
 
-@RateLimiter(max_calls=1, period=1)
+@RateLimiter(max_calls=60, period=60)
 def query_gbif(species_name: str, ref_geo: str, handler: Handler) -> Optional[str]:
     """Query GBIF to determine if a species is native or introduced to a reference geography."""
     taxon_key_url = "http://api.gbif.org/v1/species?name="
@@ -101,7 +101,7 @@ def query_gbif(species_name: str, ref_geo: str, handler: Handler) -> Optional[st
                 f"directly native to reference geography {native_range}",
             )
             return "Native"
-        if geo_contains(ref_geo, native_range) or geo_contains(native_range, ref_geo):
+        if geo_contains(ref_geo, native_range, handler) or geo_contains(native_range, ref_geo, handler):
             handler.debug(
                 f"  (Native) GBIF: {species_name}:",
                 f"reference geography {ref_geo} <=> native range {native_range}",
