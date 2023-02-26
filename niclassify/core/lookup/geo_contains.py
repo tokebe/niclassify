@@ -1,13 +1,18 @@
 from .get_ref_hierarchy import get_ref_hierarchy
+from ..interfaces.handler import Handler
 
 
-def geo_contains(ref_geo: str, geo: str) -> bool:
+def geo_contains(ref_geo: str, geo: str, handler: Handler) -> bool:
     """Check if a given reference geography contains another geography."""
     # get the actual hierarchy
     hierarchy = get_ref_hierarchy(ref_geo)
     if hierarchy is None:
         # raise TypeError(
-        print("reference geography <{}> does not exist!".format(ref_geo))
+        handler.warning(
+            f"geographic region <{ref_geo}> not recognized.",
+            "Please register an issue regarding this region name",
+            "at https://github.com/tokebe/niclassify",
+        )
         return False
     if hierarchy["Contains"] is None:
         return False
