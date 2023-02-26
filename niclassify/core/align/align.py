@@ -3,9 +3,8 @@ from multiprocessing import cpu_count
 from ..interfaces import Handler
 from ..utils import read_data
 from ..enums import TaxonomicHierarchy
-from ..utils import confirm_overwrite
-from .write_to_fasta import write_to_fasta
-from align_files import align_files
+from ..write import write
+from .align_files import align_files
 
 
 def align(
@@ -27,7 +26,7 @@ def align(
 
     handler.log("Aligning sequences...")
 
-    if split_level != "none" and f"{split_level}_name" not in data.colums:
+    if split_level != "none" and f"{split_level}_name" not in data.columns:
         handler.confirm(
             f"Column {split_level}_name not present in data. Continue without split?",
             abort=True,
@@ -42,16 +41,28 @@ def align(
         handler.confirm(
             f"With output_all set, {(len(splits) * 2) + 1} files will be generated. Continue?"
         )
-
-        for split in splits:
-            confirm_overwrite(
+        handler.confirm_multiple_overwrite(
+            [
                 output_file.parent
-                / f"{output_file.stem}_{split}_unaligned.{output_file.suffix}",
-                handler,
-                abort=True,
-            )
+                / f"{output_file.stem}_{split}_unaligned.{output_file.suffix}"
+                for split in splits
+            ],
+            abort=True,
+        )
+        handler.confirm_multiple_overwrite(
+            [
+                output_file.parent
+                / f"{output_file.stem}_{split}_aligned.{output_file.suffix}"
+                for split in splits
+            ],
+            abort=True,
+        )
 
-    written_files = write_to_fasta(
+    written_files = write(
         data, splits, output_file, split_level, handler, cores, output_all=output_all
     )
-    align_files(output_file, written_files, splits, handler, cores, output_all=output_all)
+    align_files(output_file, written_files, handler, cores, output_all=output_all)
+
+    handler.log(
+        "Finished alignment. Please review and edit as necessary before continuing."
+    )

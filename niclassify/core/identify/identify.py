@@ -26,7 +26,7 @@ def identify(
         handler.error(handler.prefab.MISSING_NUCLEOTIDES_COLUMN)
         return
 
-    handler.log("Attempting to identify sequences of unknown species...")
+    handler.log("Attempting to identify sequences of unknown species (this will take some time)...")
 
     if "order_name" in data.columns:
         orders = set(data["order_name"].unique().compute(num_workers=cores))

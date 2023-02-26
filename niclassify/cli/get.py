@@ -6,7 +6,6 @@ from pathlib import Path
 from enum import Enum
 from .handler import CLIHandler
 from ..core.get import get
-from ..core.utils import confirm_overwrite
 
 from multiprocessing import cpu_count
 
@@ -75,5 +74,5 @@ def _get(
     Options in the 'Requirements' section will be prompted for if not provided.
     """
     handler = CLIHandler(pre_confirm=pre_confirm, debug=debug)
-    confirm_overwrite(output, handler, abort=True)
+    handler.confirm_overwrite(output, abort=True)
     get(geography, taxonomy, output, handler, cores)

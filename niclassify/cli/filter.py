@@ -6,7 +6,6 @@ from pathlib import Path
 from enum import Enum
 from ..core.filter import filter_fasta
 from .handler import CLIHandler
-from ..core.utils import confirm_overwrite
 
 
 from multiprocessing import cpu_count
@@ -84,7 +83,7 @@ def _filter(
     """
     handler = CLIHandler(pre_confirm=pre_confirm, debug=debug)
 
-    confirm_overwrite(output, handler, abort=True)
+    handler.confirm_overwrite(output, abort=True)
     filter_fasta(
         input_file, output, marker_codes, base_pairs, handler, cores
     )

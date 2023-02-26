@@ -6,8 +6,8 @@ from pathlib import Path
 from enum import Enum
 from ..core.enums import TaxonomicHierarchy
 from multiprocessing import cpu_count
-from ..core.utils import confirm_overwrite
 from .handler import CLIHandler
+from ..core.align import align
 
 
 n_cpus = cpu_count()
@@ -92,4 +92,6 @@ def _align(
     """
     handler = CLIHandler(pre_confirm=pre_confirm, debug=debug)
 
-    confirm_overwrite(output, handler, abort=True)
+    handler.confirm_overwrite(output, abort=True)
+
+    align(input_file, output, split_level, handler, cores, output_all)

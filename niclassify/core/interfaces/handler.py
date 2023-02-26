@@ -2,9 +2,12 @@ from rich import print
 import typer
 import json
 from pathlib import Path
+from typing import Union, List
+
 
 class dotdict(dict):
     """dot.notation access to dictionary attributes"""
+
     __getattr__ = dict.get
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
@@ -26,23 +29,36 @@ with open(Path(__file__).parent / "../messages.json", "r") as messages:
         }
     )
 
+
 class Handler:
 
     prefab = prefab_messages
 
-    def log(message: str):
-        print(message)
+    def log(*message: str):
+        pass
 
-    def message(message: str):
-        print(message)
+    def message(*message: str):
+        pass
 
-    def warning(message: str):
-        print(message)
+    def warning(*message: str):
+        pass
 
-    def error(error: str, abort=False):
-        print(error)
-        if abort:
-            typer.Exit(code=1)
+    def error(*error: str, abort=False):
+        pass
 
-    def confirm(message, abort=False):
-        return typer.confirm(message, abort=abort)
+    def confirm(*message, abort=False):
+        pass
+
+    def debug():
+        pass
+
+    def abort(self) -> None:
+        pass
+
+    def select(self, *prompt: str, options: List[str], abort=False) -> Union[str, None]:
+        pass
+
+    def select_multiple(
+        self, *prompt: str, options: List[str], abort=False
+    ) -> Union[str, None]:
+        pass

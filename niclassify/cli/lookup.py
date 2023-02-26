@@ -1,14 +1,11 @@
 import asyncio
-from PyInquirer import prompt, print_json, Separator
 import typer
-from rich import print
 from typing import List, Optional, Union
 from pathlib import Path
 from enum import Enum
 from ..core.lookup import lookup, get_geographies
 from .validation import validate_geography
 from .completion import complete_geography
-from ..core.utils import confirm_overwrite
 from .columnize import columnize
 from .handler import CLIHandler
 from multiprocessing import cpu_count
@@ -104,24 +101,21 @@ def _lookup(
     geographies = get_geographies()
     # try to parse int input
     try:
-        if geography is not None and int(geography) is not None:
+        if int(geography) is not None:
             if int(geography) > 0 and int(geography) < len(geographies):
                 geography = geographies[int(geography) - 1]
             else:
                 raise typer.BadParameter(
                     "Geography must be exact match or integer index."
                 )
-    except ValueError:
+    except (ValueError, TypeError):
         # Prompt user for a valid geography
         if geography is None:
-            print(columnize(geographies, dry_run=True, number=True))
-            index = 0
-            while index < 1 or index > len(geographies) + 1:
-                index = typer.prompt(
-                    text="Reference geography for relative native/introduced labeling (input number)",
-                    type=int,
-                )
-            geography = geographies[index - 1]
+            geography = handler.select(
+                "Reference geography for relative native/introduced labeling",
+                geographies,
+                abort=True,
+            )
 
-    confirm_overwrite(output, handler, abort=True)
+    handler.confirm_overwrite(output, abort=True)
     lookup(input_file, output, geography, handler, cores)

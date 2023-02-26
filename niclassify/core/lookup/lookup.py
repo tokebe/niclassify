@@ -42,7 +42,7 @@ def lookup(
 
     lock = Lock()
 
-    with handler.progress(percent=True) as status:
+    with handler.progress(percent=False) as status:
         task = status.add_task(
             description="Looking up status", total=species_names.size
         )

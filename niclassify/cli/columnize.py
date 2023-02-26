@@ -7,14 +7,17 @@ from typing import List
 
 def columnize(values: List[str], dry_run: bool = False, number: bool = False) -> Table:
 
+    number_len = 0
+
     if number:
-        values = [f"{i + 1}) {v}" for i, v in enumerate(values)]
+        number_len = len(str(len(values) + 1))
+        values = [f"{(i + 1):{number_len}}) {v}" for i, v in enumerate(values)]
 
     console_size = os.get_terminal_size()
     height = console_size.lines - 4
     width = console_size.columns
     max_width_item = len(max(values, key=len))
-    max_columns = math.floor(width / (max_width_item + 4))
+    max_columns = math.floor(width / (max_width_item + 5 + number_len))
 
     if len(values) <= height:
         table = Table(
