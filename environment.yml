@@ -6,14 +6,17 @@ channels:
   - bfurneaux
   - conda-forge
 dependencies:
-  - python=3.9.0
+  - python=3.9.16
   - pip
   - pip:
     - userpaths==0.*
     - python-nexus==2.*
-    - PyInquirer
     - typer[all]==0.7.*
     # - -e niclassify/bin/PTP/master
+  - pywin32
+  - jupyter
+  - ipykernel
+  - ipython
   - biopython==1.*
   - pandas==1.*
   - dask==2022.*
