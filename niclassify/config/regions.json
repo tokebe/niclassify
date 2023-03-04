@@ -61,6 +61,11 @@
           }
         }
       },
+      "Middle Asia": {
+        "Subtropics": false,
+        "Pantropical": false,
+        "Contains": null
+      },
       "Sri Lanka": {
         "Subtropics": false,
         "Pantropical": false,

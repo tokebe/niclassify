@@ -1,0 +1,103 @@
+{
+  "Africa": [
+    "East Tropical Africa",
+    "Northern Africa",
+    "West Tropical Africa"
+  ],
+  "Northern Africa": [
+    "Algeria",
+    "Tunisia"
+  ],
+  "Asia": [
+    "Asia-Temperate",
+    "Asia-Tropical",
+    "Eastern Asia",
+    "Middle Asia",
+    "Sri Lanka"
+  ],
+  "Sri Lanka": [
+    "Asia-Tropical"
+  ],
+  "Eastern Asia": [
+    "China",
+    "Japan",
+    "Asia-Temperate"
+  ],
+  "Japan": [
+    "Asia-Temperate"
+  ],
+  "China": [
+    "Asia-Temperate"
+  ],
+  "Atlantic Ocean": [
+    "St.Helena"
+  ],
+  "Austalasia": [
+    "Australia",
+    "New Zealand"
+  ],
+  "Central America": [],
+  "Caribean Territories": [],
+  "Europe": [
+    "Northern Europe",
+    "Middle Europe",
+    "Italy",
+    "Sicilia (Sicily)"
+  ],
+  "Northern Europe": [],
+  "Middle Europe": [
+    "Austria",
+    "Switzerland",
+    "Slovenia"
+  ],
+  "Northern America": [
+    "Continental US",
+    "Canada"
+  ],
+  "Continental US": [
+    "Northeastern U.S.A",
+    "Northwestern U.S.A.",
+    "Southeastern U.S.A.",
+    "Southwestern U.S.A.",
+    "Alaska"
+  ],
+  "Canada": [
+    "Western Canada",
+    "Eastern Canada"
+  ],
+  "Pacific Ocean": [
+    "North Pacific Ocean",
+    "Central Pacific Territories"
+  ],
+  "North Pacific Ocean": [
+    "Hawaii"
+  ],
+  "Mexico": [],
+  "Subtropics": [
+    "Northern Africa",
+    "Algeria",
+    "Tunisia",
+    "Atlantic Ocean",
+    "Australia",
+    "Pacific Ocean",
+    "North Pacific Ocean",
+    "Central Pacific Territories",
+    "Mexico"
+  ],
+  "Pantropical": [
+    "Mexico",
+    "Central Pacific Territories",
+    "Hawaii",
+    "North Pacific Ocean",
+    "Pacific Ocean",
+    "Caribbean Territories",
+    "Central America",
+    "Australia",
+    "St. Helena",
+    "Atlantic Ocean",
+    "Asia-Tropical",
+    "West Tropical Africa",
+    "Algeria",
+    "East Tropical Africa"
+  ]
+}
