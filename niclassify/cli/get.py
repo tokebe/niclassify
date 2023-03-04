@@ -1,4 +1,3 @@
-from PyInquirer import prompt, print_json, Separator
 import typer
 from rich import print
 from typing import List, Optional
@@ -31,14 +30,12 @@ def _get(
         show_default=False,
         rich_help_panel="Requirements",
     ),
-    # TODO implement an automatic path completion
-    # see https://typer.tiangolo.com/tutorial/options-autocompletion/
     output: Path = typer.Option(
         ...,
         "--output",
         "-o",
         help="Output (.tsv) file.",
-        prompt="Output (.tsv) file.",
+        prompt="Output (.tsv) file",
         show_default=False,
         exists=False,
         file_okay=True,
@@ -47,6 +44,7 @@ def _get(
         writable=True,
         resolve_path=True,
         rich_help_panel="Requirements",
+
     ),
     cores: int = typer.Option(
         n_cpus,
