@@ -53,6 +53,9 @@ app.add_typer(fasta_group, name="fasta")
 app.add_typer(feature_group, name="feature")
 app.add_typer(classifier_group, name="classifier")
 
+# TODO re-install env, see if you still have double of prompt-toolkit
+# this seems to be the current thing throwing errors with jupyter notebooks
+
 # TODO use namedTemporaryFile for all output and then copy to output
 # this should avoid any issues with overwriting input
 
@@ -93,9 +96,8 @@ app.add_typer(classifier_group, name="classifier")
 
 # TODO get rid of globals, just pass in though map_partition and apply args
 
-# TODO refactor confirm_overwrite to be a method of handler
-
 # TODO add "leave blank to use system file browser"
+# only implement this for interactive mode to save yourself sanity
 
 # TODO consider adding further hierarchy to commands?
 """
@@ -129,7 +131,7 @@ app.add_typer(classifier_group, name="classifier")
 
 # TODO figure out what to call the composition of all data prep command?
 
-# TODO debug logging
+# TODO more debug logging
 
 # TODO add argument to prompt instead of defaults when using interactive mode
 # maybe just --interactive?
@@ -142,6 +144,10 @@ app.add_typer(classifier_group, name="classifier")
 
 # TODO move away from handler prefabs
 
+# TODO implement an automatic path completion
+# see https://typer.tiangolo.com/tutorial/options-autocompletion/
+
+# TODO type annotation pass, remove unnecessary typing imports
 
 @app.callback(invoke_without_command=True)
 @app.command()
