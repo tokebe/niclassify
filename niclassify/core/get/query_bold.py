@@ -56,10 +56,11 @@ def query_bold(geography: str, taxonomy: str, output: Path, handler: Handler) ->
                 )
                 pass
             except requests.exceptions.RequestException as error:
-                handler.debug(error)
-                handler.error(
-                    requests.exceptions.RequestException(handler.prefab.BOLD_SEARCH_ERR)
-                )
+                with handler.debug_lock:
+                    handler.debug(error)
+                    handler.error(
+                        requests.exceptions.RequestException(handler.prefab.BOLD_SEARCH_ERR)
+                    )
                 break
 
     except UnicodeDecodeError as error:

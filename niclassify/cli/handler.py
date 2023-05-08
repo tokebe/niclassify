@@ -18,6 +18,8 @@ from tempfile import NamedTemporaryFile
 import re
 from typing import List, Union
 from .columnize import columnize
+from threading import Lock
+import atexit
 
 # CONTEXT
 CONTEXT = {"context": None}
@@ -30,7 +32,10 @@ class CLIHandler(handler.Handler):
     def __init__(self, pre_confirm: bool = False, debug: bool = False):
         self.pre_confirm = pre_confirm
         self._debug = debug
+        self.debug_lock = Lock()
         self.logbuffer = []
+        self.crashlog = None
+        self.crashlog_lock = Lock()
 
     def prefix_with_indent(self, *message, prefix: str) -> str:
         """Return message with prefix, respecting indent."""
@@ -44,7 +49,7 @@ class CLIHandler(handler.Handler):
         """Print message only if debugging is enabled."""
         if self._debug:
             self.log(
-                f"[italic bright_black]{CLIHandler.prefix_with_indent(*message, prefix='DEBUG:')}[/]"
+                f"[italic bright_black]{self.prefix_with_indent(*message, prefix='DEBUG:')}[/]"
             )
 
     def log(self, *message: str):
@@ -72,25 +77,35 @@ class CLIHandler(handler.Handler):
             )
         )
         if abort:
-            with NamedTemporaryFile(
-                suffix="_niclassify_crashlog.log",
-                mode="w",
-                encoding="utf8",
-                delete=False,
-            ) as logdump:
+            with self.crashlog_lock:
+                if self.crashlog is not None:
+                    logdump = open(self.crashlog, "w")
+                else:
+                    logdump = NamedTemporaryFile(
+                        suffix="_niclassify_crashlog.log",
+                        mode="w",
+                        encoding="utf8",
+                        delete=False,
+                    )
+
                 message = " ".join(
                     [
                         "NIClassify encountered an error and the program was aborted.",
                         f"A complete debug-level log has been saved at {logdump.name}",
                     ]
                 )
-                print(message)
+                if self.crashlog is None:
+                    atexit.register(lambda: print(message))
+                self.crashlog = logdump.name
+                # filter out the 'end log' to ensure it only appears at the end
+                self.logbuffer = [log for log in self.logbuffer if log != message]
                 self.logbuffer.append(message)
                 for log in self.logbuffer:
                     # strip rich markup
                     logdump.write(re.sub(r"(?<!\\)\[[^\]]+\]", "", log))
                     logdump.write("\n")
-            raise typer.Exit(code=1)
+                logdump.close()
+                raise typer.Exit(code=1)
 
     def confirm(self, *message: str, abort=False, allow_pre_confirm=True):
         """Get a simply yes/no response from the user."""
@@ -175,6 +190,7 @@ class CLIHandler(handler.Handler):
             return self.confirm(
                 f"File {file.absolute()} already exists. Overwrite?", abort=abort
             )
+        file.parent.mkdir(exist_ok=True, parents=True)
         return True
 
     def confirm_multiple_overwrite(self, files: List[Path], abort=False) -> bool:
@@ -183,6 +199,8 @@ class CLIHandler(handler.Handler):
             return self.confirm(
                 f"{overwrite_count} files will be overwritten. Continue?", abort=abort
             )
+        for file in files:
+            file.parent.mkdir(exist_ok=True, parents=True)
         return True
 
     @contextmanager
