@@ -26,12 +26,6 @@ def align_files(
     cores: int = cpu_count(),
     output_all=False,
 ):
-    # TODO using multiprocessing pool, call MUSCLE
-    # need to intelligently manage how many at a time using file size vs memory
-    # run a number of files at a time such that the sum of squares of their sizes
-    # leaves at least 2gb of memory to the system.
-    # make sure to leave comments calling this "a naive approach" to avoiding
-    # system OOM situations
 
     with handler.spin() as status:
 
@@ -39,7 +33,7 @@ def align_files(
 
         def align_file(file):
 
-            split = re.search("_(.+)_unaligned|$", file.stem)[1]
+            split = re.search("_([^_]+)_unaligned|$", file.stem)[1]
 
             with lock:
                 task = status.add_task(description=f"Aligning {split}...", total=1)
@@ -55,11 +49,11 @@ def align_files(
 
             if output_all:
                 output_part = (
-                    file.parent / f"{output_file.stem}_{split}_unaligned{file.suffix}"
+                    file.parent / f"{output_file.stem}_{split}_aligned{file.suffix}"
                 )
             else:
                 output_part = NamedTemporaryFile(
-                    suffix=f"_{split}_unaligned{file.suffix}",
+                    suffix=f"_{split}_aligned{file.suffix}",
                     mode="w",
                     encoding="utf8",
                     delete=False,
@@ -67,32 +61,28 @@ def align_files(
                 output_part.close()
                 output_part = output_part.name
 
-            alignment_call = MuscleCommandline(
-                muscle_exec,
-                input=file,
-                out=output_part,
-            )
+            alignment_call = f'{muscle_exec} -in "{file}" -out "{output_part}"'
 
             try:
-                result = subprocess.run(str(alignment_call), capture_output=True, check=True)
-            except subprocess.CalledProcessError as error:
-                handler.debug(f"  stdout of {split} alignment:")
-                handler.debug(f"  {error.stdout}")
-                handler.debug(f"  stderr of {split} alignment:")
-                handler.debug(f"  {error.stdout}")
-                handler.error(
-                    f"  An error occurred during alignment of {split}.",
-                    "Additional details in above debug logs.",
-                    abort=True,
+                result = subprocess.run(
+                    alignment_call, capture_output=True, check=True
                 )
-                handler.debug(f"  stdout of {split} alignment:")
-                handler.debug(f"  {result.stdout}")
-                handler.debug(f"  stderr of {split} alignment:")
-                handler.debug(f"  {result.stdout}")
-
-
-            
-
+                with handler.debug_lock:
+                    handler.debug(f"  Command for {split} alignment:")
+                    handler.debug(f"  {alignment_call}")
+            except subprocess.CalledProcessError as error:
+                with handler.debug_lock:
+                    handler.debug(f"  Command for {split} alignment:")
+                    handler.debug(f"  {alignment_call}")
+                    handler.debug(f"  stdout of {split} alignment:")
+                    handler.debug(f"  {error.stdout}")
+                    handler.debug(f"  stderr of {split} alignment:")
+                    handler.debug(f"  {error.stderr}")
+                    handler.error(
+                        f"  An error occurred during alignment of {split}.",
+                        "Additional details in above debug logs.",
+                        abort=True,
+                    )
 
             with lock:
                 status.update(task, description=f"Aligning {split}...done.", advance=1)
