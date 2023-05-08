@@ -21,29 +21,46 @@ from niclassify.cli import (
     _write,
 )
 
+
 # Order commands in order defined
 class NaturalOrderGroup(TyperGroup):
     def list_commands(self, ctx):
         return list(self.commands)
 
 
-sample_group = typer.Typer(rich_markup_mode="rich", cls=NaturalOrderGroup, help="Operate on tab-delimited sample data.")
+sample_group = typer.Typer(
+    rich_markup_mode="rich",
+    cls=NaturalOrderGroup,
+    help="Operate on tab-delimited sample data.",
+)
 sample_group.command(name="format")(_format)
 sample_group.command(name="get")(_get)
 sample_group.command(name="identify")(_identify)
 sample_group.command(name="lookup")(_lookup)
 sample_group.command(name="filter")(_filter)
 
-fasta_group = typer.Typer(rich_markup_mode="rich", cls=NaturalOrderGroup, help="Create and operate on FASTA files.")
+fasta_group = typer.Typer(
+    rich_markup_mode="rich",
+    cls=NaturalOrderGroup,
+    help="Create and operate on FASTA files.",
+)
 fasta_group.command(name="write")(_write)
 fasta_group.command(name="align")(_align)
 fasta_group.command(name="delimit")(_delimit)
 
-feature_group = typer.Typer(rich_markup_mode="rich", cls=NaturalOrderGroup, help="Generate and select features for the classifier.")
+feature_group = typer.Typer(
+    rich_markup_mode="rich",
+    cls=NaturalOrderGroup,
+    help="Generate and select features for the classifier.",
+)
 feature_group.command(name="featgen")(_featgen)
 feature_group.command(name="select")(_column_select)
 
-classifier_group = typer.Typer(rich_markup_mode="rich", cls=NaturalOrderGroup, help="Train classifiers and make predictions.")
+classifier_group = typer.Typer(
+    rich_markup_mode="rich",
+    cls=NaturalOrderGroup,
+    help="Train classifiers and make predictions.",
+)
 classifier_group.command(name="train")(_train)
 classifier_group.command(name="predict")(_predict)
 
@@ -148,6 +165,7 @@ app.add_typer(classifier_group, name="classifier")
 # see https://typer.tiangolo.com/tutorial/options-autocompletion/
 
 # TODO type annotation pass, remove unnecessary typing imports
+
 
 @app.callback(invoke_without_command=True)
 @app.command()

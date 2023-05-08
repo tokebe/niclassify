@@ -44,7 +44,7 @@ def align(
         handler.confirm_multiple_overwrite(
             [
                 output_file.parent
-                / f"{output_file.stem}_{split}_unaligned.{output_file.suffix}"
+                / f"{output_file.stem}_{split}_unaligned{output_file.suffix}"
                 for split in splits
             ],
             abort=True,
@@ -52,7 +52,7 @@ def align(
         handler.confirm_multiple_overwrite(
             [
                 output_file.parent
-                / f"{output_file.stem}_{split}_aligned.{output_file.suffix}"
+                / f"{output_file.stem}_{split}_aligned{output_file.suffix}"
                 for split in splits
             ],
             abort=True,

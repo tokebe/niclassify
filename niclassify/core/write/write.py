@@ -39,7 +39,7 @@ def write(
                     Lock(),
                     open(
                         output_file.parent
-                        / f"{output_file.stem}_{split}_unaligned.{output_file.suffix}",
+                        / f"{output_file.stem}_{split}_unaligned{output_file.suffix}",
                         "w",
                         encoding="utf8",
                     ),
@@ -52,7 +52,7 @@ def write(
                 "file": (
                     Lock(),
                     NamedTemporaryFile(
-                        suffix=f"_nosplit_unaligned.{output_file.suffix}",
+                        suffix=f"_nosplit_unaligned{output_file.suffix}",
                         mode="w",
                         encoding="utf8",
                         delete=False,
@@ -63,7 +63,7 @@ def write(
             split: (
                 Lock(),
                 NamedTemporaryFile(
-                    suffix=f"_{split}_unaligned.{output_file.suffix}",
+                    suffix=f"_{split}_unaligned{output_file.suffix}",
                     mode="w",
                     encoding="utf8",
                     delete=False,
