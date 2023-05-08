@@ -5,6 +5,8 @@ from tempfile import NamedTemporaryFile
 import shutil
 from collections import Counter
 import os
+from Bio.Seq import Seq
+import math
 
 # TODO add spinner
 
@@ -19,19 +21,17 @@ def trim(input_file: Path, output: Path, handler: Handler, min_agreement: int = 
         contaminant_sequences = set()
         for record in SeqIO.parse(input_fasta, format="fasta"):
             success = False
-            # Check through possible reading frames until a valid one is found
             for offset in range(-4, 4):
                 flip = False
                 if offset < 0:
                     flip = True
                     offset = abs(offset) - 1
-                untrimmed_len = len(record.seq) - offset
-                tail = untrimmed_len - (untrimmed_len % 3) + 1
                 seq = record.seq if not flip else record.seq.reverse_complement()
-                success = "*" not in seq[offset:tail].translate()
-                if success:
-                    frames.update([offset if not flip else -offset - 1])
-                    break
+                seq = seq + ("N" * ((3 * math.ceil(len(seq) / 3)) - len(seq)))
+                test = Seq(seq).translate(table="Invertebrate Mitochondrial")
+                if "*" not in test:
+                    frames.update([(flip, offset)])
+                    success = True
             if not success:
                 contaminant_sequences.add(record.id)
 
@@ -50,32 +50,34 @@ def trim(input_file: Path, output: Path, handler: Handler, min_agreement: int = 
             handler.error(
                 "Minimum reading frame offset agreement not met.",
                 "Your sequences may be heavily contaminated.",
-                abort=True
+                abort=True,
             )
 
         # determine the best offset to use
-        flip = False
-        best_offset = frames.most_common(1)[0][0]
-        if best_offset < 0:
-            flip = True
-            best_offset = abs(offset) - 1
+        flip, offset = frames.most_common(1)[0]
 
         # TODO use a counter to turn frames into a count
         # TODO step 2: write out with reading frame fixed
         # for each sequence, do the offset and then test that it works
         # if it doesn't, and it's not already in contaminant sequences, add it
         # don't write out contaminantes, and report them in the end
+        wrong_frame_sequences = []
         for record in SeqIO.parse(input_fasta, format="fasta"):
-            seq = record.seq if not flip else record.seq.reverse_complement()
-            untrimmed_len = len(seq) - best_offset
-            tail = untrimmed_len - (untrimmed_len % 3) + 1
-            trimmed = seq[best_offset:tail]
-            if "*" in trimmed.translate():
-                contaminant_sequences.add(seq.id)
+            if record.id in contaminant_sequences:
                 continue
-            output_fasta.write()
+            seq = record.seq if not flip else record.seq.reverse_complement()
+            seq = seq + ("N" * ((3 * math.ceil(len(seq) / 3)) - len(seq)))
+            test = Seq(seq).translate(table="Invertebrate Mitochondrial")
+            if "*" not in test:
+                wrong_frame_sequences.append(record.id)
+                continue
+            output_fasta.write(f">{record.id}\n")
+            output_fasta.write(f"{seq}\n")
+
+        # TODO warn user about contaminant sequences and wrong frame sequences
 
     shutil.copyfile(tempfile_path, output)
+    os.unlink(tempfile_path)
 
 
 """
