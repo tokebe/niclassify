@@ -1,7 +1,7 @@
 atomicwrites==1.4.0
 attrs==20.3.0
 biopython==1.78
-certifi==2022.12.7
+certifi==2023.7.22
 chardet==3.0.4
 clldutils==3.6.0
 colorama==0.4.4
