@@ -63,7 +63,7 @@ setup(
         "requests==2.31.0",
         "rfc3986==1.4.0",
         "scikit-learn==0.24.0rc1",
-        "scipy==1.5.4",
+        "scipy==1.10.0",
         "seaborn==0.11.0",
         "six==1.15.0",
         "tabulate==0.8.7",
