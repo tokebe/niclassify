@@ -60,7 +60,7 @@ setup(
         "python-nexus==2.0.1",
         "pytz==2020.4",
         "regex==2020.11.13",
-        "requests==2.25.0",
+        "requests==2.31.0",
         "rfc3986==1.4.0",
         "scikit-learn==0.24.0rc1",
         "scipy==1.5.4",
