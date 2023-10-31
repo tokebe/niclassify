@@ -216,7 +216,7 @@ Below is an overview of the Classifer Tool, with an explanation of each input an
 
 ### A Note on the Tool
 
-This tool was created as a generalized classifier tool, and as such works independently of the requirements of the Sequence Data Tool. In theory, and data may be input to the Classifier Tool for training, so long as there is at least one feature column and one known label column. Obviously, this does not mean that this classifier tool can classify anything using any data.
+This tool was created as a generalized classifier tool, and as such works independently of the requirements of the Sequence Data Tool. In theory, any data may be input to the Classifier Tool for training, so long as there is at least one feature column and one known label column. Obviously, this does not mean that this classifier tool can classify anything using any data.
 
 Please read up on Random Forest Classifiers before attempting to use this classifier for anything other than what it was strictly intended for. In fact, it is best to read up on Random Forest Classifiers before using this tool for its intended purpose, to understand the strengths and limitations of this tool. Every classifier is, in some portion, vulnerable to a host of problems such as overfitting, underfitting, bias, etc, and this one is no exception.
 
