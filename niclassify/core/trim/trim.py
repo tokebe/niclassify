@@ -19,6 +19,8 @@ def trim(
     offset: int
     contaminant_sequences = set()
 
+    # TODO: don't replace gaps with Ns, instead catch error and make frame invalid for that seq
+
     with open(
         input_path, "r", encoding="utf8"
     ) as input_file, handler.spin() as spinner:
