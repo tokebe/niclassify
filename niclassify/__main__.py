@@ -11,14 +11,15 @@ from niclassify.cli import (
     _identify,
     _lookup,
     _filter,
+    _write,
     _align,
+    _trim,
     _delimit,
     _featgen,
     _train,
     _predict,
     _column_select,
     _format,
-    _write,
 )
 
 
@@ -46,6 +47,7 @@ fasta_group = typer.Typer(
 )
 fasta_group.command(name="write")(_write)
 fasta_group.command(name="align")(_align)
+fasta_group.command(name="trim")(_trim)
 fasta_group.command(name="delimit")(_delimit)
 
 feature_group = typer.Typer(
@@ -91,7 +93,7 @@ app.add_typer(classifier_group, name="classifier")
 # Add "Western Asia",
 # Add "Tropical Indo-Pacific Region"
 # Add "West-Central Tropical Africa"
-# Add "Indian Subcontinent"
+# Addight>i:n Subcontinent"
 # Add "Malesia"
 # Add "Tropical Indo-Pacific Region"
 # South America
@@ -108,6 +110,8 @@ app.add_typer(classifier_group, name="classifier")
 # South Tropical Africa
 # Northeast Tropical Africa
 #
+
+# TODO port from Dask to Polars to avoid Pandas as much as possible
 
 # TODO add a command for combining fasta files (because user might be lazy)
 
