@@ -1,0 +1,36 @@
+[tool.poetry]
+name = "niclassify"
+version = "2.0.0"
+description = "A CLI toolkit for predictively classifying arthropod sequences as native/introduced"
+authors = ["tokebe <43009413+tokebe@users.noreply.github.com>"]
+license = "GPL-3.0-only"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11,<3.12"
+userpaths = "0.*"
+python-nexus = "2.*"
+typer = {extras = ["all"], version = "0.7.*"}
+biopython = "1.*"
+pandas = "1.*"
+dask = {extras = ["complete"], version = "^2023.12.1"}
+PyQt5-sip = "12.*"
+requests = "2.*"
+scikit-learn = "1.*"
+seaborn = "0.*"
+xlrd = "2.*"
+natsort = "7.*"
+throttler = "^1.2.2"
+ratelimit = "^2.2.1"
+backoff = "^2.2.1"
+
+[tool.poetry.group.dev.dependencies]
+jupyter = "^1.0.0"
+ipython = "^8.19.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+niclassify = "niclassify.__main__:app"
