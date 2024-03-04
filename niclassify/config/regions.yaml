@@ -1,0 +1,42 @@
+# Each is a region, with its direct contains or parents listed
+# Region graph is built in code so with contains/parents expanded
+# That way file size is small, but child and parent traversal is quicker
+regions:
+  Africa:
+    contains:
+      - East Tropical Africa
+      - Northern Africa
+      - West Tropical Africa
+  East Tropical Africa:
+  Northern Africa:
+    contains:
+      - Algeria
+      - Tunisia
+  West Tropical Africa:
+  Algeria:
+  Tunisia:
+  Asia:
+    contains:
+      - Asia-Temperate
+      - Asia-Tropical
+      - Eastern Asia
+      - Middle Asia
+      - Sri Lanka
+  Asia-Temperate:
+  Asia-Tropical:
+    contains:
+      - Sri Lanka
+  Eastern Asia:
+    contains:
+      - Asia-Temperate
+      - China
+      - Japan
+  Middle Asia:
+  Sri Lanka:
+  Japan:
+    contains: 
+      - Asia-Temperate
+  China:
+    contains: 
+      - Asia-Temperate
+
