@@ -34,3 +34,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 niclassify = "niclassify.__main__:app"
+nic = "niclassify.__main__:app"
