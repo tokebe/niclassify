@@ -3,16 +3,18 @@ from typing import Optional
 import requests
 from collections import Counter
 
-from ratelimiter import RateLimiter
 from xml.etree import ElementTree
 from typing import Set, Dict
 import json
+from ratelimit import RateLimitException, limits
+from backoff import on_exception, expo
 
 # TODO get order, family, subfamily, genus from top match if identify success
 # TODO state warnings if identify gives
 
 
-@RateLimiter(max_calls=10, period=1)
+@on_exception(expo, RateLimitException)
+@limits(calls=10, period=1)
 def query_bold(
     sequence: str,
     min_similarity: float,

@@ -5,6 +5,8 @@ import shutil
 from tempfile import NamedTemporaryFile
 import os
 
+from requests.compat import chardet
+
 from ..interfaces import Handler
 
 
@@ -20,6 +22,7 @@ def query_bold(geography: str, taxonomy: str, output: Path, handler: Handler) ->
                 handler.error(TimeoutError("boldsystems.com keeps timing out"))
                 break
             try:
+                write_size = 0
                 with handler.spin() as spinner:
                     task = spinner.add_task(description="Querying BOLD...", total=1)
                     with open(output, "w", encoding="utf8") as file, requests.get(
@@ -37,12 +40,34 @@ def query_bold(geography: str, taxonomy: str, output: Path, handler: Handler) ->
                                 )
                             )
                             return
-                        for chunk in response.iter_content(chunk_size=int(1e9)):
-                            # streamed result is (probably) ANSI encoded
-                            file.write(chunk.decode("ansi"))
+
+                        # Streamed result switches encoding occasionally for some reason
+                        encoding = None
+                        for chunk in response.iter_content(chunk_size=int(1e6)):
+                            if not encoding:
+                                encoding = chardet.detect(chunk)["encoding"]
+                                handler.debug(f"Initial encoding {encoding}")
+                            to_write = ""
+                            try:
+                                to_write = chunk.decode(encoding)
+                            except UnicodeDecodeError:
+                                encoding = chardet.detect(chunk)["encoding"]
+                                handler.debug(
+                                    f"Switched to encoding {encoding} after byte {write_size}"
+                                )
+                                to_write = chunk.decode(encoding)
+
+                            file.write(to_write)
+                            write_size += len(chunk)
+                            spinner.update(
+                                task,
+                                description=f"Querying BOLD...(received {write_size} bytes)",
+                            )
 
                     task = spinner.update(
-                        task, description="Querying BOLD...done.", completed=1
+                        task,
+                        description=f"Querying BOLD...done (wrote {write_size} bytes).",
+                        completed=1,
                     )
 
                 # handler.log("Success!")
@@ -59,7 +84,9 @@ def query_bold(geography: str, taxonomy: str, output: Path, handler: Handler) ->
                 with handler.debug_lock:
                     handler.debug(error)
                     handler.error(
-                        requests.exceptions.RequestException(handler.prefab.BOLD_SEARCH_ERR)
+                        requests.exceptions.RequestException(
+                            handler.prefab.BOLD_SEARCH_ERR
+                        )
                     )
                 break
 

@@ -1,14 +1,17 @@
 from ..interfaces.handler import Handler
 import requests
-from ratelimiter import RateLimiter
+from throttler import throttle
 from .get_ref_hierarchy import get_ref_hierarchy
 from .geo_contains import geo_contains
 import re
 from typing import Optional
 from time import sleep
+from backoff import on_exception, expo
+from ratelimit import limits, RateLimitException
 
 
-@RateLimiter(max_calls=60, period=60)
+@on_exception(expo, RateLimitException)
+@limits(calls=60, period=60)
 def query_gbif(species_name: str, ref_geo: str, handler: Handler) -> Optional[str]:
     """Query GBIF to determine if a species is native or introduced to a reference geography."""
     taxon_key_url = "http://api.gbif.org/v1/species?name="

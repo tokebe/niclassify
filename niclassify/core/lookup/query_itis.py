@@ -2,15 +2,17 @@ from ..interfaces.handler import Handler
 from typing import Optional
 import requests
 from xml.etree import ElementTree
-from ratelimiter import RateLimiter
+from throttler import throttle
 from .get_ref_hierarchy import get_ref_hierarchy
 from .geo_contains import geo_contains
 from time import sleep
+from backoff import on_exception, expo
+from ratelimit import limits, RateLimitException
 
 
-@RateLimiter(max_calls=60, period=60)
+@on_exception(expo, RateLimitException)
+@limits(calls=60, period=60)
 def query_itis(species_name: str, geography: str, handler: Handler) -> Optional[str]:
-
     tsn_url = "http://www.itis.gov/ITISWebService/services/ITISService/\
 getITISTermsFromScientificName?srchKey="
     jurisdiction_url = "http://www.itis.gov/ITISWebService/services/ITISService/\
@@ -20,7 +22,6 @@ getJurisdictionalOriginFromTSN?tsn="
 
     while tries > 0:
         try:
-
             # get TSN
             request = f"{tsn_url}{species_name.replace(' ', '%20')}"
 

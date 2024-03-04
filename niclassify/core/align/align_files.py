@@ -9,7 +9,8 @@ from pathlib import Path
 import platform
 import psutil
 import re
-from Bio.Align.Applications import MuscleCommandline
+
+# from Bio.Align.Applications import MuscleCommandline
 from tempfile import NamedTemporaryFile
 import subprocess
 from ..dynamic_pool import DynamicPool
@@ -26,13 +27,10 @@ def align_files(
     cores: int = cpu_count(),
     output_all=False,
 ):
-
     with handler.spin() as status:
-
         lock = Lock()
 
         def align_file(file):
-
             split = re.search("_([^_]+)_unaligned|$", file.stem)[1]
 
             with lock:
@@ -61,12 +59,16 @@ def align_files(
                 output_part.close()
                 output_part = output_part.name
 
-            alignment_call = f'{muscle_exec} -in "{file}" -out "{output_part}"'
+            alignment_call = [
+                f"{muscle_exec}",
+                "-in",
+                f'{file}',
+                "-out",
+                f'{output_part}',
+            ]
 
             try:
-                result = subprocess.run(
-                    alignment_call, capture_output=True, check=True
-                )
+                result = subprocess.run(alignment_call, capture_output=True, check=True)
                 with handler.debug_lock:
                     handler.debug(f"  Command for {split} alignment:")
                     handler.debug(f"  {alignment_call}")

@@ -1,4 +1,4 @@
-from .handler import CLIHandler
+from ..core.interfaces.handler import Handler
 from multiprocessing import cpu_count
 from ..core.write import write
 from ..core.utils import read_data
@@ -7,9 +7,11 @@ from pathlib import Path
 from ..core.enums import TaxonomicHierarchy
 
 
-
 n_cpus = cpu_count()
 
+# TODO add arguments to output all files (add documentation that it'll all output with prefixes)
+# otherwise it's all tempfiles and only the one output
+# add warning that it'll generate n files and list files which will be overwritten
 
 def _write(
     input_file: Path = typer.Option(
@@ -69,13 +71,15 @@ def _write(
         help="Output debug logs to stdout.",
     ),
 ):
-    handler = CLIHandler(pre_confirm=pre_confirm, debug=debug)
+    handler = Handler(pre_confirm=pre_confirm, debug=debug)
 
     handler.confirm_overwrite(output, abort=True)
+    # TODO: confirm overwrite for all existing matching files
 
+    # PERF: find a way to not need to read in whole file
     data = read_data(input_file)
-    if split_level != "none":
-        splits = data[f"{split_level}_name"].unique().compute(num_workers=cores)
+    if split_level.value != "none":
+        splits = data[f"{split_level.value}_name"].unique().compute(num_workers=cores)
     else:
         splits = None
 

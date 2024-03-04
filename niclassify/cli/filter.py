@@ -4,7 +4,7 @@ from typing import List, Optional
 from pathlib import Path
 from enum import Enum
 from ..core.filter import filter_fasta
-from .handler import CLIHandler
+from ..core.interfaces.handler import Handler
 
 
 from multiprocessing import cpu_count
@@ -80,7 +80,7 @@ def _filter(
 
     Options in the 'Requirements' section will be prompted for if not provided.
     """
-    handler = CLIHandler(pre_confirm=pre_confirm, debug=debug)
+    handler = Handler(pre_confirm=pre_confirm, debug=debug)
 
     handler.confirm_overwrite(output, abort=True)
     filter_fasta(

@@ -5,7 +5,7 @@ from pathlib import Path
 from enum import Enum
 from ..core.identify import identify
 
-from .handler import CLIHandler
+from ..core.interfaces.handler import Handler
 
 from multiprocessing import cpu_count
 
@@ -88,6 +88,6 @@ def _identify(
 
     Options in the 'Requirements' section will be prompted for if not provided.
     """
-    handler = CLIHandler(pre_confirm=pre_confirm, debug=debug)
+    handler = Handler(pre_confirm=pre_confirm, debug=debug)
     handler.confirm_overwrite(output, abort=True)
     identify(input_file, output, similarity, agreement, handler, cores)

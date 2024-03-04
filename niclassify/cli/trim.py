@@ -2,7 +2,7 @@ import typer
 from pathlib import Path
 from typing import List, Optional
 from ..core.trim import trim
-from .handler import CLIHandler
+from ..core.interfaces.handler import Handler
 
 def _trim(
     input_file: Path = typer.Option(
@@ -60,6 +60,6 @@ def _trim(
 
     Options in the 'Requirements' section will be prompted for if not provided.
     """
-    handler = CLIHandler(pre_confirm=pre_confirm, debug=debug)
+    handler = Handler(pre_confirm=pre_confirm, debug=debug)
     handler.confirm_overwrite(output, abort=True)
     trim(input_file, output, handler, agreement)

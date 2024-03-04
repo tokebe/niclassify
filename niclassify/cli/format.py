@@ -2,7 +2,7 @@ import typer
 from multiprocessing import cpu_count
 from ..core.format import format_data
 from pathlib import Path
-from .handler import CLIHandler
+from ..core.interfaces.handler import Handler
 
 
 n_cpus = cpu_count()
@@ -64,7 +64,7 @@ def _format(
 
     Options in the 'Requirements' section will be prompted for if not provided.
     """
-    handler = CLIHandler(pre_confirm=pre_confirm, debug=debug)
+    handler = Handler(pre_confirm=pre_confirm, debug=debug)
     handler.confirm_overwrite(output, abort=True)
     format_data(input_file, output, handler, cores)
     pass

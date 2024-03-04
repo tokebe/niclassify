@@ -5,7 +5,7 @@ from pathlib import Path
 from enum import Enum
 from ..core.enums import TaxonomicHierarchy
 from multiprocessing import cpu_count
-from .handler import CLIHandler
+from ..core.interfaces.handler import Handler
 from ..core.align import align
 
 
@@ -89,7 +89,7 @@ def _align(
 
     Options in the 'Requirements' section will be prompted for if not provided.
     """
-    handler = CLIHandler(pre_confirm=pre_confirm, debug=debug)
+    handler = Handler(pre_confirm=pre_confirm, debug=debug)
 
     handler.confirm_overwrite(output, abort=True)
 

@@ -10,6 +10,13 @@ class TaxonomicHierarchy(str, Enum):
     subfamily = "subfamily"
     genus = "genus"
 
+    def __str__(self):
+        return self.name
+
+
 class Methods(str, Enum):
     bPTP = "bPTP"
     GMYC = "GMYC"
+
+    def __str__(self):
+        return self.name

@@ -7,10 +7,20 @@ from ..core.lookup import lookup, get_geographies
 from .validation import validate_geography
 from .completion import complete_geography
 from .columnize import columnize
-from .handler import CLIHandler
+from ..core.interfaces.handler import Handler
 from multiprocessing import cpu_count
 
 n_cpus = cpu_count()
+
+# TODO use https://github.com/Exahilosys/survey or similar
+# (select with filter) for better means of selecting
+# a valid region
+
+# TODO write gbif/itis native ranges as new columns
+# If an unknown region is encountered, set it aside
+# At end, report on unknown regions, tell user to report to github
+# Ask if user would like to assign a status for those regions
+# if so, run through regions, and back-assign those to related samples
 
 
 def list_geographies(value: bool):
@@ -97,7 +107,7 @@ def _lookup(
 
     Options in the 'Requirements' section will be prompted for if not provided.
     """
-    handler = CLIHandler(pre_confirm=pre_confirm, debug=debug)
+    handler = Handler(pre_confirm=pre_confirm, debug=debug)
     geographies = get_geographies()
     # try to parse int input
     try:

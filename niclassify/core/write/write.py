@@ -2,7 +2,7 @@ from pathlib import Path
 from multiprocessing import cpu_count
 from ..interfaces import Handler
 from ..enums import TaxonomicHierarchy
-from dask.dataframe import DataFrame
+from dask.dataframe.core import DataFrame
 from typing import List
 from tempfile import NamedTemporaryFile
 from threading import Lock
@@ -10,14 +10,13 @@ from threading import Lock
 
 def write(
     data: DataFrame,
-    splits: List[str],
+    splits: List[str] | None,
     output_file: Path,
     split_level: TaxonomicHierarchy,
     handler: Handler,
     cores: int = cpu_count(),
     output_all=False,
 ) -> List[Path]:
-
     row_count = data.shape[0].compute()
 
     if output_all:
@@ -59,21 +58,21 @@ def write(
                     ),
                 )
             }
-        files = {
-            split: (
-                Lock(),
-                NamedTemporaryFile(
-                    suffix=f"_{split}_unaligned{output_file.suffix}",
-                    mode="w",
-                    encoding="utf8",
-                    delete=False,
-                ),
-            )
-            for split in splits
-        }
+        else:
+            files = {
+                split: (
+                    Lock(),
+                    NamedTemporaryFile(
+                        suffix=f"_{split}_unaligned{output_file.suffix}",
+                        mode="w",
+                        encoding="utf8",
+                        delete=False,
+                    ),
+                )
+                for split in splits
+            }
 
     try:
-
         with handler.progress(percent=True) as status:
             task = status.add_task(description="Writing to FASTA", total=row_count)
 
@@ -81,9 +80,13 @@ def write(
                 if splits is None:
                     lock, file = files["file"]
                 else:
-                    lock, file = files[row[f"{split_level}_name"]]
+                    lock, file = files[row[f"{split_level.value}_name"]]
                 with lock:
-                    file.write(f">{row[f'{split_level}_name']}_{row['UID']}\n")
+                    if splits is None:
+                        label = f">{row['UID']}"
+                    else:
+                        label = f">{row[f'{split_level.value}_name']}_{row['UID']}\n"
+                    file.write(label)
                     file.write(f"{row['nucleotides']}\n")
                 status.advance(task)
 

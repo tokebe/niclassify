@@ -7,27 +7,40 @@ from collections import Counter
 import os
 from Bio.Seq import Seq
 import math
+import textwrap
 
 # TODO add spinner
 
 
-def trim(input_file: Path, output: Path, handler: Handler, min_agreement: int = 0.9):
-    with open(input_file, "r", encoding="utf8") as input_fasta, NamedTemporaryFile(
-        mode="r", encoding="utf8", delete=False
-    ) as output_fasta:
-        tempfile_path = Path(output_fasta.name)
+def trim(
+    input_path: Path, output_path: Path, handler: Handler, min_agreement: float = 0.9
+):
+    flip: bool
+    offset: int
+    contaminant_sequences = set()
 
+    with open(
+        input_path, "r", encoding="utf8"
+    ) as input_file, handler.spin() as spinner:
+        task = spinner.add_task("Reading FASTA...", total=1)
         frames = Counter()
-        contaminant_sequences = set()
-        for record in SeqIO.parse(input_fasta, format="fasta"):
+
+        n_seq = 0
+        for record in SeqIO.parse(input_file, format="fasta"):
+            n_seq += 1
+            spinner.update(f"Reading FASTA...(read {n_seq} entries)")
             success = False
-            for offset in range(-4, 4):
+            # Offsets where -3 is flipped with offset 2
+            # But positives work normally
+            for offset in range(-3, 3):
                 flip = False
                 if offset < 0:
                     flip = True
                     offset = abs(offset) - 1
                 seq = record.seq if not flip else record.seq.reverse_complement()
-                seq = seq + ("N" * ((3 * math.ceil(len(seq) / 3)) - len(seq)))
+                seq = seq.replace("-", "N")
+                seq = ("N" * offset) + seq
+                seq = seq + ("N" * (3 - len(seq) % 3))
                 test = Seq(seq).translate(table="Invertebrate Mitochondrial")
                 if "*" not in test:
                     frames.update([(flip, offset)])
@@ -35,18 +48,16 @@ def trim(input_file: Path, output: Path, handler: Handler, min_agreement: int = 
             if not success:
                 contaminant_sequences.add(record.id)
 
-        votes = sum(frames)
         handler.debug(
             "Reading frame votes (offset, where negative is",
-            "reverse-complement and offset by abs - 1):",
+            "reverse-complement and offset by abs - 2):",
         )
         handler.debug(
             ", ".join(
-                [f"{offset}:{count / votes:.2f}" for offset, count in frames.items()]
+                [f"{offset}:{count / n_seq:.2f}" for offset, count in frames.items()]
             )
         )
-        if not any((count / votes >= min_agreement for count in frames.values())):
-            os.unlink(tempfile_path)
+        if not any((count / n_seq >= min_agreement for count in frames.values())):
             handler.error(
                 "Minimum reading frame offset agreement not met.",
                 "Your sequences may be heavily contaminated.",
@@ -54,30 +65,63 @@ def trim(input_file: Path, output: Path, handler: Handler, min_agreement: int = 
             )
 
         # determine the best offset to use
-        flip, offset = frames.most_common(1)[0]
+        flip, offset = frames.most_common()[0][0]
 
-        # TODO use a counter to turn frames into a count
-        # TODO step 2: write out with reading frame fixed
-        # for each sequence, do the offset and then test that it works
-        # if it doesn't, and it's not already in contaminant sequences, add it
-        # don't write out contaminantes, and report them in the end
-        wrong_frame_sequences = []
-        for record in SeqIO.parse(input_fasta, format="fasta"):
+        task = spinner.update(
+            task,
+            description=f"Reading FASTA...done (read {n_seq} entries).",
+            completed=1,
+        )
+
+    n_written = 0
+
+    with open(output_path, "w", encoding="utf8") as output_file, handler.progress(
+        percent=True
+    ) as status:
+        task = status.add_task(description="Writing to output FASTA", total=n_seq)
+        for record in SeqIO.parse(input_file, format="fasta"):
             if record.id in contaminant_sequences:
                 continue
             seq = record.seq if not flip else record.seq.reverse_complement()
-            seq = seq + ("N" * ((3 * math.ceil(len(seq) / 3)) - len(seq)))
+            seq = seq.replace("-", "N")
+            seq = ("N" * offset) + seq
+            seq = seq + ("N" * (3 - len(seq) % 3))
             test = Seq(seq).translate(table="Invertebrate Mitochondrial")
-            if "*" not in test:
-                wrong_frame_sequences.append(record.id)
+            if "*" in test:
+                contaminant_sequences.add(record.id)
+                status.advance(task)
                 continue
-            output_fasta.write(f">{record.id}\n")
-            output_fasta.write(f"{seq}\n")
+            output_file.write(f">{record.id}\n")
+            output_file.write(
+                "\n".join((seq[i : 60 + i] for i in range(0, len(seq), 60))) + "\n"
+            )
+            n_written += 1
+            status.advance(task)
 
-        # TODO warn user about contaminant sequences and wrong frame sequences
+    if len(contaminant_sequences) > 0:
+        handler.warning(
+            " ".join(
+                [
+                    f"{len(contaminant_sequences)}",
+                    f"sequence{'s' if len(contaminant_sequences) > 1 else ''}",
+                    "failed to match reading frame consensus",
+                    "and were not included in output.",
+                ]
+            )
+        )
+        handler.warning("These invalid sequences are:")
+        for seqID in contaminant_sequences:
+            handler.warning(seqID)
 
-    shutil.copyfile(tempfile_path, output)
-    os.unlink(tempfile_path)
+    handler.log(
+        "".join(
+            [
+                f"Wrote {n_written} sequences with reading frame offset {offset}",
+                " (reverse-complement); " if flip else "; ",
+                f"{frames.most_common()[0][1] / n_seq:.2f} agreement.",
+            ]
+        )
+    )
 
 
 """

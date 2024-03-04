@@ -3,7 +3,7 @@ from rich import print
 from typing import List, Optional
 from pathlib import Path
 from enum import Enum
-from .handler import CLIHandler
+from ..core.interfaces.handler import Handler
 from ..core.get import get
 
 from multiprocessing import cpu_count
@@ -71,6 +71,6 @@ def _get(
 
     Options in the 'Requirements' section will be prompted for if not provided.
     """
-    handler = CLIHandler(pre_confirm=pre_confirm, debug=debug)
+    handler = Handler(pre_confirm=pre_confirm, debug=debug)
     handler.confirm_overwrite(output, abort=True)
     get(geography, taxonomy, output, handler, cores)

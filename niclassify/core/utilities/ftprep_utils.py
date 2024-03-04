@@ -17,7 +17,7 @@ import xlrd
 
 import pandas as pd
 
-from Bio.Align.Applications import MuscleCommandline
+# from Bio.Align.Applications import MuscleCommandline
 from Bio.Phylo.TreeConstruction import DistanceCalculator
 from Bio import AlignIO
 from xml.etree import ElementTree
@@ -99,13 +99,14 @@ def align_fasta(infname, outfname, debug=False):
         "Darwin": "niclassify/bin/muscle3.8.31_i86darwin64"
     }[PLATFORM]
 
-    alignment_call = MuscleCommandline(
-        os.path.realpath(
-            os.path.join(MAIN_PATH, muscle_exec)
-        ),
-        input=os.path.realpath(infname),
-        out=os.path.realpath(outfname)
-    )
+    # TODO have to use subprocess instead of Bio Application API
+    # alignment_call = MuscleCommandline(
+    #     os.path.realpath(
+    #         os.path.join(MAIN_PATH, muscle_exec)
+    #     ),
+    #     input=os.path.realpath(infname),
+    #     out=os.path.realpath(outfname)
+    # )
 
     print(alignment_call.__str__())
 
