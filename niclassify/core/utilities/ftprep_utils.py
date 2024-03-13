@@ -626,7 +626,7 @@ def get_native_ranges(species_name):
     lookup = [
         res["description"]
         for res in results["results"]
-        if res["type"] == "native range"
+        if ("type" in res and res["type"] == "native range" and "description" in res)
     ]
 
     if len(lookup) == 0:
