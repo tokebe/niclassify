@@ -32,7 +32,7 @@ setup(
         "docutils==0.16",
         "ete3==3.1.2",
         "flake8==3.8.4",
-        "idna==2.10",
+        "idna==3.7",
         "iniconfig==1.1.1",
         "isodate==0.6.0",
         "joblib==1.2.0",
