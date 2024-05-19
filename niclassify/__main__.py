@@ -32,17 +32,19 @@ class NaturalOrderGroup(TyperGroup):
 sample_group = typer.Typer(
     rich_markup_mode="rich",
     cls=NaturalOrderGroup,
+    no_args_is_help=True,
     help="Operate on tab-delimited sample data.",
 )
 sample_group.command(name="format")(_format)
 sample_group.command(name="get")(_get)
+sample_group.command(name="filter")(_filter)
 sample_group.command(name="identify")(_identify)
 sample_group.command(name="lookup")(_lookup)
-sample_group.command(name="filter")(_filter)
 
 fasta_group = typer.Typer(
     rich_markup_mode="rich",
     cls=NaturalOrderGroup,
+    no_args_is_help=True,
     help="Create and operate on FASTA files.",
 )
 fasta_group.command(name="write")(_write)
@@ -53,6 +55,7 @@ fasta_group.command(name="delimit")(_delimit)
 feature_group = typer.Typer(
     rich_markup_mode="rich",
     cls=NaturalOrderGroup,
+    no_args_is_help=True,
     help="Generate and select features for the classifier.",
 )
 feature_group.command(name="featgen")(_featgen)
@@ -61,12 +64,17 @@ feature_group.command(name="select")(_column_select)
 classifier_group = typer.Typer(
     rich_markup_mode="rich",
     cls=NaturalOrderGroup,
+    no_args_is_help=True,
     help="Train classifiers and make predictions.",
 )
 classifier_group.command(name="train")(_train)
 classifier_group.command(name="predict")(_predict)
 
-app = typer.Typer(rich_markup_mode="rich", cls=NaturalOrderGroup)
+app = typer.Typer(
+    rich_markup_mode="rich",
+    cls=NaturalOrderGroup,
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
 app.add_typer(sample_group, name="sample")
 app.add_typer(fasta_group, name="fasta")
 app.add_typer(feature_group, name="feature")
