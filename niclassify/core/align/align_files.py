@@ -71,14 +71,16 @@ def align_files(
                 with handler.debug_lock:
                     handler.debug(f"  Command for {split} alignment:")
                     handler.debug(f"  {alignment_call}")
+                    handler.debug(f"  Output for {split} alignment:")
+                    handler.debug(f"result.stdout.decode(encoding='utf8')")
             except subprocess.CalledProcessError as error:
                 with handler.debug_lock:
                     handler.debug(f"  Command for {split} alignment:")
                     handler.debug(f"  {alignment_call}")
                     handler.debug(f"  stdout of {split} alignment:")
-                    handler.debug(f"  {error.stdout}")
+                    handler.debug(f"  {error.stdout.decode(encoding='utf8')}")
                     handler.debug(f"  stderr of {split} alignment:")
-                    handler.debug(f"  {error.stderr}")
+                    handler.debug(f"  {error.stderr.decode(encoding='utf8')}")
                     handler.error(
                         f"  An error occurred during alignment of {split}.",
                         "Additional details in above debug logs.",
