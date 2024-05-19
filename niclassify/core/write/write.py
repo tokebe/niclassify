@@ -7,6 +7,8 @@ from typing import List
 from tempfile import NamedTemporaryFile
 from threading import Lock
 
+# TODO: if a split file ends up with only 1 sequence, report that it can't be used
+# given the split level and then figure out how to proceed without it
 
 def write(
     data: DataFrame,

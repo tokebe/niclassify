@@ -4,6 +4,7 @@ import psutil
 from typing import Callable, Tuple, Dict, Literal
 import math
 
+# TODO: Error handling. If a task errors out, cancel everything in the pool.
 
 class DynamicPool:
     def __init__(
