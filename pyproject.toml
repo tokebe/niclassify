@@ -2,9 +2,12 @@
 name = "niclassify"
 version = "2.0.0"
 description = "A CLI toolkit for predictively classifying arthropod sequences as native/introduced"
-authors = ["tokebe <43009413+tokebe@users.noreply.github.com>"]
 license = "GPL-3.0-only"
+authors = ["Jackson Callaghan <43009413+tokebe@users.noreply.github.com>"]
 readme = "README.md"
+repository = "https://tokebe/niclassify"
+keywords = ["niclassify", "classification", "arthropod"]
+
 
 [tool.poetry.dependencies]
 python = "^3.11,<3.12"
