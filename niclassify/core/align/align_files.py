@@ -31,7 +31,9 @@ def align_files(
         lock = Lock()
 
         def align_file(file):
-            split = re.search("_([^_]+)_unaligned|$", file.stem)[1]
+            split = re.search("_([^_]+)_unaligned|$", file.stem)
+            if split is not None:
+                split = split[1]
 
             with lock:
                 task = status.add_task(description=f"Aligning {split}...", total=1)
