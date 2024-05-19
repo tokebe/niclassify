@@ -60,10 +60,10 @@ def align_files(
 
             alignment_call = [
                 f"{muscle_exec}",
-                "-in",
-                f'{file}',
-                "-out",
-                f'{output_part}',
+                "-align",
+                f"{file}",
+                "-output",
+                f"{output_part}",
             ]
 
             try:
