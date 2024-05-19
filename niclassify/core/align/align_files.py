@@ -39,12 +39,9 @@ def align_files(
                 task = status.add_task(description=f"Aligning {split}...", total=1)
 
             muscle_exec = {
-                "Windows": Path(__file__).parent.parent.parent
-                / "bin/muscle3.8.31_i86win32.exe",
-                "Linux": Path(__file__).parent.parent.parent
-                / "bin/muscle3.8.31_i86linux64",
-                "Darwin": Path(__file__).parent.parent.parent
-                / "bin/muscle3.8.31_i86darwin64",
+                "Windows": Path(__file__).parent.parent.parent / "bin/muscle_win",
+                "Linux": Path(__file__).parent.parent.parent / "bin/muscle_linux",
+                "Darwin": Path(__file__).parent.parent.parent / "bin/muscle_macos",
             }[PLATFORM]
 
             if output_all:
