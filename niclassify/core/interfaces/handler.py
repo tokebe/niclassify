@@ -20,12 +20,12 @@ from typing import Any, List, Union
 from ...cli.columnize import columnize
 from threading import Lock
 import atexit
+from pydantic import BaseModel, TypeAdapter
+from pathlib import Path
+import yaml
 
 # CONTEXT
-CONTEXT: dict[str, Any] = {"context": None}
-
-
-# TODO create a log buffer that can be dumped to tempfile
+CONTEXT: dict[str, Union[Progress, None]] = {"context": None}
 
 
 class Handler:
@@ -34,6 +34,7 @@ class Handler:
 
     Default interface is CLI.
     """
+
     def __init__(self, pre_confirm: bool = False, debug: bool = False):
         self.pre_confirm = pre_confirm
         self._debug = debug
@@ -52,16 +53,18 @@ class Handler:
 
     def debug(self, *message: str):
         """Print message only if debugging is enabled."""
-        if self._debug:
-            self.log(
-                "".join(
-                    [
-                        "[italic bright_black]",
-                        f"{self.prefix_with_indent(*message, prefix='DEBUG:')}",
-                        "[/]",
-                    ]
-                )
+        if not self._debug:  # Log to buffer regardless
+            self.logbuffer.append(" ".join(message))
+            return
+        self.log(
+            "".join(
+                [
+                    "[italic bright_black]",
+                    f"{self.prefix_with_indent(*message, prefix='DEBUG:')}",
+                    "[/]",
+                ]
             )
+        )
 
     def log(self, *message: str):
         """Log a message."""
