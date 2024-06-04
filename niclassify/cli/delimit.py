@@ -4,13 +4,17 @@ from typing import List, Optional
 from pathlib import Path
 from enum import Enum
 from ..core.enums import TaxonomicHierarchy, Methods
+from multiprocessing import cpu_count
+from ..core.interfaces.handler import Handler
+
+n_cpus = cpu_count()
 
 def _delimit(
     input_file: Path = typer.Option(
         ...,
         "--input",
         "-i",
-        help="Input data containing sample IDs.",
+        help="Input (.tsv) file.",
         prompt=True,
         show_default=False,
         exists=True,
@@ -40,7 +44,7 @@ def _delimit(
         ...,
         "--output",
         "-o",
-        help="Output data with added species delimitation.",
+        help="Output (.tsv) data with added species delimitation.",
         prompt=True,
         show_default=False,
         exists=False,
@@ -58,14 +62,38 @@ def _delimit(
         help="Taxonomic level on which to split data for computation",
         case_sensitive=False,
     ),
-    # TODO make this have an enum of possible values
-    method: Methods = typer.Option(
-        "bPTP", "--method", "-m", help="Alignment method to use"
+    # TODO: find better methods to support?
+    # method: Methods = typer.Option(
+    #     "bPTP", "--method", "-m", help="Alignment method to use"
+    # ),
+    cores: int = typer.Option(
+        n_cpus,
+        "--cores",
+        "-c",
+        help="Number of cores to use. Defaults to system core count (i.e. the default changes).",
+        min=1,
+        max=n_cpus,
+    ),
+    pre_confirm: bool = typer.Option(
+        False,
+        "--yes",
+        "-y",
+        help="Automatically confirm dialogs such as file overwrite confirmations.",
+    ),
+    debug: bool = typer.Option(
+        False,
+        "--debug",
+        help="Output debug logs to stdout.",
     ),
 ):
     """
     Automatically delimit species based on genetic distance, using bPTP or GMYC.
 
+    The split level must match the previously used split level from alignment.
+
     Options marked [red]\[required][/] will be prompted for if not provided.
     """
-    print(locals())
+    handler = Handler(pre_confirm=pre_confirm, debug=debug)
+    handler.confirm_overwrite(output, abort=True)
+
+    # delimit()
