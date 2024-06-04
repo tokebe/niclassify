@@ -90,7 +90,8 @@ def _align(
     Options in the 'Requirements' section will be prompted for if not provided.
     """
     handler = Handler(pre_confirm=pre_confirm, debug=debug)
-
     handler.confirm_overwrite(output, abort=True)
 
     align(input_file, output, split_level, handler, cores, output_all)
+    
+    # TODO: if using output_all, multiple overwrite confirmations occur

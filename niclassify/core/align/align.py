@@ -1,5 +1,6 @@
 from pathlib import Path
 from multiprocessing import cpu_count
+
 from ..interfaces import Handler
 from ..utils import read_data
 from ..enums import TaxonomicHierarchy
