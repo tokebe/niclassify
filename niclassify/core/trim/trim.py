@@ -21,16 +21,17 @@ def trim(
 
     # TODO: don't replace gaps with Ns, instead catch error and make frame invalid for that seq
 
-    with open(
-        input_path, "r", encoding="utf8"
-    ) as input_file, handler.spin() as spinner:
+    with (
+        open(input_path, "r", encoding="utf8") as input_file,
+        handler.spin() as spinner,
+    ):
         task = spinner.add_task("Reading FASTA...", total=1)
         frames = Counter()
 
         n_seq = 0
         for record in SeqIO.parse(input_file, format="fasta"):
             n_seq += 1
-            spinner.update(f"Reading FASTA...(read {n_seq} entries)")
+            spinner.update(task, description=f"Reading FASTA...(read {n_seq} entries)")
             success = False
             # Offsets where -3 is flipped with offset 2
             # But positives work normally
@@ -77,9 +78,11 @@ def trim(
 
     n_written = 0
 
-    with open(output_path, "w", encoding="utf8") as output_file, handler.progress(
-        percent=True
-    ) as status:
+    with (
+        open(input_path, "r", encoding="utf8") as input_file,
+        open(output_path, "w", encoding="utf8") as output_file,
+        handler.progress(percent=True) as status,
+    ):
         task = status.add_task(description="Writing to output FASTA", total=n_seq)
         for record in SeqIO.parse(input_file, format="fasta"):
             if record.id in contaminant_sequences:
@@ -95,7 +98,7 @@ def trim(
                 continue
             output_file.write(f">{record.id}\n")
             output_file.write(
-                "\n".join((seq[i : 60 + i] for i in range(0, len(seq), 60))) + "\n"
+                "\n".join((str(seq[i : 60 + i]) for i in range(0, len(seq), 60))) + "\n"
             )
             n_written += 1
             status.advance(task)
