@@ -58,6 +58,8 @@ def _trim(
     """
     Trim the input FASTA (.fasta) to a reading frame containing no stop codons.
 
+    The split level must match the previously used split level from alignment.
+
     Options in the 'Requirements' section will be prompted for if not provided.
     """
     handler = Handler(pre_confirm=pre_confirm, debug=debug)
