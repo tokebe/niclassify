@@ -12,3 +12,4 @@ from .predict import _predict
 from ..core.interfaces.handler import Handler
 from .write import _write
 from .format import _format
+from .interactive import run_interactive

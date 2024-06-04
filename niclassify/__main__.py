@@ -5,6 +5,11 @@ from typing import List, Optional
 from pathlib import Path
 from enum import Enum
 from typer.core import TyperGroup
+from multiprocessing import cpu_count
+
+from niclassify.core.interfaces.handler import Handler
+
+n_cpus = cpu_count()
 
 from niclassify.cli import (
     _get,
@@ -20,6 +25,7 @@ from niclassify.cli import (
     _predict,
     _column_select,
     _format,
+    run_interactive
 )
 
 
@@ -128,7 +134,6 @@ app.add_typer(classifier_group, name="classifier")
 # TODO add "leave blank to use system file browser"
 # only implement this for interactive mode to save yourself sanity
 
-# TODO consider adding further hierarchy to commands?
 """
 - niclassify
     - interactive (same as just typing niclassify, runs through everything with user-friendly questions)
@@ -136,9 +141,9 @@ app.add_typer(classifier_group, name="classifier")
         - format (takes in tsv, asks questions to conform to supported format, interactive-only)
         - concat (concatenates proper-formatted data files)
         - get
+        - filter
         - identify
         - lookup
-        - filter
     - fasta
         - write (just writes out to unaligned fasta)
         - combine (takes multiple fastas and combines into one)
@@ -181,14 +186,30 @@ app.add_typer(classifier_group, name="classifier")
 
 @app.callback(invoke_without_command=True)
 @app.command()
-def interactive(ctx: typer.Context):
+def interactive(
+    ctx: typer.Context,
+    cores: int = typer.Option(
+        n_cpus,
+        "--cores",
+        "-c",
+        help="Number of cores to use. Defaults to system core count (i.e. the default changes).",
+        min=1,
+        max=n_cpus,
+    ),
+    debug: bool = typer.Option(
+        False,
+        "--debug",
+        help="Output debug logs to stdout.",
+    ),
+):
     """
     Run NIClassify in interactive mode for ease-of-use.
     """
     # TODO use environment variables to set arguments when composing commands?
     if ctx.invoked_subcommand is not None:
         return
-    print("default")
+    handler = Handler(pre_confirm=False, debug=debug)
+    run_interactive(handler, cores)
 
 
 if __name__ == "__main__":
