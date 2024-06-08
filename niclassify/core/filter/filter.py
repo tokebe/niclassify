@@ -26,16 +26,14 @@ def filter_fasta(
     try:
         data = dd.concat(data_parts, axis="index", interleave_partitions=True)
     except ValueError as error:
-        handler.debug(error)
+        handler.debug(str(error))
         handler.error(
-            "Failed to concatenate input files,",
-            "they may be structurally incompatible.",
-            "Run again with --debug to see exact error.",
+            handler.prefab.ERR_TSV_CONCAT,
             abort=True,
         )
 
     if "nucleotides" not in data.columns:
-        handler.error(handler.prefab.MISSING_NUCLEOTIDES_COLUMN, abort=True)
+        handler.error(handler.prefab.ERR_MISSING_NUCLEOTIDES_COLUMN, abort=True)
         return
 
     # Remove rows missing allowed marker_codes

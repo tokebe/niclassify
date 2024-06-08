@@ -9,8 +9,6 @@ from Bio.Seq import Seq
 import math
 import textwrap
 
-# TODO add spinner
-
 
 def trim(
     input_path: Path, output_path: Path, handler: Handler, min_agreement: float = 0.9
@@ -127,11 +125,3 @@ def trim(
             ]
         )
     )
-
-
-"""
-- all sequences *should* be in same reading frame
-- idea: get supermajority in correct reading frame, mark rest as contaminant?
-- default to 90% agreement
-- try forward and reverse, reversal must have agreement
-"""

@@ -1,5 +1,4 @@
 from ..interfaces.handler import Handler
-import requests
 from throttler import throttle
 from .get_ref_hierarchy import get_ref_hierarchy
 from .geo_contains import geo_contains
@@ -8,6 +7,9 @@ from typing import Optional
 from time import sleep
 from backoff import on_exception, expo
 from ratelimit import limits, RateLimitException
+import httpx
+
+client = httpx.Client(transport=httpx.HTTPTransport(retries=3), timeout=60, follow_redirects=True)
 
 
 @on_exception(expo, RateLimitException)
@@ -17,46 +19,29 @@ def query_gbif(species_name: str, ref_geo: str, handler: Handler) -> Optional[st
     taxon_key_url = "http://api.gbif.org/v1/species?name="
     records_url = "http://api.gbif.org/v1/species/"
 
-    tries = 3
+    try:
+        # get taxonKey
+        request = f"{taxon_key_url}{species_name.lower().replace(' ', '%20')}"
+        response = client.get(request)
+        response.raise_for_status()
 
-    while tries > 0:
-        try:
-            # get taxonKey
-            request = f"{taxon_key_url}{species_name.lower().replace(' ', '%20')}"
-            response = requests.get(request)
-            response.raise_for_status()
+        # search for "taxonID":"gbif:" with some numbers, getting the numbers
+        taxon_key = re.search('(?<="taxonID":"gbif:)\\d+', response.text)
 
-            # search for "taxonID":"gbif:" with some numbers, getting the numbers
-            taxon_key = re.search('(?<="taxonID":"gbif:)\\d+', response.text)
+        if taxon_key is None:
+            handler.debug(f"  (Unknown) GBIF: {species_name}: No data")
+            return None
+        taxon_key = taxon_key.group()
 
-            if taxon_key is None:
-                handler.debug(f"  (Unknown) GBIF: {species_name}: No data")
-                return None
-            taxon_key = taxon_key.group()
+        # get native range
+        request = f"{records_url}{taxon_key}/descriptions"
+        response = client.get(request)
+        response.raise_for_status()
 
-            # get native range
-            request = f"{records_url}{taxon_key}/descriptions"
-            response = requests.get(request)
-            response.raise_for_status()
-
-            break
-
-        except (
-            ConnectionError,
-            ConnectionRefusedError,
-            ConnectionAbortedError,
-            ConnectionResetError,
-        ) as error:
-            handler.debug(f"Failed on attempt {4 - tries}. See error below.")
-            handler.debug(error)
-            tries -= 1
-            sleep(3)
-
-    if tries < 1:
-        handler.error(
-            "Connection Error, GBIF may be having issues. Please try again later.",
-            abort=True,
-        )
+    except httpx.HTTPError as error:
+        handler.debug(str(error))
+        handler.debug(f"GBIF lookup failed. See error above.")
+        return None
 
     try:
         results = response.json()
@@ -104,7 +89,9 @@ def query_gbif(species_name: str, ref_geo: str, handler: Handler) -> Optional[st
                 f"directly native to reference geography {native_range}",
             )
             return "Native"
-        if geo_contains(ref_geo, native_range, handler) or geo_contains(native_range, ref_geo, handler):
+        if geo_contains(ref_geo, native_range, handler) or geo_contains(
+            native_range, ref_geo, handler
+        ):
             handler.debug(
                 f"  (Native) GBIF: {species_name}:",
                 f"reference geography {ref_geo} <=> native range {native_range}",

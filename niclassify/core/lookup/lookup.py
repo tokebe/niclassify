@@ -23,8 +23,7 @@ def lookup(
     data = read_data(input_file)
 
     if "species_name" not in data.columns:
-        handler.error(handler.prefab.NO_SPECIES_NAME)
-        return
+        handler.error(handler.prefab.ERR_NO_SPECIES_NAME, abort=True)
 
     if not RESERVED_COLUMNS.isdisjoint(set(data.columns)):
         if not handler.confirm(

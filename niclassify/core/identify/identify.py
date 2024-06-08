@@ -22,8 +22,11 @@ def identify(
 
     data = read_data(input_file)
 
+    if "UID" not in data.columns:
+        handler.error(handler.prefab.ERR_MISSING_UID, abort=True)
+
     if "nucleotides" not in data.columns:
-        handler.error(handler.prefab.MISSING_NUCLEOTIDES_COLUMN)
+        handler.error(handler.prefab.ERR_MISSING_NUCLEOTIDES_COLUMN, abort=True)
         return
 
     handler.log("Attempting to identify sequences of unknown species (this will take some time)...")
@@ -48,7 +51,7 @@ def identify(
             global identified_count
             if pd.isnull(row["species_name"]):
                 identification = query_bold(
-                    row["nucleotides"], min_similarity, min_agreement, orders, handler
+                    row["UID"], row["nucleotides"], min_similarity, min_agreement, orders, handler
                 )
                 if identification is not None:
                     with lock:

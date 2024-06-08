@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from rich import print
 from rich.text import Text
 import typer
@@ -16,17 +17,21 @@ from rich.progress import (
 )
 from tempfile import NamedTemporaryFile
 import re
-from typing import Any, List, Union
+from typing import Any, List, Union, cast
+
+from niclassify.core.utils.dotdict import dotdict
 from ...cli.columnize import columnize
 from threading import Lock
 import atexit
-from pydantic import BaseModel, TypeAdapter
 from pathlib import Path
 import yaml
+from dotmap import DotMap
 
 # CONTEXT
 CONTEXT: dict[str, Union[Progress, None]] = {"context": None}
 
+with open(Path(__file__).parent / "prefab.yaml", "r") as prefab_file:
+    prefab = SimpleNamespace(**yaml.safe_load(prefab_file))
 
 class Handler:
     """
@@ -34,6 +39,8 @@ class Handler:
 
     Default interface is CLI.
     """
+
+    prefab = prefab
 
     def __init__(self, pre_confirm: bool = False, debug: bool = False):
         self.pre_confirm = pre_confirm
@@ -43,7 +50,7 @@ class Handler:
         self.crashlog = None
         self.crashlog_lock = Lock()
 
-    def prefix_with_indent(self, *message, prefix: str) -> str:
+    def prefix_with_indent(self, *message: str, prefix: str) -> str:
         """Return message with prefix, respecting indent."""
         indent = len(message[0]) - len(message[0].lstrip())
         lstripped = " ".join(
