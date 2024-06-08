@@ -25,7 +25,7 @@ from niclassify.cli import (
     _predict,
     _column_select,
     _format,
-    run_interactive
+    _interactive
 )
 
 
@@ -176,7 +176,7 @@ app.add_typer(classifier_group, name="classifier")
 
 # TODO type annotate everything that seems reasonable to
 
-# TODO move away from handler prefabs
+# TODO: if a message is used in multiple places, move it to prefab, otherwise leave it
 
 # TODO implement an automatic path completion
 # see https://typer.tiangolo.com/tutorial/options-autocompletion/
@@ -209,7 +209,7 @@ def interactive(
     if ctx.invoked_subcommand is not None:
         return
     handler = Handler(pre_confirm=False, debug=debug)
-    run_interactive(handler, cores)
+    _interactive(handler, cores)
 
 
 if __name__ == "__main__":
