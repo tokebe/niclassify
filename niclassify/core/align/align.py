@@ -19,11 +19,17 @@ def align(
     data = read_data(input_file)
 
     if "nucleotides" not in data.columns:
-        handler.error(handler.prefab.MISSING_NUCLEOTIDES_COLUMN, abort=True)
+        handler.error(
+            handler.prefab.ERR_MISSING_NUCLEOTIDES_COLUMN,
+            abort=True,
+        )
         return
 
     if "UID" not in data.columns:
-        handler.error(handler.prefab.MISSING_UID, abort=True)
+        handler.error(
+            handler.prefab.ERR_MISSING_UID,
+            abort=True,
+        )
 
     handler.log("Aligning sequences...")
 
@@ -44,17 +50,16 @@ def align(
         )
         handler.confirm_multiple_overwrite(
             [
-                output_file.parent
-                / f"{output_file.stem}_{split}_unaligned{output_file.suffix}"
-                for split in splits
-            ],
-            abort=True,
-        )
-        handler.confirm_multiple_overwrite(
-            [
-                output_file.parent
-                / f"{output_file.stem}_{split}_aligned{output_file.suffix}"
-                for split in splits
+                *[
+                    output_file.parent
+                    / f"{output_file.stem}_{split}_unaligned{output_file.suffix}"
+                    for split in splits
+                ],
+                *[
+                    output_file.parent
+                    / f"{output_file.stem}_{split}_aligned{output_file.suffix}"
+                    for split in splits
+                ],
             ],
             abort=True,
         )
