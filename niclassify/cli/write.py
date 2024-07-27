@@ -29,7 +29,7 @@ def _write(
         resolve_path=True,
         rich_help_panel="Requirements",
     ),
-    output: Path = typer.Option(
+    output_file: Path = typer.Option(
         ...,
         "--output",
         "-o",
@@ -73,14 +73,13 @@ def _write(
 ):
     handler = Handler(pre_confirm=pre_confirm, debug=debug)
 
-    handler.confirm_overwrite(output, abort=True)
+    handler.confirm_overwrite(output_file, abort=True)
     # TODO: confirm overwrite for all existing matching files
 
-    # PERF: find a way to not need to read in whole file
     data = read_data(input_file)
     if split_level.value != "none":
         splits = data[f"{split_level.value}_name"].unique().compute(num_workers=cores)
     else:
         splits = None
 
-    write(data, splits, output, split_level, handler, cores, output_all=True)
+    write(data, splits, output_file, split_level, handler, cores, output_all=True)
