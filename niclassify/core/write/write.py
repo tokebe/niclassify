@@ -58,7 +58,7 @@ def write(
                     lock, file = files[row[f"{split_level.value}_name"]]
                 with lock:
                     if splits is None:
-                        label = f">{row['UID']}"
+                        label = f">{row['UID']}\n"
                     else:
                         label = f">{row[f'{split_level.value}_name']}_{row['UID']}\n"
                     file.write(label)
