@@ -3,11 +3,14 @@ from rich import print
 from typing import List, Optional
 from pathlib import Path
 from enum import Enum
+
+from niclassify.core.delimit.delimit import delimit
 from ..core.enums import TaxonomicHierarchy, Methods
 from multiprocessing import cpu_count
 from ..core.interfaces.handler import Handler
 
 n_cpus = cpu_count()
+
 
 def _delimit(
     input_file: Path = typer.Option(
@@ -40,7 +43,7 @@ def _delimit(
         resolve_path=True,
         rich_help_panel="Requirements",
     ),
-    output: Path = typer.Option(
+    output_path: Path = typer.Option(
         ...,
         "--output",
         "-o",
@@ -55,12 +58,11 @@ def _delimit(
         resolve_path=True,
         rich_help_panel="Requirements",
     ),
-    split_level: TaxonomicHierarchy = typer.Option(
-        "order",
-        "--split-on",
+    no_split: bool = typer.Option(
+        False,
+        "--no-split",
         "-s",
-        help="Taxonomic level on which to split data for computation",
-        case_sensitive=False,
+        help="Set if the input Aligned FASTA was generated without splits (see align help)",
     ),
     # TODO: find better methods to support?
     # method: Methods = typer.Option(
@@ -91,9 +93,10 @@ def _delimit(
 
     The split level must match the previously used split level from alignment.
 
-    Options marked [red]\[required][/] will be prompted for if not provided.
+    Options marked [red]\\[required][/] will be prompted for if not provided.
     """
     handler = Handler(pre_confirm=pre_confirm, debug=debug)
-    handler.confirm_overwrite(output, abort=True)
+    handler.confirm_overwrite(output_path, abort=True)
+    delimit(input_file, input_fasta, output_path, (not no_split), handler, cores)
 
     # delimit()

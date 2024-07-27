@@ -6,7 +6,7 @@ import sys
 import argparse
 import os
 import numpy
-from ptp.ptpllh import species_setting, showTree
+from bptp.ptpllh import species_setting, showTree
 
 
 class pnode:

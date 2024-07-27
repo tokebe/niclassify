@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "bptp"
+version = "1.1.0"
+description = "A Repackaging of bPTP for easier use as a module"
+authors = ["tokebe <43009413+tokebe@users.noreply.github.com>"]
+license = "GPLv3.0"
+readme = "README.md"
+keywords = ["ptp", "bptp"]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+numpy = "^1.26.4"
+scipy = "^1.13.1"
+matplotlib = "^3.9.0"
+lxml = "^5.2.2"
+ete3 = "3.1.1"
+python-nexus = "^2.9.0"
+PyQt5-sip = "12.*"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

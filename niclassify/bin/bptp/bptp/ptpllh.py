@@ -2,10 +2,11 @@ import math
 import random
 import sys
 
+from ete3.treeview.faces import TextFace
 from scipy import stats
 
-from ete3 import Tree, NodeStyle, TreeStyle, TextFace
-from ete3.treeview.main import  _FaceAreas
+from ete3 import Tree
+from ete3.treeview.main import  _FaceAreas, NodeStyle, TreeStyle
 #except ImportError:
 #print("Please install the matplotlib and other dependent package first.")
 #print("If your OS is ubuntu or has apt installed, you can try the following:") 
