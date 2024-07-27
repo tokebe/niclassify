@@ -1,3 +1,4 @@
+import traceback
 from types import SimpleNamespace
 from rich import print
 from rich.text import Text
@@ -33,6 +34,7 @@ CONTEXT: dict[str, Union[Progress, None]] = {"context": None}
 with open(Path(__file__).parent / "prefab.yaml", "r") as prefab_file:
     prefab = SimpleNamespace(**yaml.safe_load(prefab_file))
 
+
 class Handler:
     """
     Interface for interaction and log handling.
@@ -45,7 +47,7 @@ class Handler:
     def __init__(self, pre_confirm: bool = False, debug: bool = False):
         self.pre_confirm = pre_confirm
         self._debug = debug
-        self.debug_lock = Lock()
+        self.log_lock = Lock()
         self.logbuffer = []
         self.crashlog = None
         self.crashlog_lock = Lock()
@@ -75,28 +77,35 @@ class Handler:
 
     def log(self, *message: str):
         """Log a message."""
-        if CONTEXT["context"] is not None:
-            CONTEXT["context"].console.print(" ".join(message))
-        else:
-            print(" ".join(message))
-        self.logbuffer.append(" ".join(message))
+        with self.log_lock:
+            if CONTEXT["context"] is not None:
+                CONTEXT["context"].console.print(" ".join(message))
+            else:
+                print(" ".join(message))
+            self.logbuffer.append(" ".join(message))
 
     def message(self, *message: str):
         """Log a message and wait for the user to acknowledge."""
         self.log(*message)
-        typer.prompt("Enter to continue", hide_input=True)
+        typer.prompt("Press enter to continue", hide_input=True)
 
     def warning(self, *message: str):
         """Log a message with a warning prefix to grab user attention."""
         self.log(self.prefix_with_indent(*message, prefix="[bold yellow]WARNING:[/]"))
 
-    def error(self, *error: str, abort=False):
+    def error(self, *error: Union[str, Exception], abort=False):
         """Log a message with an error prefix and exit if required."""
-        self.log(
-            self.prefix_with_indent(
-                *[str(e) for e in error], prefix="[bold red]ERROR:[/]"
+        if isinstance(error[0], Exception):
+            self.log(
+                self.prefix_with_indent(str(error[0]), prefix="[bold red]ERROR:[/]")
             )
-        )
+            self.log(traceback.format_exc())
+        else:
+            self.log(
+                self.prefix_with_indent(
+                    *[str(e) for e in error], prefix="[bold red]ERROR:[/]"
+                )
+            )
         if abort:
             with self.crashlog_lock:
                 if self.crashlog is not None:
