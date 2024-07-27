@@ -183,6 +183,9 @@ app.add_typer(classifier_group, name="classifier")
 
 # TODO type annotation pass, remove unnecessary typing imports
 
+# TODO: make handler something that is initialized on first import and then can be
+# be imported instead of passed around
+
 
 @app.callback(invoke_without_command=True)
 @app.command()
