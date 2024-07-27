@@ -15,3 +15,4 @@ niclassify/core/utilties/config/rloc.txt
 *.pyc
 .python3installed
 env
+.python-version
