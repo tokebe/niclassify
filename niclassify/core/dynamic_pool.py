@@ -1,17 +1,20 @@
 from multiprocessing import cpu_count, pool
 from threading import Semaphore
 import psutil
-from typing import Callable, Tuple, Dict, Literal
+from typing import Any, Callable, Tuple, Dict, Literal, cast
 import math
 
 # TODO: Error handling. If a task errors out, cancel everything in the pool.
+
 
 class DynamicPool:
     def __init__(
         self,
         pool_type: Literal["thread", "process"] = "thread",
         pool_size: int = cpu_count(),
-        resources: int = math.ceil((psutil.virtual_memory().total - 2e9) / 1e6),  # leaves 2GB to system
+        resources: int = math.ceil(
+            (psutil.virtual_memory().total - 2e9) / 1e6
+        ),  # leaves 2GB to system
     ) -> None:
         if pool_type not in ["thread", "process"]:
             raise ValueError("pool type must be one of (thread, process).")
@@ -35,12 +38,14 @@ class DynamicPool:
     def task_complete(self, cost: int):
         self.resources.release(min(cost, self.resources_size))
 
-    def map(self, tasks: Tuple[Callable, int, Tuple[any, ...], Dict[str, any]]):
+    def map(self, tasks: list[Tuple[Callable, int, Tuple[Any, ...], Dict[str, Any]]]):
         queue = []
         for func, cost, args, kwargs in [
             (list(task) + [None] * 2)[:4] for task in tasks
         ]:
             args = () if args is None else args
             kwargs = {} if kwargs is None else {}
-            queue.append(self.add_task(func, cost, *args, *kwargs))
+            queue.append(
+                self.add_task(cast(Callable, func), cast(int, cost), *args, *kwargs)
+            )
         return [result.get() for result in queue]
