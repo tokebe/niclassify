@@ -1,15 +1,20 @@
+from multiprocessing import cpu_count
 import typer
 from pathlib import Path
 from typing import List, Optional
+
+from niclassify.core.trim.trim_files import trim_files
 from ..core.trim import trim
 from ..core.interfaces.handler import Handler
+
+n_cpus = cpu_count()
 
 def _trim(
     input_file: Path = typer.Option(
         ...,
         "--input",
         "-i",
-        help="Input (.fasta) file.",
+        help="Input aligned FASTA (.fasta) file.",
         prompt=True,
         show_default=False,
         exists=True,
@@ -20,11 +25,11 @@ def _trim(
         resolve_path=True,
         rich_help_panel="Requirements",
     ),
-    output: Path = typer.Option(
+    output_file: Path = typer.Option(
         ...,
         "--output",
         "-o",
-        help="Output (.fasta) file, trimmed to proper reading frame.",
+        help="Output FASTA (.fasta) file, trimmed to proper reading frame.",
         prompt=True,
         show_default=False,
         exists=False,
@@ -35,6 +40,12 @@ def _trim(
         resolve_path=True,
         rich_help_panel="Requirements",
     ),
+    no_split: bool = typer.Option(
+        False,
+        "--no-split",
+        "-s",
+        help="Set if the input Aligned FASTA was generated without splits (see align help)"
+    ),
     agreement: float = typer.Option(
         0.9,
         "--min-agreement",
@@ -42,6 +53,20 @@ def _trim(
         help="Minimum proportion of aligned sequences that must agree on a reading frame.",
         min=0,
         max=1,
+    ),
+    output_all: bool = typer.Option(
+        False,
+        "--output-all",
+        "-a",
+        help="Output all trimmed FASTA (.fasta) files separately for each split. Ignored if --no-split is set."
+    ),
+    cores: int = typer.Option(
+        n_cpus,
+        "--cores",
+        "-c",
+        help="Number of cores to use. Defaults to system core count (i.e. the default changes). Ignored if --no-split is set.",
+        min=1,
+        max=n_cpus,
     ),
     pre_confirm: bool = typer.Option(
         False,
@@ -63,5 +88,8 @@ def _trim(
     Options in the 'Requirements' section will be prompted for if not provided.
     """
     handler = Handler(pre_confirm=pre_confirm, debug=debug)
-    handler.confirm_overwrite(output, abort=True)
-    trim(input_file, output, handler, agreement)
+    handler.confirm_overwrite(output_file, abort=True)
+    if no_split:
+        trim(input_file, output_file, handler, agreement)
+    else:
+        trim_files(input_file, output_file, handler, agreement, cores, output_all)
