@@ -62,7 +62,7 @@ setup(
         "regex==2020.11.13",
         "requests==2.31.0",
         "rfc3986==1.4.0",
-        "scikit-learn==0.24.0",
+        "scikit-learn==1.0.1",
         "scipy==1.10.0",
         "seaborn==0.11.0",
         "six==1.15.0",
