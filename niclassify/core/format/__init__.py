@@ -1,1 +1,1 @@
-from .format import *
+from niclassify.core.format.format import *

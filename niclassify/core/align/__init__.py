@@ -1,1 +1,1 @@
-from .align import *
+from niclassify.core.align.align import *

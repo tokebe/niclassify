@@ -1,1 +1,1 @@
-from .filter import *
+from niclassify.core.filter.filter import *

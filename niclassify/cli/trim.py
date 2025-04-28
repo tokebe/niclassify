@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import List, Optional
 
 from niclassify.core.trim.trim_files import trim_files
-from ..core.trim import trim
-from ..core.interfaces.handler import Handler
+from niclassify.core.trim import trim
+from niclassify.core.interfaces.handler import Handler
 
 n_cpus = cpu_count()
 

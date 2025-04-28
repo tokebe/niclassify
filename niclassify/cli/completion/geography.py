@@ -1,6 +1,6 @@
 from typing import List
-from ...core.lookup import get_geographies
-from ...core.utils.fuzzy_match import score
+from niclassify.core.lookup import get_geographies
+from niclassify.core.utils.fuzzy_match import score
 
 GEOGRAPHIES = get_geographies()
 

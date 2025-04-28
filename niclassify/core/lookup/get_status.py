@@ -1,9 +1,9 @@
 from typing import Tuple, Optional
 
-from ..interfaces.handler import Handler
-from .query_gbif import query_gbif
-from .query_itis import query_itis
-from .combine_status import combine_status
+from niclassify.core.interfaces.handler import Handler
+from niclassify.core.lookup.query_gbif import query_gbif
+from niclassify.core.lookup.query_itis import query_itis
+from niclassify.core.lookup.combine_status import combine_status
 
 
 def get_status(

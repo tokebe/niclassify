@@ -1,1 +1,1 @@
-from .trim import *
+from niclassify.core.trim.trim import *

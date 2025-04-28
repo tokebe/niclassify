@@ -1,15 +1,15 @@
 from pathlib import Path
 from multiprocessing import cpu_count
-from ..interfaces import Handler
-from ..enums import TaxonomicHierarchy
-from dask.dataframe.core import DataFrame
+from niclassify.core.interfaces import Handler
+from niclassify.core.enums import TaxonomicHierarchy
+import polars as pl
 from typing import List
 from tempfile import NamedTemporaryFile
 from threading import Lock
 
 
 def write(
-    data: DataFrame,
+    data: pl.LazyFrame,
     splits: List[str] | None,
     output_file: Path,
     split_level: TaxonomicHierarchy,

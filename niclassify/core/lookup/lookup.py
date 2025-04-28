@@ -1,10 +1,10 @@
 from pathlib import Path
-import dask.dataframe as dd
+import polars as pl
 import pandas as pd
 
-from ..interfaces import Handler
-from ..utils import read_data
-from .get_status import get_status
+from niclassify.core.interfaces import Handler
+from niclassify.core.utils import read_data
+from niclassify.core.lookup.get_status import get_status
 import numpy as np
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool

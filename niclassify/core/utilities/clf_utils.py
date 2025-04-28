@@ -19,8 +19,8 @@ from sklearn import metrics
 from sklearn import preprocessing
 from sklearn.impute import SimpleImputer
 
-from ..classifiers import AutoClassifier
-from .general_utils import USER_PATH
+from niclassify.core.classifiers import AutoClassifier
+from niclassify.core.utilities.general_utils import USER_PATH
 
 sns.set()
 

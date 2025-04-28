@@ -1,11 +1,11 @@
 from pathlib import Path
 from multiprocessing import cpu_count
 
-from ..interfaces import Handler
-from ..utils import read_data
-from ..enums import TaxonomicHierarchy
-from ..write import write
-from .align_files import align_files
+from niclassify.core.interfaces import Handler
+from niclassify.core.utils import read_data
+from niclassify.core.enums import TaxonomicHierarchy
+from niclassify.core.write import write
+from niclassify.core.align.align_files import align_files
 
 
 def align(

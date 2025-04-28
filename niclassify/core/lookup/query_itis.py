@@ -1,9 +1,9 @@
-from ..interfaces.handler import Handler
+from niclassify.core.interfaces.handler import Handler
 from typing import Optional, cast
 from xml.etree import ElementTree
 from throttler import throttle
-from .get_ref_hierarchy import get_ref_hierarchy
-from .geo_contains import geo_contains
+from niclassify.core.lookup.get_ref_hierarchy import get_ref_hierarchy
+from niclassify.core.lookup.geo_contains import geo_contains
 from time import sleep
 from backoff import on_exception, expo
 from ratelimit import limits, RateLimitException

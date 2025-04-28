@@ -21,7 +21,7 @@ try:
     from sklearn.model_selection import train_test_split
     from sklearn.inspection import permutation_importance
 
-    from . import utilities
+    from niclassify.core import utilities
 
 except ModuleNotFoundError:
     logging.error("Missing required modules. Install requirements by running")

@@ -1,1 +1,1 @@
-from .get import *
+from niclassify.core.get.get import *

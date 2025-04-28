@@ -1,7 +1,7 @@
-from ..interfaces.handler import Handler
+from niclassify.core.interfaces.handler import Handler
 from throttler import throttle
-from .get_ref_hierarchy import get_ref_hierarchy
-from .geo_contains import geo_contains
+from niclassify.core.lookup.get_ref_hierarchy import get_ref_hierarchy
+from niclassify.core.lookup.geo_contains import geo_contains
 import re
 from typing import Optional
 from time import sleep

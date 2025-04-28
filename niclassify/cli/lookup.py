@@ -3,11 +3,11 @@ import typer
 from typing import List, Optional, Union
 from pathlib import Path
 from enum import Enum
-from ..core.lookup import lookup, get_geographies
-from .validation import validate_geography
-from .completion import complete_geography
-from .columnize import columnize
-from ..core.interfaces.handler import Handler
+from niclassify.core.lookup import lookup, get_geographies
+from niclassify.cli.validation import validate_geography
+from niclassify.cli.completion import complete_geography
+from niclassify.cli.columnize import columnize
+from niclassify.core.interfaces.handler import Handler
 from multiprocessing import cpu_count
 
 n_cpus = cpu_count()
@@ -64,7 +64,7 @@ def _lookup(
         None,
         "--geography",
         "-g",
-        help="A reference geopgrahy with respect to which samples will be labeled as native or introduced.",
+        help="A reference geopgrahy with respect to which samples will be labeled as native or introduced. Can be the name or number from the geography list (see --list).",
         show_default=False,
         show_choices=False,
         rich_help_panel="Requirements",
@@ -78,14 +78,6 @@ def _lookup(
         help="List all accepted geographies and exit.",
         callback=list_geographies,
         is_eager=True,
-    ),
-    cores: int = typer.Option(
-        n_cpus,
-        "--cores",
-        "-c",
-        help="Number of cores to use. Defaults to system core count (i.e. the default changes).",
-        min=1,
-        max=n_cpus,
     ),
     pre_confirm: bool = typer.Option(
         False,
@@ -128,4 +120,4 @@ def _lookup(
             )
 
     handler.confirm_overwrite(output, abort=True)
-    lookup(input_file, output, geography, handler, cores)
+    lookup(input_file, output, geography, handler)

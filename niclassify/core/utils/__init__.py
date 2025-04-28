@@ -1,2 +1,2 @@
-from .dotdict import *
-from .read_data import *
+from niclassify.core.utils.dotdict import *
+from niclassify.core.utils.read_data import *

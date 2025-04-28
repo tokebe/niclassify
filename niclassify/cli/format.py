@@ -1,8 +1,8 @@
 import typer
 from multiprocessing import cpu_count
-from ..core.format import format_data
+from niclassify.core.format import format_data
 from pathlib import Path
-from ..core.interfaces.handler import Handler
+from niclassify.core.interfaces.handler import Handler
 
 
 n_cpus = cpu_count()

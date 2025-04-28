@@ -1,1 +1,1 @@
-from .write import *
+from niclassify.core.write.write import *

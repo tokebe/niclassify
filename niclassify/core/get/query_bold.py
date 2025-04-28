@@ -8,7 +8,7 @@ import os
 from requests.compat import chardet
 import httpx
 
-from ..interfaces import Handler
+from niclassify.core.interfaces import Handler
 
 
 def query_bold(geography: str, taxonomy: str, output: Path, handler: Handler) -> None:

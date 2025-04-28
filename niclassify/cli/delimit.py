@@ -5,9 +5,9 @@ from pathlib import Path
 from enum import Enum
 
 from niclassify.core.delimit.delimit import delimit
-from ..core.enums import TaxonomicHierarchy, Methods
+from niclassify.core.enums import TaxonomicHierarchy, Methods
 from multiprocessing import cpu_count
-from ..core.interfaces.handler import Handler
+from niclassify.core.interfaces.handler import Handler
 
 n_cpus = cpu_count()
 

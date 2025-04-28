@@ -3,8 +3,8 @@ from rich import print
 from typing import List, Optional
 from pathlib import Path
 from enum import Enum
-from ..core.interfaces.handler import Handler
-from ..core.get import get
+from niclassify.core.interfaces.handler import Handler
+from niclassify.core.get import get
 
 from multiprocessing import cpu_count
 
@@ -46,14 +46,6 @@ def _get(
         rich_help_panel="Requirements",
 
     ),
-    cores: int = typer.Option(
-        n_cpus,
-        "--cores",
-        "-c",
-        help="Number of cores to use. Defaults to system core count (i.e. the default changes).",
-        min=1,
-        max=n_cpus,
-    ),
     pre_confirm: bool = typer.Option(
         False,
         "--yes",
@@ -73,4 +65,4 @@ def _get(
     """
     handler = Handler(pre_confirm=pre_confirm, debug=debug)
     handler.confirm_overwrite(output, abort=True)
-    get(geography, taxonomy, output, handler, cores)
+    get(geography, taxonomy, output, handler)

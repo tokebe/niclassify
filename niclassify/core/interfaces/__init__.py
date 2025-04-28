@@ -1,1 +1,1 @@
-from .handler import *
+from niclassify.core.interfaces.handler import *

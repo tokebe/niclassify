@@ -1,1 +1,1 @@
-from .identify import *
+from niclassify.core.identify.identify import *

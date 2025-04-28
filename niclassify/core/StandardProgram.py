@@ -29,8 +29,8 @@ from time import sleep
 #     exit(-1)
 
 # import rest of program modules
-from . import utilities
-from . import classifiers
+from niclassify.core import utilities
+from niclassify.core import classifiers
 
 
 class NativeChecker:

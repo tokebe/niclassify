@@ -1,5 +1,5 @@
 from pathlib import Path
-from ..interfaces import Handler
+from niclassify.core.interfaces import Handler
 from Bio import SeqIO
 from tempfile import NamedTemporaryFile
 import shutil

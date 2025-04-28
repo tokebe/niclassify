@@ -1,10 +1,10 @@
-from ..core.interfaces.handler import Handler
+from niclassify.core.interfaces.handler import Handler
 from multiprocessing import cpu_count
-from ..core.write import write
-from ..core.utils import read_data
+from niclassify.core.write import write
+from niclassify.core.utils import read_data
 import typer
 from pathlib import Path
-from ..core.enums import TaxonomicHierarchy
+from niclassify.core.enums import TaxonomicHierarchy
 
 
 n_cpus = cpu_count()

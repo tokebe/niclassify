@@ -3,8 +3,8 @@ from rich import print
 from typing import List, Optional
 from pathlib import Path
 from enum import Enum
-from ..core.filter import filter_fasta
-from ..core.interfaces.handler import Handler
+from niclassify.core.filter import filter_fasta
+from niclassify.core.interfaces.handler import Handler
 
 
 from multiprocessing import cpu_count
@@ -43,13 +43,13 @@ def _filter(
         resolve_path=True,
         rich_help_panel="Requirements",
     ),
-    marker_codes: Optional[str] = typer.Option(
+    marker_codes: str = typer.Option(
         "COI-5P",
         "--marker-codes",
         "-m",
         help="Marker codes to keep, separated by a comma.",
     ),
-    base_pairs: Optional[int] = typer.Option(
+    base_pairs: int = typer.Option(
         350, "--base-pairs", "-b", help="Minimum base pair count allowed.", min=0
     ),
     cores: int = typer.Option(

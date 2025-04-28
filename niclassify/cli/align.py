@@ -3,10 +3,10 @@ from rich import print
 from typing import List, Optional
 from pathlib import Path
 from enum import Enum
-from ..core.enums import TaxonomicHierarchy
+from niclassify.core.enums import TaxonomicHierarchy
 from multiprocessing import cpu_count
-from ..core.interfaces.handler import Handler
-from ..core.align import align
+from niclassify.core.interfaces.handler import Handler
+from niclassify.core.align import align
 
 
 n_cpus = cpu_count()

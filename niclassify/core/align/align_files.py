@@ -1,7 +1,6 @@
 import sys
-from ..interfaces import Handler
-from ..enums import TaxonomicHierarchy
-from dask.dataframe import DataFrame
+from niclassify.core.interfaces import Handler
+from niclassify.core.enums import TaxonomicHierarchy
 from typing import IO, List, Optional, cast
 from tempfile import TemporaryFile
 from threading import Lock
@@ -14,7 +13,7 @@ import re
 # from Bio.Align.Applications import MuscleCommandline
 from tempfile import NamedTemporaryFile
 import subprocess
-from ..dynamic_pool import DynamicPool
+from niclassify.core.dynamic_pool import DynamicPool
 import math
 import os
 

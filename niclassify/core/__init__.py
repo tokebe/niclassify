@@ -1,1 +1,1 @@
-from . import *
+from niclassify.core import *

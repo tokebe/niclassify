@@ -1,5 +1,5 @@
-from .get_ref_hierarchy import get_ref_hierarchy
-from ..interfaces.handler import Handler
+from niclassify.core.lookup.get_ref_hierarchy import get_ref_hierarchy
+from niclassify.core.interfaces.handler import Handler
 
 
 def geo_contains(ref_geo: str, geo: str, handler: Handler) -> bool:

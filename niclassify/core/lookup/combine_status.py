@@ -1,4 +1,4 @@
-from ..interfaces.handler import Handler
+from niclassify.core.interfaces.handler import Handler
 
 
 def combine_status(status_gbif: str, status_itis: str) -> str:

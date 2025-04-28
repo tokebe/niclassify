@@ -1,1 +1,1 @@
-from .combine import *
+from niclassify.core.combine.combine import *

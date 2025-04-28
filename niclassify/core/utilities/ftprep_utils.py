@@ -22,8 +22,8 @@ from Bio.Phylo.TreeConstruction import DistanceCalculator
 from Bio import AlignIO
 from xml.etree import ElementTree
 
-from .general_utils import MAIN_PATH, USER_PATH, REGIONS, R_LOC, RNotFoundError, RScriptFailedError, PLATFORM
-from ..bPTP_interface import bPTP
+from niclassify.core.utilities.general_utils import MAIN_PATH, USER_PATH, REGIONS, R_LOC, RNotFoundError, RScriptFailedError, PLATFORM
+from niclassify.core.bPTP_interface import bPTP
 
 REQUIRED_COLUMNS = [
     ["processid", "UPID", ""],  # can have one or the other

@@ -1,1 +1,1 @@
-from .delimit import *
+from niclassify.core.delimit.delimit import *

@@ -1,11 +1,8 @@
 import traceback
 from types import SimpleNamespace
 from rich import print
-from rich.text import Text
 import typer
-import json
 from pathlib import Path
-import niclassify.core.interfaces.handler as handler
 from contextlib import contextmanager
 from rich.progress import (
     Progress,
@@ -13,20 +10,19 @@ from rich.progress import (
     TextColumn,
     BarColumn,
     TimeRemainingColumn,
-    MofNCompleteColumn,
-    TimeElapsedColumn,
 )
 from tempfile import NamedTemporaryFile
 import re
-from typing import Any, List, Union, cast
+from typing import List, Union
 
-from niclassify.core.utils.dotdict import dotdict
-from ...cli.columnize import columnize
+from niclassify.cli.columnize import columnize
 from threading import Lock
 import atexit
 from pathlib import Path
 import yaml
-from dotmap import DotMap
+from bullet import Bullet
+
+# TODO: automatically handle syntaxwarnings, put them in debug logs
 
 # CONTEXT
 CONTEXT: dict[str, Union[Progress, None]] = {"context": None}
@@ -42,7 +38,7 @@ class Handler:
     Default interface is CLI.
     """
 
-    prefab = prefab
+    prefab = prefab  # Pre-written reusable messages, see niclassify/core/interfaces/prefab.yaml
 
     def __init__(self, pre_confirm: bool = False, debug: bool = False):
         self.pre_confirm = pre_confirm
@@ -93,8 +89,12 @@ class Handler:
         """Log a message with a warning prefix to grab user attention."""
         self.log(self.prefix_with_indent(*message, prefix="[bold yellow]WARNING:[/]"))
 
-    def error(self, *error: Union[str, Exception], abort=False):
-        """Log a message with an error prefix and exit if required."""
+    def error(self, *error: Union[str, Exception], abort: Union[bool, int] = False):
+        """Log a message with an error prefix and exit if required.
+
+        If provided with an Exception, the traceback will be printed as well.
+        If abort is True or >0, attempt to exit the program with the given code (or 1 if set to True).
+        """
         if isinstance(error[0], Exception):
             self.log(
                 self.prefix_with_indent(str(error[0]), prefix="[bold red]ERROR:[/]")
@@ -135,7 +135,7 @@ class Handler:
                     logdump.write(re.sub(r"(?<!\\)\[[^\]]+\]", "", log))
                     logdump.write("\n")
                 logdump.close()
-                raise typer.Exit(code=1)
+                raise typer.Exit(code=1 if not isinstance(abort, int) else abort)
 
     def confirm(self, *message: str, abort=False, allow_pre_confirm=True):
         """Get a simply yes/no response from the user."""
@@ -161,19 +161,21 @@ class Handler:
         self.debug("Options:")
         self.debug("\n".join([f"{i + 1}) {v}" for i, v in enumerate(options)]))
 
-        print(columnize(options, dry_run=True, number=True))
-        index = 0
-        while index is not None and (index < 1 or index > len(options) + 1):
-            response = typer.prompt(
-                text=f"{prompt} (number)", type=str, default="", show_default=False
-            )
-            if len(response) == 0 and not (allow_empty or abort):
-                continue
-            if re.search("[^0-9]", response) is not None:
-                continue
-            index = int(response) if len(response) > 0 else None
-        selection = options[index - 1] if index is not None else None
+        selection = Bullet(choices=options, bullet=">", prompt=f"{prompt}:").launch()
 
+        # print(columnize(options, dry_run=True, number=True))
+        # index = 0
+        # while index is not None and (index < 1 or index > len(options) + 1):
+        #     response = typer.prompt(
+        #         text=f"{prompt} (number)", type=str, default="", show_default=False
+        #     )
+        #     if len(response) == 0 and not (allow_empty or abort):
+        #         continue
+        #     if re.search("[^0-9]", response) is not None:
+        #         continue
+        #     index = int(response) if len(response) > 0 else None
+        # selection = options[index - 1] if index is not None else None
+        #
         self.debug(f"User selection: {selection}")
         if selection is None and abort:
             raise typer.Abort()

@@ -1,9 +1,9 @@
 from pathlib import Path
-from typing import List
-from ..interfaces import Handler
+from typing import List, cast
+from niclassify.core.interfaces import Handler
 from multiprocessing import cpu_count
-from ..utils import read_data
-from dask import dataframe as dd
+from niclassify.core.utils import read_data
+import polars as pl
 
 from threading import Lock
 
@@ -21,66 +21,66 @@ def filter_fasta(
     handler: Handler,
     cores: int = cpu_count(),
 ) -> None:
-    data_parts = [read_data(inpu_file) for inpu_file in input_files]
+    data_parts = [read_data(input_file) for input_file in input_files]
 
     try:
-        data = dd.concat(data_parts, axis="index", interleave_partitions=True)
+        data = pl.concat(data_parts, how="vertical", rechunk=True)
     except ValueError as error:
         handler.debug(str(error))
         handler.error(
             handler.prefab.ERR_TSV_CONCAT,
             abort=True,
         )
+        exit(1)
 
-    if "nucleotides" not in data.columns:
+    columns = data.collect_schema().names()
+
+    if "nucleotides" not in columns:
         handler.error(handler.prefab.ERR_MISSING_NUCLEOTIDES_COLUMN, abort=True)
         return
 
+    before_rows = cast(int, data.select(pl.len()).collect(streaming=True).item())
+
     # Remove rows missing allowed marker_codes
-    if "marker_codes" in data.columns:
-        data["marker_codes"] = data["marker_codes"].astype(str)
+    if "marker_codes" in columns:
+        data = data.with_columns(pl.col("marker_codes").cast(pl.String, strict=False))
         for code in marker_codes.split(","):
-            data = data[data["marker_codes"].str.contains(code)]
+            data = data.filter(pl.col("marker_codes").str.contains(code))
 
     # Remove rows with fewer than base_pairs count
-    data["nucleotides"] = data["nucleotides"].astype(str)
-    data = data[data["nucleotides"].str.len() >= base_pairs]
+    data = data.with_columns(
+        pl.col("nucleotides").cast(pl.String, strict=False)
+    ).filter(pl.col("nucleotides").str.len_chars() >= base_pairs)
 
-    rows = data.shape[0].compute()
+    after_rows = cast(int, data.select(pl.len()).collect(streaming=True).item())
 
+    global lock
     lock = Lock()
 
     global count
-    count = -1
+    count = 0
 
     with handler.progress(percent=True) as status:
-        task = status.add_task(description="Filtering rows", total=rows)
+        task = status.add_task(description="Filtering rows", total=after_rows)
 
-        def count_id(row, lock):
+        def count_id(_):
+            global lock
+            global count
             with lock:
-                global count
                 count += 1
                 status.advance(task)
                 return f"ID_{count}"
 
-        def make_ids(df, lock):
-            uid = df.apply(count_id, axis="columns", args=(lock,))
-            df.insert(0, "UID", uid)
-            return df
-
         # Create a unique ID column
-        data.drop(columns=RESERVED_COLUMNS, errors="ignore").map_partitions(
-            make_ids,
-            lock,
-            meta={"UID": "object", **{column: "object" for column in data.columns}},
-        ).to_csv(
-            output_file,
-            single_file=True,
-            index=False,
-            sep="\t",
-            compute_kwargs={"num_workers": cores},
+        data.drop(RESERVED_COLUMNS, strict=False).with_columns(
+            pl.lit("").alias("UID"),
+        ).select(
+            pl.col("UID").map_elements(count_id, return_dtype=pl.String), pl.all()
+        ).sink_csv(
+            output_file, separator="\t"
         )
+
     handler.log(
         f"File{'s' if len(input_files) > 1 else ''} filtered successfully",
-        f"(removed {rows - count+1} rows).",
+        f"(removed {before_rows - after_rows} rows).",
     )

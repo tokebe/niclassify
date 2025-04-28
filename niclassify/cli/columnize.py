@@ -1,8 +1,13 @@
+from itertools import zip_longest
 import os
 import math
 from rich import print
 from rich.table import Table
 from typing import List
+
+def split(a, n):
+    k, m = divmod(len(a), n)
+    return (a[i*k+min(i, m):(i+1)*k+min(i+1, m)] for i in range(n))
 
 
 def columnize(values: List[str], dry_run: bool = False, number: bool = False) -> Table:
@@ -14,40 +19,22 @@ def columnize(values: List[str], dry_run: bool = False, number: bool = False) ->
         values = [f"{(i + 1):{number_len}}) {v}" for i, v in enumerate(values)]
 
     console_size = os.get_terminal_size()
-    height = console_size.lines - 4
     width = console_size.columns
     max_width_item = len(max(values, key=len))
-    max_columns = math.floor(width / (max_width_item + 5 + number_len))
-
-    if len(values) <= height:
-        table = Table(
-            show_edge=False,
-            show_header=False,
-            box=None,
-            padding=(0, 2),
-        )
-        table.add_column()
-        for v in values:
-            table.add_row(v)
-        if not dry_run:
-            print(table)
-        return table
+    columns = math.ceil(width / (max_width_item + 4 + number_len))
 
     table = Table(
         show_edge=False,
         show_header=False,
         box=None,
-        padding=(0, 2),
+        padding=(0, 1),
     )
 
-    if math.ceil(len(values) / max_columns) >= height:
-        columns = max_columns
-    else:
-        columns = math.ceil(len(values) / height)
+    splits = list(split(values, columns))
 
     for i in range(columns):
         table.add_column()
-    for row in (values[i : i + len(values) : height] for i in range(0, height)):
+    for row in zip_longest(*splits):
         table.add_row(*row)
 
     if not dry_run:

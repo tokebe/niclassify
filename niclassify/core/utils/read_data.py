@@ -1,50 +1,46 @@
 from pathlib import Path
-import dask.dataframe as dd
-import json
+from typing import Optional
+import yaml
+import polars as pl
 
 import multiprocessing
+import csv
+
+from niclassify.core.interfaces.handler import Handler
 
 
 NANS = []
 
-with open(Path(__file__).parent.parent.parent / "config/nans.json") as nansfile:
-    NANS = json.load(nansfile)
+with open(Path(__file__).parent.parent.parent / "config/nans.yaml") as nansfile:
+    NANS = yaml.safe_load(nansfile)
 
 
-def read_data(file: Path) -> dd.DataFrame:
-    data = dd.read_csv(
-        file,
-        sample=1000000,
-        sample_rows=100,
-        assume_missing=True,
-        na_values=NANS,
-        keep_default_na=True,
-        engine="python",
-        sep=None,
-        dtype="object",
-    )
+def read_data(file: Path, handler: Optional[Handler] = None) -> pl.LazyFrame:
+    """Determine the dialect of a csv-like file and read it.
 
-    # if there's one column, it probably read wrong somehow
-    # otherwise if there *should* be one column, this should be fine
-    if len(data.columns) < 2:
-        data = dd.read_csv(
+    Returns Polars LazyFrame.
+    """
+
+    try:
+        # Determine separator
+        with open(file, "r") as datafile:
+            sniffer = csv.Sniffer()
+            delimiter = sniffer.sniff(datafile.readline()).delimiter
+
+        data = pl.scan_csv(
             file,
-            sample=1000000,
-            sample_rows=100,
-            assume_missing=True,
-            na_values=NANS,
-            keep_default_na=True,
-            engine="python",
-            sep="\t",
-            dtype="object",
+            separator=delimiter,
+            quote_char=None,
+            null_values=NANS,
+            rechunk=True,
         )
 
-    core_count = multiprocessing.cpu_count()
-
-    part_count = 0
-    for part in data.partitions:
-        part_count += 1
-
-    if part_count < core_count:
-        return data.repartition(npartitions=core_count)
-    return data
+        return data
+    except Exception as error:
+        if handler:
+            handler.error(error)
+            handler.error(
+                f"There was an error reading the data at {file}. Please see the above error details for more information and ensure the integrity of your input files.",
+                abort=True,
+            )
+        exit(1)  # Just here to keep the type checker happy

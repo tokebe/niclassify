@@ -1,1 +1,1 @@
-from .geography import *
+from niclassify.cli.completion.geography import *

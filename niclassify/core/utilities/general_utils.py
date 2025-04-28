@@ -17,7 +17,7 @@ import xlrd
 import pandas as pd
 
 import importlib.resources as pkg_resources
-from . import config
+from niclassify.core.utilities import config
 
 PLATFORM = platform.system()
 

@@ -1,7 +1,7 @@
 from pathlib import Path
-from ..interfaces import Handler
-from ..utils import read_data
-from ..enums import TaxonomicHierarchy
+from niclassify.core.interfaces import Handler
+from niclassify.core.utils import read_data
+from niclassify.core.enums import TaxonomicHierarchy
 from multiprocessing import cpu_count
 
 
