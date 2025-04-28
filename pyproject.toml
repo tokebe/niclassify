@@ -1,46 +1,58 @@
-[tool.poetry]
+[project]
 name = "niclassify"
 version = "2.0.0"
 description = "A CLI toolkit for predictively classifying arthropod sequences as native/introduced"
-license = "GPL-3.0-only"
-authors = ["Jackson Callaghan <43009413+tokebe@users.noreply.github.com>"]
+authors = [{ name = "Jackson Callaghan", email = "43009413+tokebe@users.noreply.github.com" }]
+requires-python = "~=3.11"
 readme = "README.md"
-repository = "https://tokebe/niclassify"
-keywords = ["niclassify", "classification", "arthropod"]
+license = "GPL-3.0-only"
+keywords = [
+    "niclassify",
+    "classification",
+    "arthropod",
+]
+dependencies = [
+    "userpaths==0.*",
+    "python-nexus>=2.9.0,<3",
+    "typer[all]==0.7.*",
+    "biopython==1.*",
+    "PyQt5-sip==12.*",
+    "requests==2.*",
+    "scikit-learn==1.*",
+    "seaborn==0.*",
+    "xlrd==2.*",
+    "natsort==7.*",
+    "throttler>=1.2.2,<2",
+    "ratelimit>=2.2.1,<3",
+    "backoff>=2.2.1,<3",
+    "polars>=1.5.0,<2",
+    "pydantic>=2.7.3,<3",
+    "dotmap>=1.3.30,<2",
+    "httpx>=0.27.0,<0.28",
+    "bptp",
+    "pyqt5>=5.15.11,<6",
+    "bullet>=2.2.0,<3",
+]
 
+[project.urls]
+Repository = "https://tokebe/niclassify"
 
-[tool.poetry.dependencies]
-python = "^3.11,<3.12"
-userpaths = "0.*"
-python-nexus = "^2.9.0"
-typer = {extras = ["all"], version = "0.7.*"}
-biopython = "1.*"
-pandas = "^2.2.2"
-dask = {extras = ["dataframe"], version = "^2024.7.1"}
-PyQt5-sip = "12.*"
-requests = "2.*"
-scikit-learn = "1.*"
-seaborn = "0.*"
-xlrd = "2.*"
-natsort = "7.*"
-throttler = "^1.2.2"
-ratelimit = "^2.2.1"
-backoff = "^2.2.1"
-polars = "^0.20.31"
-pydantic = "^2.7.3"
-dotmap = "^1.3.30"
-httpx = "^0.27.0"
-bptp = {path = "niclassify/bin/bptp", develop = true}
-
-pyqt5 = "^5.15.11"
-[tool.poetry.group.dev.dependencies]
-jupyter = "^1.0.0"
-ipython = "^8.19.0"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.scripts]
+[project.scripts]
 niclassify = "niclassify.__main__:app"
 nic = "niclassify.__main__:app"
+
+[dependency-groups]
+dev = [
+    "jupyter>=1.0.0,<2",
+    "ipython>=8.19.0,<9",
+    "absolufy-imports>=0.3.1,<0.4",
+]
+
+[tool.uv]
+
+[tool.uv.sources]
+bptp = { path = "niclassify/bin/bptp", editable = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
