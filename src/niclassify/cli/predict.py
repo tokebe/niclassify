@@ -6,12 +6,27 @@ from enum import Enum
 from niclassify.core.enums import TaxonomicHierarchy, Methods
 
 
-def _train(
+def _predict(
     input_file: Path = typer.Option(
         ...,
         "--input",
         "-i",
-        help="Input data containing training features and known samples",
+        help="Input data containing features on which to predict",
+        prompt=True,
+        show_default=False,
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        writable=False,
+        resolve_path=True,
+        rich_help_panel="Requirements",
+    ),
+    classifier: Path = typer.Option(
+        ...,
+        "--model",
+        "-m",
+        help="A trained classifier model to use for making predictions",
         prompt=True,
         show_default=False,
         exists=True,
@@ -58,36 +73,6 @@ def _train(
         resolve_path=True,
         rich_help_panel="Requirements",
     ),
-    report_output: Path = typer.Option(
-        ...,
-        "--report",
-        "-r",
-        help="Output report text file.",
-        prompt=True,
-        show_default=False,
-        exists=False,
-        file_okay=True,
-        dir_okay=False,
-        readable=False,
-        writable=True,
-        resolve_path=True,
-        rich_help_panel="Requirements",
-    ),
-    matrix_output: Path = typer.Option(
-        ...,
-        "--matrix",
-        "-m",
-        help="Output confusion matrix plot.",
-        prompt=True,
-        show_default=False,
-        exists=False,
-        file_okay=True,
-        dir_okay=False,
-        readable=False,
-        writable=True,
-        resolve_path=True,
-        rich_help_panel="Requirements",
-    ),
     label_column: str = typer.Option(
         ...,
         "--label",
@@ -97,17 +82,10 @@ def _train(
         show_default=False,
         rich_help_panel="Requirements",
     ),
-    n_classifiers: int = typer.Option(
-        1000,
-        "--n_classifiers",
-        "-n",
-        help="Number of competing classifiers to generate.",
-        min=0,
-    ),
 ):
     """
-    Train a classifier on a set of features using known samples.
+    Make predictions on a set of features using a trained classifier model.
 
-    Options marked [red]\[required][/] will be prompted for if not provided. One of either --columns or --columns-selection is required.
+    Options marked [red]\\[required][/] will be prompted for if not provided. One of either --columns or --columns-selection is required.
     """
     print(locals())

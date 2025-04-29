@@ -1,4 +1,5 @@
 # from PyInquirer import prompt, print_json, Separator
+import warnings
 import typer
 from rich import print
 from typing import List, Optional
@@ -10,6 +11,8 @@ from multiprocessing import cpu_count
 from niclassify.core.interfaces.handler import Handler
 
 n_cpus = cpu_count()
+
+# warnings.filterwarnings("ignore", category=SyntaxWarning)
 
 from niclassify.cli import (
     _get,

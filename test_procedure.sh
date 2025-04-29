@@ -1,4 +1,4 @@
-# Procedure 1: MA Hemiptera
+# Procedure 3: MA Hemiptera
 # No splits
 nic sample get -g Massachusetts -t hemiptera -o testing/hemiptera_raw.tsv --debug
 nic sample filter -i testing/hemiptera_raw.tsv -o testing/hemiptera_filter.tsv --debug

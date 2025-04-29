@@ -3,7 +3,6 @@ from typing import cast
 from niclassify.core.utils import read_data
 import yaml
 from niclassify.core.interfaces import Handler
-from pandas.errors import EmptyDataError, ParserError
 import polars as pl
 
 NANS = []

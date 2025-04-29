@@ -62,6 +62,6 @@ def _featgen(
     """
     Generate training features using statistics about genetic distance.
 
-    Options marked [red]\[required][/] will be prompted for if not provided.
+    Options marked [red]\\[required][/] will be prompted for if not provided.
     """
     print(locals())

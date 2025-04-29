@@ -1,6 +1,6 @@
 from pathlib import Path
 import polars as pl
-import pandas as pd
+# import pandas as pd
 
 from niclassify.core.interfaces import Handler
 from niclassify.core.utils import read_data
