@@ -10,6 +10,12 @@ import httpx
 
 from niclassify.core.interfaces import Handler
 
+# TODO: upgrade to BOLDv5
+# See https://boldsystems.org/data/api/#section1
+# Basically, do a check with the preprocessor, get the middle term from the matches
+# Or inform user of non-matches and attempt to recover
+# Then, make a query and get back a request token
+# Then, retrieve the data using the token
 
 def query_bold(geography: str, taxonomy: str, output: Path, handler: Handler) -> None:
     api = "http://www.boldsystems.org/index.php/API_Public/combined?"

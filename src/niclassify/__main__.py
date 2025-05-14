@@ -12,7 +12,7 @@ from niclassify.core.interfaces.handler import Handler
 
 n_cpus = cpu_count()
 
-# warnings.filterwarnings("ignore", category=SyntaxWarning)
+warnings.filterwarnings("ignore", category=SyntaxWarning)
 
 from niclassify.cli import (
     _get,

@@ -15,7 +15,7 @@ def validate_file(file: Path, handler: Handler) -> None:
     with handler.spin() as spinner:
         task = spinner.add_task(description="Validating file...", total=1)
         try:
-            data = read_data(file)
+            data = read_data(file, handler=handler)
             retrieved_count = cast(
                 int, data.select(pl.len()).collect(streaming=True).item()
             )
