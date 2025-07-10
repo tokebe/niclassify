@@ -1,5 +1,4 @@
-"""
-StandardProgram class and not much else.
+"""StandardProgram class and not much else.
 
 StandardProgram may be used as a helper for creating new programs based upon
 it, as seen in the GUI implementation.
@@ -7,30 +6,26 @@ it, as seen in the GUI implementation.
 
 # try:
 # import main libraries
-import os
 import logging
+import os
 import re
 import shutil
 import tempfile
+from functools import partial
+from multiprocessing import Pool, cpu_count
+from time import sleep
 
 import numpy as np
 import pandas as pd
 import seaborn as sns
-
-from functools import partial
-from multiprocessing import Pool
-from multiprocessing import cpu_count
 from requests.exceptions import RequestException
-from time import sleep
 
 # except ModuleNotFoundError:
 #     logging.error("Missing required modules. Install requirements by running")
 #     logging.error("'python -m pip install -r requirements.txt'")
 #     exit(-1)
-
 # import rest of program modules
-from niclassify.core import utilities
-from niclassify.core import classifiers
+from niclassify.core import classifiers, utilities
 
 
 class NativeChecker:
@@ -38,8 +33,7 @@ class NativeChecker:
         self.ref_geo = ref_geo
 
     def check_native_gbif(self, row):
-        """
-        Check if a given species is native according to gbif.
+        """Check if a given species is native according to gbif.
 
         Args:
             row (df row): A DataFrame row with a column "species_name".
@@ -48,9 +42,7 @@ class NativeChecker:
             str or np.NaN: Native, Introduced, or np.NaN if unknown.
 
         """
-        if pd.isna(row["species_name"]):
-            return np.NaN
-        elif len(row["species_name"]) == 0:
+        if pd.isna(row["species_name"]) or len(row["species_name"]) == 0:
             return np.NaN
 
         # check GBIF native ranges
@@ -90,21 +82,23 @@ class NativeChecker:
             if nrange == self.ref_geo:
                 print("  {}: direct native to ref".format(row["species_name"]))
                 return "Native"
-            elif (utilities.geo_contains(self.ref_geo, nrange)
-                  or utilities.geo_contains(nrange, self.ref_geo)):
-                print("  {}: {} <=> {}".format(
-                    row["species_name"], self.ref_geo, nrange))
+            elif utilities.geo_contains(self.ref_geo, nrange) or utilities.geo_contains(
+                nrange, self.ref_geo
+            ):
+                print(
+                    "  {}: {} <=> {}".format(row["species_name"], self.ref_geo, nrange)
+                )
                 return "Native"
             else:
-                print("  {}: {} <!=> {}".format(
-                    row["species_name"], self.ref_geo, nrange))
+                print(
+                    "  {}: {} <!=> {}".format(row["species_name"], self.ref_geo, nrange)
+                )
 
         # if it hasn't found a reason to call it native
         return "Introduced" if not crypto else np.NaN
 
     def check_native_itis(self, row):
-        """
-        Check if a given species is native according to itis.
+        """Check if a given species is native according to itis.
 
         Args:
             row (df row): A DataFrame row with a column "species_name".
@@ -113,9 +107,7 @@ class NativeChecker:
             str or np.NaN: Native, Introduced, or np.NaN if unknown.
 
         """
-        if pd.isna(row["species_name"]):
-            return np.NaN
-        elif len(row["species_name"]) == 0:
+        if pd.isna(row["species_name"]) or len(row["species_name"]) == 0:
             return np.NaN
 
         # check ITIS jurisdictions
@@ -133,26 +125,32 @@ class NativeChecker:
 
         # simple first: check if jurisdiction is just current reference geo
         for jurisdiction, status in jurisdictions.items():
-            print("{}, {}".format(jurisdiction, status))
+            print(f"{jurisdiction}, {status}")
             if jurisdiction == self.ref_geo:
                 return status if status != "Native&Introduced" else np.NaN
             # otherwise if one contains the other it's native
-            elif (utilities.geo_contains(self.ref_geo, jurisdiction)
-                  or utilities.geo_contains(jurisdiction, self.ref_geo)):
-                print("{}: {} <=> {}".format(
-                    row["species_name"], self.ref_geo, jurisdiction))
+            elif utilities.geo_contains(
+                self.ref_geo, jurisdiction
+            ) or utilities.geo_contains(jurisdiction, self.ref_geo):
+                print(
+                    "{}: {} <=> {}".format(
+                        row["species_name"], self.ref_geo, jurisdiction
+                    )
+                )
                 return status if status != "Native&Introduced" else np.NaN
             else:
-                print("{}: {} <!=> {}".format(
-                    row["species_name"], self.ref_geo, jurisdiction))
+                print(
+                    "{}: {} <!=> {}".format(
+                        row["species_name"], self.ref_geo, jurisdiction
+                    )
+                )
 
         # if it hasn't found a reason to call it native
         return "Introduced"  # this maybe should be NA
 
 
 def parallelize(df, func, n_cores=None):
-    """
-    Parallelize applying a function to a DataFrame.
+    """Parallelize applying a function to a DataFrame.
 
     Args:
         df (DataFrame): DataFrame to apply function to.
@@ -164,7 +162,7 @@ def parallelize(df, func, n_cores=None):
 
     """
     if n_cores is None:
-        n_cores = cpu_count() if df.shape[0] >= cpu_count() else df.shape[0]
+        n_cores = min(cpu_count(), df.shape[0])
 
     df_split = np.array_split(df, n_cores)
     pool = Pool(processes=n_cores)
@@ -175,7 +173,6 @@ def parallelize(df, func, n_cores=None):
 
 
 def mp_align(arg):
-
     if os.stat(arg[5]).st_size == 0:  # empty alignment (for whatever reason)
         return
 
@@ -183,7 +180,7 @@ def mp_align(arg):
         utilities.align_fasta(
             arg[5],  # unaligned fasta
             arg[1],  # alignment output
-            debug=False
+            debug=False,
         )
     except ChildProcessError:
         raise ChildProcessError(arg[0] + " alignment")
@@ -193,7 +190,6 @@ def mp_align(arg):
 
 
 def mp_delim(arg):
-
     if os.stat(arg[1]).st_size == 0:  # empty alignment (for whatever reason)
         return
 
@@ -209,7 +205,7 @@ def mp_delim(arg):
             arg[1],  # alignment
             arg[2],  # tree output
             arg[3],  # delim output
-            debug=True
+            debug=True,
         )
     except ChildProcessError:
         raise ChildProcessError(arg[0] + " (tree generation)")
@@ -227,7 +223,6 @@ def mp_delim(arg):
 
 
 def mp_ftgen(arg):
-
     if os.stat(arg[3]).st_size == 0 or os.stat(arg[1]).st_size == 0:
         return
 
@@ -235,7 +230,7 @@ def mp_ftgen(arg):
         arg[1],  # alignment
         arg[3],  # delimitation
         arg[4],  # feature output
-        debug=False
+        debug=False,
     )
 
     if os.stat(arg[4]).st_size == 0:
@@ -243,8 +238,7 @@ def mp_ftgen(arg):
 
 
 def run_on_subset(func, data_subset):
-    """
-    Apply a function to a subset of a DataFrame.
+    """Apply a function to a subset of a DataFrame.
 
     Args:
         func (func): A function suitable for df.apply().
@@ -258,8 +252,7 @@ def run_on_subset(func, data_subset):
 
 
 def parallelize_on_rows(data, func, n_cores=None):
-    """
-    Parallelize applying a function to a DataFrame, row-wise.
+    """Parallelize applying a function to a DataFrame, row-wise.
 
     Args:
         data (DataFrame): A DataFrame.
@@ -274,8 +267,7 @@ def parallelize_on_rows(data, func, n_cores=None):
 
 
 class StandardChecks:
-    """
-    A number of functions which check various conditions for the data.
+    """A number of functions which check various conditions for the data.
 
     Each check executes a passed in function if the check fails. Some checks
     may return a specified value regardless of the function given, while others
@@ -283,8 +275,7 @@ class StandardChecks:
     """
 
     def __init__(self, parent):
-        """
-        Instantiate the class.
+        """Instantiate the class.
 
         Args:
             parent (StandardProgram): The parent StandardProgram, for access to
@@ -293,8 +284,7 @@ class StandardChecks:
         self.sp = parent  # access to parent StandardProgram for data
 
     def check_enough_classes(self, data, cb=None):
-        """
-        Check if two or more classes exist in given data.
+        """Check if two or more classes exist in given data.
 
         If number of classes is < 2, cb is called.
 
@@ -319,8 +309,7 @@ class StandardChecks:
             return True
 
     def check_enough_classified(self, data, cb=None):
-        """
-        Check if enough values have a label.
+        """Check if enough values have a label.
 
         Args:
             data (Series): Data to check.
@@ -338,8 +327,7 @@ class StandardChecks:
             return True
 
     def check_file_exists(self, filename, cb=None):
-        """
-        Check if the given filename exists in the system directory.
+        """Check if the given filename exists in the system directory.
 
         Args:
             filename (str): A filename.
@@ -362,7 +350,7 @@ class StandardChecks:
             if cb is not None:
                 cb()
             else:
-                raise ValueError("file {} does not exist.".format(filename))
+                raise ValueError(f"file {filename} does not exist.")
 
         return True
 
@@ -375,8 +363,7 @@ class StandardChecks:
             return True
 
     def check_inbalance(self, data, cb=None):
-        """
-        Check if the given data has a high class inbalance.
+        """Check if the given data has a high class inbalance.
         Standard Deviation is used as a rough heuristic for inbalance.
 
         If the a high inbalance exists, cb is called, and its result is
@@ -390,8 +377,7 @@ class StandardChecks:
         if isinstance(data, pd.Series):
             test = data.value_counts(normalize=True).std() > 0.35
         else:
-            test = data[self.sp.class_column].value_counts(
-                normalize=True).std() > 0.35
+            test = data[self.sp.class_column].value_counts(normalize=True).std() > 0.35
 
         if test:
             if cb is not None:
@@ -401,8 +387,7 @@ class StandardChecks:
             return True
 
     def check_minimum_training_labels(self, data, cb=None):
-        """
-        Check that there are > 4 known samples for each label.
+        """Check that there are > 4 known samples for each label.
 
         Calls callback if check fails.
 
@@ -420,8 +405,7 @@ class StandardChecks:
             Bool: True if check passes, otherwise False.
         """
         fail_condition = any(
-            c < 4
-            for c in data[self.sp.class_column].value_counts().tolist()
+            c < 4 for c in data[self.sp.class_column].value_counts().tolist()
         )
         if fail_condition:
             if cb is not None:
@@ -431,8 +415,7 @@ class StandardChecks:
             return True
 
     def check_nan_taxon(self, data, cb=None):
-        """
-        Check if the given data has null values in a given taxon split level.
+        """Check if the given data has null values in a given taxon split level.
 
         Calls cb if null values are found.
 
@@ -455,8 +438,7 @@ class StandardChecks:
             return True
 
     def check_required_columns(self, data, cb=None):
-        """
-        Check if the data has the required columns.
+        """Check if the data has the required columns.
 
         Calls cb if not.
 
@@ -470,13 +452,9 @@ class StandardChecks:
         """
         if not all(
             r in data.columns.values.tolist()
-                if not isinstance(r, list)
-                else any(
-                    s in data.columns.values.tolist()
-                    if s != ""
-                    else True
-                    for s in r)
-                for r in utilities.REQUIRED_COLUMNS
+            if not isinstance(r, list)
+            else any(s in data.columns.values.tolist() if s != "" else True for s in r)
+            for r in utilities.REQUIRED_COLUMNS
         ):
             if cb is not None:
                 cb()
@@ -520,9 +498,8 @@ class StandardChecks:
         if utilities.PLATFORM == "Windows":
             if os.path.isfile(utilities.R_LOC):
                 return True
-        else:
-            if shutil.which("Rscript") is not None:
-                return True
+        elif shutil.which("Rscript") is not None:
+            return True
 
         # none of the checks succeeded, assume check fails
         if cb is not None:
@@ -530,8 +507,7 @@ class StandardChecks:
         return False
 
     def check_single_split(self, data, cb=None):
-        """
-        Check if splitting data by taxon split level would return subsets of
+        """Check if splitting data by taxon split level would return subsets of
         length 1.
 
         Args:
@@ -552,8 +528,7 @@ class StandardChecks:
             return True
 
     def check_taxon_exists(self, data, cb=None):
-        """
-        Check if a given taxonomic level exists in the data.
+        """Check if a given taxonomic level exists in the data.
 
         Generally taxon levels are used for subsetting.
 
@@ -565,8 +540,7 @@ class StandardChecks:
         Returns:
             Bool: True if check passes, otherwise False.
         """
-        if (self.sp.taxon_split not in data.columns
-                and self.sp.taxon_split != 0):
+        if self.sp.taxon_split not in data.columns and self.sp.taxon_split != 0:
             if cb is not None:
                 cb()
             return False
@@ -574,8 +548,7 @@ class StandardChecks:
             return True
 
     def check_UPID_unique(self, data, cb=None):
-        """
-        Check if the UPID column of the given data is all unique.
+        """Check if the UPID column of the given data is all unique.
 
         Returns result of cb if not.
 
@@ -596,8 +569,7 @@ class StandardChecks:
 
 
 class StandardProgram:
-    """
-    A standard template for the classifier program.
+    """A standard template for the classifier program.
 
     Contains all methods required to run the program, using either default_run,
     or a user-made method/override. Most methods handle some basic data
@@ -606,8 +578,7 @@ class StandardProgram:
     """
 
     def __init__(self, clf, arg_parser=None, interactive_parser=None):
-        """
-        Instantiate the program.
+        """Instantiate the program.
 
         Args:
             clf (AutoClassifier): An AutoClassifier such as RandomForestAC.
@@ -654,8 +625,7 @@ class StandardProgram:
         self.req_cols = utilities.REQUIRED_COLUMNS
 
     def align_fasta(self, tax=None, debug=False):
-        """
-        Align the fasta file.
+        """Align the fasta file.
 
         Args:
             debug (bool, optional): Save script output to file.
@@ -663,12 +633,10 @@ class StandardProgram:
         if not self.check.check_r_working():
             raise utilities.RNotFoundError("Rscript.exe not found")
 
-        pool_files, pool_dir = self.split_by_taxon(
-            taxon_split=tax, create_align=True)
+        pool_files, pool_dir = self.split_by_taxon(taxon_split=tax, create_align=True)
 
         # align files, separated by taxonomic level
-        pool = Pool(
-            cpu_count() if cpu_count() < len(pool_files) else len(pool_files))
+        pool = Pool(min(len(pool_files), cpu_count()))
         pool.map(mp_align, pool_files)
 
         # make sure alignment is empty
@@ -678,7 +646,7 @@ class StandardProgram:
         with open(self.fasta_align_fname, "a") as merge_file:
             for files in pool_files:
                 if os.stat(files[1]).st_size > 0:
-                    with open(files[1], "r") as part_file:
+                    with open(files[1]) as part_file:
                         part = part_file.read()
                         merge_file.write(part)
 
@@ -686,8 +654,7 @@ class StandardProgram:
             raise ChildProcessError("Sequence Alignment Failed")
 
     def boilerplate(self):
-        """
-        Set up the theme, ensure required folders exist, and set up logging.
+        """Set up the theme, ensure required folders exist, and set up logging.
 
         Consider overriding if you need additional preparations for every run.
 
@@ -712,10 +679,7 @@ class StandardProgram:
         #     "logs/rf-auto{}.log".format(i)
         # )
         # set log filename (overwriting previous)
-        logname = os.path.join(
-            utilities.USER_PATH,
-            "logs/rf-auto.log".format()
-        )
+        logname = os.path.join(utilities.USER_PATH, "logs/rf-auto.log".format())
 
         # empty the log
         open(logname, "w+").close()
@@ -724,17 +688,13 @@ class StandardProgram:
         logging.basicConfig(
             level=logging.INFO,
             format="%(message)s",
-            handlers=[
-                logging.FileHandler(logname),
-                logging.StreamHandler()
-            ]
+            handlers=[logging.FileHandler(logname), logging.StreamHandler()],
         )
 
         return logname
 
     def split_by_taxon(self, taxon_split=None, create_align=False):
-        """
-        Split data by a given taxonomic level, craeting temporary files.
+        """Split data by a given taxonomic level, craeting temporary files.
 
         Args:
             taxon_split (str, optional): Taxonomic level to split by.
@@ -773,13 +733,13 @@ class StandardProgram:
         # TODO split unaligned fasta file
 
         for taxon, pids in taxons.items():
-            print("{}: {}".format(taxon, len(pids)))
+            print(f"{taxon}: {len(pids)}")
         print()
         # print(taxons.keys())
 
         if not create_align:
             # split alignment file according to taxon splits
-            with open(self.fasta_align_fname, "r") as file:
+            with open(self.fasta_align_fname) as file:
                 align = file.read()
 
             names = re.findall("(?<=>).*(?=\n)", align)
@@ -787,7 +747,7 @@ class StandardProgram:
 
         else:
             # split unaligned fasta
-            with open(self.fasta_fname, "r") as file:
+            with open(self.fasta_fname) as file:
                 fasta = file.read()
 
             names = re.findall("(?<=>).*(?=\n)", fasta)
@@ -807,66 +767,67 @@ class StandardProgram:
             print(taxon)
             print("------------------------------")
             if len(pids) < 2:
-                print("({}: subset of 1 ignored)".format(taxon))
+                print(f"({taxon}: subset of 1 ignored)")
                 continue
 
             fasta_file = tempfile.NamedTemporaryFile(
                 mode="w+",
-                prefix="unaligned_{}_".format(taxon),
+                prefix=f"unaligned_{taxon}_",
                 suffix=".fasta",
                 delete=False,
-                dir=pool_dir.name
+                dir=pool_dir.name,
             )
 
             align_file = tempfile.NamedTemporaryFile(
                 mode="w+",
-                prefix="alignment_{}_".format(taxon),
+                prefix=f"alignment_{taxon}_",
                 suffix=".fasta",
                 delete=False,
-                dir=pool_dir.name
+                dir=pool_dir.name,
             )
 
             for pid in pids:
                 if pid in names:  # in case seq in data but not in align
                     if not create_align:
-                        align_file.write(">{}\n".format(pid))
-                        align_file.write("{}\n".format(seqs[names.index(pid)]))
+                        align_file.write(f">{pid}\n")
+                        align_file.write(f"{seqs[names.index(pid)]}\n")
                     else:
-                        fasta_file.write(">{}\n".format(pid))
-                        fasta_file.write("{}\n".format(seqs[names.index(pid)]))
+                        fasta_file.write(f">{pid}\n")
+                        fasta_file.write(f"{seqs[names.index(pid)]}\n")
 
             align_file.close()
             fasta_file.close()
 
             delim_file = tempfile.NamedTemporaryFile(
                 mode="w+",
-                prefix="delim_{}_".format(taxon),
+                prefix=f"delim_{taxon}_",
                 suffix=".csv",
                 delete=False,
-                dir=pool_dir.name
+                dir=pool_dir.name,
             )
             delim_file.close()
             # split off species delimitation if it exists
             if delims is not None:
                 print(delims[delims["sample_name"].isin(pids)])
                 delims[delims["sample_name"].isin(pids)].to_csv(
-                    delim_file.name, index=False)
+                    delim_file.name, index=False
+                )
 
             tree_file = tempfile.NamedTemporaryFile(
                 mode="w+",
-                prefix="tree_{}_".format(taxon),
+                prefix=f"tree_{taxon}_",
                 suffix=".tre",
                 delete=False,
-                dir=pool_dir.name
+                dir=pool_dir.name,
             )
             tree_file.close()
 
             seq_features_file = tempfile.NamedTemporaryFile(
                 mode="w+",
-                prefix="features_{}_".format(taxon),
+                prefix=f"features_{taxon}_",
                 suffix=".tsv",
                 delete=False,
-                dir=pool_dir.name
+                dir=pool_dir.name,
             )
             seq_features_file.close()
 
@@ -884,8 +845,7 @@ class StandardProgram:
         return pool_files, pool_dir
 
     def delimit_species(self, method="bPTP", tax=None, debug=False):
-        """
-        Delimit species by their nucleotide sequences.
+        """Delimit species by their nucleotide sequences.
 
         Args:
             method (str, optional): Delimitation method. Defaults to "bPTP".
@@ -901,21 +861,14 @@ class StandardProgram:
 
         # clean previous logs
         paths = [
-            os.path.join(
-                utilities.USER_PATH,
-                "logs/delim/tree"
-            ),
-            os.path.join(
-                utilities.USER_PATH,
-                "logs/delim/delim"
-            )
+            os.path.join(utilities.USER_PATH, "logs/delim/tree"),
+            os.path.join(utilities.USER_PATH, "logs/delim/delim"),
         ]
 
         [utilities.clean_folder(path) for path in paths]
 
         # delimit species, separated by order
-        pool = Pool(
-            cpu_count() if cpu_count() < len(pool_files) else len(pool_files))
+        pool = Pool(min(len(pool_files), cpu_count()))
         pool.map(mp_delim, pool_files)
 
         # merge resulting delimitations into one file and save
@@ -924,10 +877,7 @@ class StandardProgram:
             if os.stat(files[3]).st_size > 0:
                 delim = utilities.get_data(files[3])
                 delim_merge = pd.concat(
-                    (delim_merge, delim),
-                    axis=0,
-                    ignore_index=True,
-                    sort=False
+                    (delim_merge, delim), axis=0, ignore_index=True, sort=False
                 )
         delim_merge.to_csv(self.delim_fname, index=False)
 
@@ -944,15 +894,9 @@ class StandardProgram:
 
         pool_files, pool_dir = self.split_by_taxon(taxon_split=tax)
 
-        utilities.clean_folder(
-            os.path.join(
-                utilities.USER_PATH,
-                "logs/ftgen"
-            )
-        )
+        utilities.clean_folder(os.path.join(utilities.USER_PATH, "logs/ftgen"))
 
-        pool = Pool(
-            cpu_count() if cpu_count() < len(pool_files) else len(pool_files))
+        pool = Pool(min(len(pool_files), cpu_count()))
         pool.map(mp_ftgen, pool_files)
 
         features = pd.DataFrame()
@@ -961,25 +905,20 @@ class StandardProgram:
             if os.stat(files[4]).st_size > 0:
                 features_part = utilities.get_data(files[4])
                 features = pd.concat(
-                    (features, features_part),
-                    axis=0,
-                    ignore_index=True,
-                    sort=False
+                    (features, features_part), axis=0, ignore_index=True, sort=False
                 )
 
         features.to_csv(self.seq_features_fname, sep="\t", index=False)
         meta = utilities.get_data(self.filtered_fname)
 
-        meta = pd.merge(
-            meta, features, on="UPID", how="left")
+        meta = pd.merge(meta, features, on="UPID", how="left")
 
         meta.to_csv(self.finalized_fname, index=False)
 
         pool_dir.cleanup()
 
     def get_args(self):
-        """
-        Get arguments from either parser and store required values.
+        """Get arguments from either parser and store required values.
 
         Raises:
             ValueError: If interactive parser is expected by parser but not
@@ -990,22 +929,27 @@ class StandardProgram:
 
         self.mode = args.mode
 
-        if ((self.mode == "interactive" or self.mode is None)
-                and self.interactive_parser is None):
+        if (
+            self.mode == "interactive" or self.mode is None
+        ) and self.interactive_parser is None:
             raise ValueError(
-                "Mode is interactive but interactive parser is not provided!")
+                "Mode is interactive but interactive parser is not provided!"
+            )
 
-        elif ((self.mode == "interactive" or self.mode is None)
-                and self.interactive_parser is not None):
-            self.mode,\
-                self.data_file,\
-                self.excel_sheet,\
-                self.feature_cols,\
-                self.class_column,\
-                self.multirun,\
-                self.classifier_file,\
-                self.output_filename,\
-                self.nans = self.interactive_parser()
+        elif (
+            self.mode == "interactive" or self.mode is None
+        ) and self.interactive_parser is not None:
+            (
+                self.mode,
+                self.data_file,
+                self.excel_sheet,
+                self.feature_cols,
+                self.class_column,
+                self.multirun,
+                self.classifier_file,
+                self.output_filename,
+                self.nans,
+            ) = self.interactive_parser()
 
         else:
             self.data_file = args.data
@@ -1024,20 +968,19 @@ class StandardProgram:
             if type(self.feature_cols) is str:
                 self.check_file_exists("data/" + self.data_file)
                 col_range = utilities.get_col_range(self.selected_cols)
-                self.feature_cols = utilities.get_data(
-                    self.data_file,
-                    self.excel_sheet
-                ).columns.values[col_range[0]:col_range[1]].tolist()
+                self.feature_cols = (
+                    utilities.get_data(self.data_file, self.excel_sheet)
+                    .columns.values[col_range[0] : col_range[1]]
+                    .tolist()
+                )
 
         # do some error checking
         self.check_file_exists("data/" + self.data_file)
         if self.classifier_file is not None:
-            self.check_file_exists(
-                "output/classifiers/" + self.classifier_file)
+            self.check_file_exists("output/classifiers/" + self.classifier_file)
 
     def get_sequence_data(self):
-        """
-        Read in unprepared sequence data and return it.
+        """Read in unprepared sequence data and return it.
 
         Returns:
             DataFrame: DataFrame of sequence data.
@@ -1046,8 +989,7 @@ class StandardProgram:
         return utilities.get_data(self.request_fname)
 
     def impute_data(self, feature_norm):
-        """
-        Impute given data.
+        """Impute given data.
 
         Mostly a wrapper for utilities.impute_data().
 
@@ -1081,27 +1023,23 @@ class StandardProgram:
         print("Getting gbif statuses...")
         checker = NativeChecker(self.ref_geo)
         # data["gbif_status"] = data.apply(self.check_native_gbif, axis=1)
-        species["gbif_status"] = parallelize_on_rows(
-            species, checker.check_native_gbif)
+        species["gbif_status"] = parallelize_on_rows(species, checker.check_native_gbif)
 
         # print("Getting itis statuses...")
         # data["itis_status"] = data.apply(self.check_native_itis, axis=1)
-        species["itis_status"] = parallelize_on_rows(
-            species, checker.check_native_itis)
+        species["itis_status"] = parallelize_on_rows(species, checker.check_native_itis)
 
         def combine_status(row):
             """Combine given GBIF and ITIS statuses."""
             if row["itis_status"] == row["gbif_status"]:
                 return row["itis_status"]
-            elif (pd.isnull(row["itis_status"])
-                  and pd.notnull(row["gbif_status"])):
+            elif pd.isnull(row["itis_status"]) and pd.notnull(row["gbif_status"]):
                 return row["gbif_status"]
-            elif (pd.isnull(row["gbif_status"])
-                  and pd.notnull(row["itis_status"])):
+            elif pd.isnull(row["gbif_status"]) and pd.notnull(row["itis_status"]):
                 return row["itis_status"]
-            elif ((row["itis_status"] != row["gbif_status"])
-                  and (pd.notnull(row["itis_status"])
-                       and pd.notnull(row["gbif_status"]))):
+            elif (row["itis_status"] != row["gbif_status"]) and (
+                pd.notnull(row["itis_status"]) and pd.notnull(row["gbif_status"])
+            ):
                 return "unknown"  # unknown strictly means conflicting answers
             else:
                 return np.NaN
@@ -1140,8 +1078,7 @@ class StandardProgram:
         data.to_csv(self.finalized_fname, index=False)
 
     def predict_AC(self, clf, feature_norm, status_cb=None):
-        """
-        Predict using a trained AutoClassifier and return predictions.
+        """Predict using a trained AutoClassifier and return predictions.
 
         Args:
             clf (AutoClassifier): A Trained AutoClassifier.
@@ -1158,8 +1095,10 @@ class StandardProgram:
         if type(feature_norm) is not pd.DataFrame:
             raise TypeError("Cannot predict: feature_norm is not DataFrame.")
         if not isinstance(clf, classifiers.AutoClassifier):
-            raise TypeError("Cannot predict: classifier does not inherit from \
-AutoClassifier")
+            raise TypeError(
+                "Cannot predict: classifier does not inherit from \
+AutoClassifier"
+            )
 
         # prep for a few tests
         # feature names are case-insenstive
@@ -1193,7 +1132,6 @@ AutoClassifier")
         # check if classifier supports proba and use it if so
         proba_method = getattr(clf.clf, "predict_proba", None)
         if proba_method is not None and callable(proba_method):
-
             status_cb("Getting predicition probabilities...")
 
             # get predict probabilities
@@ -1201,19 +1139,19 @@ AutoClassifier")
             # rename column
             predict_prob.rename(
                 columns={
-                    predict_prob.columns[i]: "prob. {}".format(c)
+                    predict_prob.columns[i]: f"prob. {c}"
                     for i, c in enumerate(clf.clf.classes_)
                 },
-                inplace=True)
+                inplace=True,
+            )
 
             return predict, predict_prob
 
         else:
-            return (predict)
+            return predict
 
     def prep_data(self):
-        """
-        Get and prepare data for use.
+        """Get and prepare data for use.
 
         Returns:
             tuple: Of raw data, feature data, normalized feature data, and
@@ -1225,7 +1163,7 @@ AutoClassifier")
 
         # replace argument-added nans
         if self.nans is not None:
-            metadata.replace({val: np.nan for val in self.nans}, inplace=True)
+            metadata.replace(dict.fromkeys(self.nans, np.nan), inplace=True)
 
         # split data into feature data and metadata
         features = metadata[self.feature_cols]
@@ -1233,10 +1171,8 @@ AutoClassifier")
 
         # convert class labels to lower if classes are in str format
         if self.class_column is not None:
-            if not np.issubdtype(
-                    metadata[self.class_column].dtype, np.number):
-                metadata[self.class_column] = \
-                    metadata[self.class_column].str.lower()
+            if not np.issubdtype(metadata[self.class_column].dtype, np.number):
+                metadata[self.class_column] = metadata[self.class_column].str.lower()
 
         # scale (normalize) data
         features = utilities.scale_data(features)
@@ -1244,8 +1180,7 @@ AutoClassifier")
         return features, metadata
 
     def filter_sequence_data(self, data, bp=350):
-        """
-        Prepare sequence data.
+        """Prepare sequence data.
 
         Args:
             data (DataFrame): DataFrame of sequence data.
@@ -1259,36 +1194,26 @@ AutoClassifier")
         return data
 
     def print_vars(self):
-        """
-        Print all the currently stored vars.
+        """Print all the currently stored vars.
 
         Basically just here for debugging.
         """
-        print("mode: {}".format(self.mode))
-        print("data_file: {}".format(self.data_file))
-        print("excel_sheet: {}".format(self.excel_sheet))
-        print("feature_cols: {}".format(self.feature_cols))
-        print("class_column: {}".format(self.class_column))
-        print("multirun: {}".format(self.multirun))
-        print("classifier_file: {}".format(self.classifier_file))
-        print("output_filename: {}".format(self.output_filename))
-        print("nans: {}".format(self.nans))
+        print(f"mode: {self.mode}")
+        print(f"data_file: {self.data_file}")
+        print(f"excel_sheet: {self.excel_sheet}")
+        print(f"feature_cols: {self.feature_cols}")
+        print(f"class_column: {self.class_column}")
+        print(f"multirun: {self.multirun}")
+        print(f"classifier_file: {self.classifier_file}")
+        print(f"output_filename: {self.output_filename}")
+        print(f"nans: {self.nans}")
 
     def retrieve_sequence_data(self):
         """Retrieve sequence data from api, saving it to filename."""
-        utilities.get_geo_taxon(
-            self.request_fname, self.geo, self.taxon, self.api)
+        utilities.get_geo_taxon(self.request_fname, self.geo, self.taxon, self.api)
 
-    def save_outputs(
-            self,
-            clf,
-            features,
-            metadata,
-            predict,
-            predict_prob=None
-    ):
-        """
-        Save the outputs of a prediction.
+    def save_outputs(self, clf, features, metadata, predict, predict_prob=None):
+        """Save the outputs of a prediction.
 
         Includes data with new predictions, a pairplot, and the classifier if
             it is newly trained.
@@ -1303,8 +1228,10 @@ AutoClassifier")
         """
         # type error checking
         if not isinstance(clf, classifiers.AutoClassifier):
-            raise TypeError("Cannot save: classifier does not inherit from \
-                AutoClassifier")
+            raise TypeError(
+                "Cannot save: classifier does not inherit from \
+                AutoClassifier"
+            )
         if type(features) is not pd.DataFrame:
             raise TypeError("Cannot save: features is not DataFrame.")
         if type(metadata) is not pd.DataFrame:
@@ -1316,24 +1243,18 @@ AutoClassifier")
 
         # get only known data and metadata
         features_known, metadata_known = utilities.get_known(
-            features, metadata, self.class_column)
+            features, metadata, self.class_column
+        )
 
         # save confusion matrix
         logging.info("saving confusion matrix...")
         utilities.save_confm(
-            clf,
-            features_known,
-            metadata_known[self.class_column],
-            self.output_filename
+            clf, features_known, metadata_known[self.class_column], self.output_filename
         )
 
         # save predictions
         utilities.save_predictions(
-            metadata,
-            predict,
-            features,
-            self.output_filename,
-            predict_prob
+            metadata, predict, features, self.output_filename, predict_prob
         )
 
         # generate and output graph
@@ -1347,8 +1268,7 @@ AutoClassifier")
             utilities.save_clf_dialog(clf)
 
     def train_AC(self, features, metadata, status_cb=None):
-        """
-        Train the AutoClassifier.
+        """Train the AutoClassifier.
 
         Prepares data for training.
 
@@ -1375,8 +1295,7 @@ AutoClassifier")
             status_cb("Getting data...")
 
         # get only known data and metadata
-        features, metadata = utilities.get_known(
-            features, metadata, self.class_column)
+        features, metadata = utilities.get_known(features, metadata, self.class_column)
 
         # train classifier
         logging.info("training random forest...")
@@ -1384,14 +1303,12 @@ AutoClassifier")
         if status_cb is not None:
             status_cb("Training random forest...")
 
-        self.clf.train(
-            features, metadata[self.class_column], self.multirun, status_cb)
+        self.clf.train(features, metadata[self.class_column], self.multirun, status_cb)
 
         return self.clf
 
     def default_run(self):
-        """
-        Run the program with default methods and settings.
+        """Run the program with default methods and settings.
 
         Generally, you don't need to override this, but instead want to
             override other methods in DefaultProgram, unless you have some very

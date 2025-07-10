@@ -1,38 +1,39 @@
 from pathlib import Path
-from multiprocessing import cpu_count
-from niclassify.core.interfaces import Handler
-from niclassify.core.enums import TaxonomicHierarchy
-import polars as pl
-from typing import List
 from tempfile import NamedTemporaryFile
 from threading import Lock
 
+import polars as pl
 
-def write(
+from niclassify.core.enums import TaxonomicHierarchy
+from niclassify.core.interfaces.handler import Handler
+
+
+def write(  # noqa:PLR0913
     data: pl.LazyFrame,
-    splits: List[str] | None,
+    splits: set[str] | None,
     output_file: Path,
     split_level: TaxonomicHierarchy,
     handler: Handler,
-    cores: int = cpu_count(),
-    output_all=False,
-) -> List[Path]:
-    row_count = data.shape[0].compute()
+    output_all: bool = False,
+) -> list[Path]:
+    """Split the given data up and sequences out to FASTA files."""
+    row_count = data.select(pl.len()).collect().item()
 
     if splits is None:
-        splits = ["nosplit"]
+        splits = {"nosplit"}
     files = {
         split: (
             Lock(),
             (
-                open(
+                (
                     output_file.parent
-                    / f"{output_file.stem}_{split}_unaligned{output_file.suffix}",
+                    / f"{output_file.stem}_{split}_unaligned{output_file.suffix}"
+                ).open(
                     "w",
                     encoding="utf8",
                 )
                 if output_all
-                else NamedTemporaryFile(
+                else NamedTemporaryFile(  # noqa:SIM115 We're using a try:finally to ensure they close
                     suffix=f"_{split}_unaligned{output_file.suffix}",
                     mode="w",
                     encoding="utf8",
@@ -49,33 +50,36 @@ def write(
         with handler.progress(percent=True) as status:
             task = status.add_task(description="Writing to FASTA", total=row_count)
 
-            def write_fasta(row):
-                if splits is None:
+            def write_fasta(row: tuple[str, str, str]) -> tuple[None, None, None]:
+                uid, nucleotides, split_value = row
+                if "nosplit" in splits:
                     split_name = "nosplit"
                     lock, file = files["nosplit"]
                 else:
-                    split_name = row[f"{split_level.value}_name"]
-                    lock, file = files[row[f"{split_level.value}_name"]]
+                    split_name = split_value
+                    lock, file = files[split_value]
                 with lock:
-                    if splits is None:
-                        label = f">{row['UID']}\n"
+                    if "nosplit" in splits:
+                        label = f">{uid}\n"
                     else:
-                        label = f">{row[f'{split_level.value}_name']}_{row['UID']}\n"
+                        label = f">{split_value}_{uid}\n"
                     file.write(label)
-                    file.write(f"{row['nucleotides']}\n")
+                    file.write(f"{nucleotides}\n")
                     if split_name not in entries_written:
                         entries_written[split_name] = 0
                         file_map[split_name] = file.name
                     entries_written[split_name] += 1
                 status.advance(task)
+                return None, None, None
 
-            def compute_part(df: DataFrame):
-                df.apply(write_fasta, axis=1)
+            def compute_part(df: pl.DataFrame) -> pl.DataFrame:
+                df.map_rows(write_fasta)
                 return df
 
-            data.map_partitions(
-                compute_part, meta={column: "object" for column in data.columns}
-            ).compute(num_workers=cores)
+            data.select(
+                pl.col.UID, pl.col.nucleotides, pl.col(f"{split_level.value}_name")
+            ).map_batches(compute_part).collect(engine="streaming")
+
     finally:
         for _, file in files.values():
             file.close()
@@ -101,6 +105,4 @@ def write(
         if n_written > 1
     ]
 
-    return [
-        Path(file.name) for _, file in files.values() if file.name in keep_files
-    ]
+    return [Path(file.name) for _, file in files.values() if file.name in keep_files]

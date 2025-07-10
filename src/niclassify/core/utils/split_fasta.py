@@ -1,7 +1,7 @@
 # TODO: fasta path in, split fasta paths out
 # Replace what's currently in trim_files, make it generic enough to be useable for delimit
-from pathlib import Path
 import re
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any
 
@@ -11,12 +11,11 @@ from niclassify.core.interfaces.handler import Handler
 
 
 def split_files(input_path: Path, handler: Handler) -> tuple[int, dict[str, Path]]:
-
     split_files: dict[str, Any] = {}
     try:
         n_seq = 0
         with (
-            open(input_path, "r", encoding="utf8") as input_file,
+            open(input_path, encoding="utf8") as input_file,
             handler.spin() as spinner,
         ):
             task = spinner.add_task("Reading FASTA...", total=1)
@@ -39,7 +38,7 @@ def split_files(input_path: Path, handler: Handler) -> tuple[int, dict[str, Path
                     )
 
                 split_files[split_name].write(f">{record.id}\n")
-                split_files[split_name].write(f"{str(record.seq)}\n")
+                split_files[split_name].write(f"{record.seq!s}\n")
                 spinner.update(
                     task,
                     description=f"Splitting FASTA...(wrote {n_seq} entries to {len(split_files.keys())} splits).",
@@ -57,7 +56,7 @@ def split_files(input_path: Path, handler: Handler) -> tuple[int, dict[str, Path
         completed=True,
     )
 
-    handler.debug(f"Smart-split files:")
+    handler.debug("Smart-split files:")
     for path in split_paths.values():
         handler.debug(str(path))
     return n_seq, split_paths

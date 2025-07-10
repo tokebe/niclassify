@@ -1,13 +1,13 @@
 from pathlib import Path
-from typing import cast
+from threading import Lock
+from typing import Any
+
 import polars as pl
 
+from niclassify.config.general import CONFIG
 from niclassify.core.identify.query_bold import query_bold
-
-from niclassify.core.interfaces import Handler
-from niclassify.core.utils import read_data
-
-from threading import Lock
+from niclassify.core.interfaces.handler import Handler
+from niclassify.core.utils.read_data import read_data
 
 
 def identify(
@@ -17,7 +17,7 @@ def identify(
     min_agreement: float,
     handler: Handler,
 ) -> None:
-
+    """Attempt to identify samples using BOLD."""
     data = read_data(input_file)
     columns = data.collect_schema().names()
 
@@ -33,46 +33,33 @@ def identify(
     )
 
     if "order_name" in columns:
-        orders = set(
-            data.select(pl.col("order_name"))
+        orders = set[str](
+            data.select(pl.col.order_name)
             .unique()
-            .collect(streaming=True)
+            .collect(engine="streaming")
             .to_series()
             .to_list()
         )
     else:
-        orders = set()
+        orders = set[str]()
 
     unknown_species: int = (
-        (data.select(pl.col("species_name").null_count()).collect().item())
+        (data.select(pl.col.species_name.null_count()).collect(engine="streaming").item())
         if "species_name" in columns
-        else data.select(pl.len()).collect(streaming=True).item()
+        else data.select(pl.len()).collect(engine="streaming").item()
     )
 
-    global identified_count
-    identified_count = 0
-    global lock
+    identified_count = [0]
     lock = Lock()
 
-    with handler.progress(percent=True) as status:
+    with handler.progress() as status:
         task = status.add_task(description="Querying BOLD", total=unknown_species)
 
-        def count_assign(row):
-            global identified_count
-            global lock
+        def count_assign(
+            row: dict[str, Any], identified_count: list[int], lock: Lock
+        ) -> dict[str, str | None]:
             if row["species_name"] is not None:
-                return dict(
-                    subspecies_name=row.get("subspecies_name", None),
-                    species_name=row["species_name"],
-                    subgenus_name=row.get("subgenus_name", None),
-                    genus_name=row.get("genus_name", None),
-                    tribe_name=row.get("tribe_name", None),
-                    subfamily_name=row.get("subfamily_name", None),
-                    family_name=row.get("family_name", None),
-                    order_name=row.get("order_name", None),
-                    class_name=row.get("class_name", None),
-                    phylum_name=row.get("phylum_name", None),
-                )
+                return {name: row.get(name) for name in CONFIG.apis.bold.taxon_levels}
             identification = query_bold(
                 row["UID"],
                 row["nucleotides"],
@@ -81,74 +68,37 @@ def identify(
                 orders,
                 handler,
             )
-            identification = cast(dict[str, str | None], identification)
             with lock:
                 if identification["species_name"] is not None:
-                    identified_count += 1
-                status.advance(task)
+                    # Using mutable to keep info because there isn't
+                    # a more convenient alternative
+                    identified_count[0] = identified_count[0] + 1
+                status.update(
+                    task,
+                    completed=1,
+                    description=f"Querying BOLD (Identified {identified_count[0]})",
+                )
             return identification
 
         data.with_columns(  # Insert taxon columns if they don't exist
-            subspecies_name=pl.coalesce(pl.col("^subspecies_name$"), pl.lit(None)),
-            species_name=pl.coalesce(pl.col("^species_name$"), pl.lit(None)),
-            subgenus_name=pl.coalesce(pl.col("^subgenus_name$"), pl.lit(None)),
-            genus_name=pl.coalesce(pl.col("^genus_name$"), pl.lit(None)),
-            tribe_name=pl.coalesce(pl.col("^tribe_name$"), pl.lit(None)),
-            subfamily_name=pl.coalesce(pl.col("^subfamily_name$"), pl.lit(None)),
-            family_name=pl.coalesce(pl.col("^family_name$"), pl.lit(None)),
-            order_name=pl.coalesce(pl.col("^order_name$"), pl.lit(None)),
-            class_name=pl.coalesce(pl.col("^class_name$"), pl.lit(None)),
-            phylum_name=pl.coalesce(pl.col("^phylum_name$"), pl.lit(None)),
+            **{
+                name: pl.coalesce(pl.col(f"^{name}$"), pl.lit(None))
+                for name in CONFIG.apis.bold.taxon_levels
+            }
         ).with_columns(
-            pl.struct(
-                "UID",
-                "nucleotides",
-                "subspecies_name",
-                "species_name",
-                "subgenus_name",
-                "genus_name",
-                "tribe_name",
-                "subfamily_name",
-                "family_name",
-                "order_name",
-                "class_name",
-                "phylum_name",
-            )
+            pl.struct("UID", "nucleotides", *CONFIG.apis.bold.taxon_levels)
             .map_elements(
-                count_assign,
+                lambda row: count_assign(row, identified_count, lock),
                 skip_nulls=False,
                 strategy="threading",
                 return_dtype=pl.Struct(
-                    {
-                        "subspecies_name": pl.String,
-                        "species_name": pl.String,
-                        "subgenus_name": pl.String,
-                        "genus_name": pl.String,
-                        "tribe_name": pl.String,
-                        "subfamily_name": pl.String,
-                        "family_name": pl.String,
-                        "order_name": pl.String,
-                        "class_name": pl.String,
-                        "phylum_name": pl.String,
-                    }
+                    dict.fromkeys(CONFIG.apis.bold.taxon_levels, pl.String)
                 ),
             )
             .alias("identify_output")
-        ).drop(  # Previous values are kept in identtify_output so no loss
-            "subspecies_name",
-            "species_name",
-            "subgenus_name",
-            "genus_name",
-            "tribe_name",
-            "subfamily_name",
-            "family_name",
-            "order_name",
-            "class_name",
-            "phylum_name",
-        ).unnest(
-            "identify_output"
-        ).sink_csv(
+            # Previous values are kept in identify_output so no loss in dropping
+        ).drop(*CONFIG.apis.bold.taxon_levels).unnest("identify_output").sink_csv(
             output_file, separator="\t"
         )
 
-    handler.log(f"Successfully identified {identified_count} species.")
+    handler.log(f"Successfully identified {identified_count[0]} species.")

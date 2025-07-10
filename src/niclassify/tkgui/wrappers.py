@@ -4,29 +4,26 @@ import os
 import threading
 import traceback
 
-from tkinter import messagebox
-
 
 def threaded(func):
-    """
-    Thread a given function.
+    """Thread a given function.
 
     Threads are made as daemons so they are closed when the main thread closes.
 
     Args:
         func (func): A function to be threaded.
     """
+
     def wrapper(*args, **kwargs):
-        thread = threading.Thread(
-            target=func, args=args, kwargs=kwargs, daemon=True)
+        thread = threading.Thread(target=func, args=args, kwargs=kwargs, daemon=True)
         thread.start()
         return thread
+
     return wrapper
 
 
 def report_uncaught(func):
-    """
-    Execute a function, catching and logging any uncaught exceptions.
+    """Execute a function, catching and logging any uncaught exceptions.
 
     Calls back to class instance to handle reporting to user.
 
@@ -35,7 +32,6 @@ def report_uncaught(func):
     """
 
     def wrapper(self, *args, **kwargs):
-
         # special handling for if a progress popup is blocking
         special_callback = None
         if "on_finish" in kwargs:
@@ -44,10 +40,7 @@ def report_uncaught(func):
             return func(self, *args, **kwargs)
         except:
             error_trace = traceback.format_exc()
-            logfile = os.path.join(
-                self.util.USER_PATH,
-                "logs/error_traceback.log"
-            )
+            logfile = os.path.join(self.util.USER_PATH, "logs/error_traceback.log")
             open(logfile, "w").close()
 
             with open(logfile, "w") as error_log:

@@ -7,16 +7,8 @@ class VS_Pair(tk.LabelFrame):
     Contains a couple of useful methods, not much else.
     """
 
-    def __init__(
-            self,
-            parent,
-            app,
-            view_callback,
-            save_callback,
-            *args,
-            **kwargs):
-        """
-        Instantiate the VS_pair.
+    def __init__(self, parent, app, view_callback, save_callback, *args, **kwargs):
+        """Instantiate the VS_pair.
 
         Args:
             parent (Frame): Whatever tk object holds this pair.
@@ -24,29 +16,17 @@ class VS_Pair(tk.LabelFrame):
             view_callback (func): A function to call when view is pressed.
             save_callback (func): A function to call when save is pressed.
         """
-        tk.LabelFrame.__init__(
-            self,
-            parent,
-            *args,
-            **kwargs)
+        tk.LabelFrame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.app = app
 
         self.button_view = tk.Button(
-            self,
-            text="View",
-            width=5,
-            state=tk.DISABLED,
-            command=view_callback
+            self, text="View", width=5, state=tk.DISABLED, command=view_callback
         )
         self.button_view.pack(padx=1, pady=1)
 
         self.button_save = tk.Button(
-            self,
-            text="Save",
-            width=5,
-            state=tk.DISABLED,
-            command=save_callback
+            self, text="Save", width=5, state=tk.DISABLED, command=save_callback
         )
         self.button_save.pack(padx=1, pady=1)
 

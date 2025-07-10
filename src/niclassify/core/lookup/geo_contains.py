@@ -1,34 +1,19 @@
-from niclassify.core.lookup.get_ref_hierarchy import get_ref_hierarchy
+from niclassify.config.regions import REGIONS, REGIONS_FLAT, Region
 from niclassify.core.interfaces.handler import Handler
 
 
 def geo_contains(ref_geo: str, geo: str, handler: Handler) -> bool:
     """Check if a given reference geography contains another geography."""
-    # get the actual hierarchy
-    hierarchy = get_ref_hierarchy(ref_geo)
-    if hierarchy is None:
-        # raise TypeError(
+    if geo not in REGIONS_FLAT:
         handler.warning(
-            f"geographic region <{ref_geo}> not recognized.",
+            f"geographic region <{geo}> not recognized.",
             "Please register an issue regarding this region name",
             "at https://github.com/tokebe/niclassify",
         )
-        return False
-    if hierarchy["Contains"] is None:
-        return False
 
-    def match_geo(level, ref):
-        if level is None:
-            return False
-        result = False
+    def traverse(region: Region) -> bool:
+        return geo in region.children or any(
+            traverse(REGIONS[child]) for child in region.children
+        )
 
-        for name, sub in level.items():
-            if name == ref:
-                result = True
-                break
-            elif not result and sub["Contains"] is not None:
-                result = match_geo(sub["Contains"], ref)
-
-        return result
-
-    return match_geo(hierarchy["Contains"], geo)
+    return ref_geo == geo or traverse(REGIONS[ref_geo])

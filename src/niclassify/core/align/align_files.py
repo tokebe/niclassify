@@ -1,21 +1,17 @@
-import sys
-from niclassify.core.interfaces import Handler
-from niclassify.core.enums import TaxonomicHierarchy
-from typing import IO, List, Optional, cast
-from tempfile import TemporaryFile
-from threading import Lock
-from multiprocessing import cpu_count
-from pathlib import Path
+import math
 import platform
-import psutil
 import re
+import subprocess
+from collections.abc import Callable
+from pathlib import Path
 
 # from Bio.Align.Applications import MuscleCommandline
 from tempfile import NamedTemporaryFile
-import subprocess
+from threading import Lock
+from typing import IO, Any, cast
+
 from niclassify.core.dynamic_pool import DynamicPool
-import math
-import os
+from niclassify.core.interfaces.handler import Handler
 
 PLATFORM = platform.system()
 MUSCLE_EXEC = {
@@ -27,15 +23,15 @@ MUSCLE_EXEC = {
 
 def align_files(
     output_file: Path,
-    written_files: List[Path],
+    written_files: list[Path],
     handler: Handler,
-    cores: int = cpu_count(),
-    output_all=False,
-):
+    output_all: bool = False,
+) -> None:
+    """Align a set of FASTA files."""
     with handler.spin() as status:
         lock = Lock()
 
-        def align_file(file):
+        def align_file(file: Path) -> Path:
             split = re.search("_([^_]+)_unaligned|$", file.stem)
             if split is not None:
                 split = split[1]
@@ -48,14 +44,13 @@ def align_files(
                     file.parent / f"{output_file.stem}_{split}_aligned{file.suffix}"
                 )
             else:
-                output_part = NamedTemporaryFile(
+                with NamedTemporaryFile(
                     suffix=f"_{split}_aligned{file.suffix}",
                     mode="w",
                     encoding="utf8",
                     delete=False,
-                )
-                output_part.close()
-                output_part = output_part.name
+                ) as tempfile:
+                    output_part = tempfile.name
 
             alignment_call = [
                 f"{MUSCLE_EXEC}",
@@ -104,14 +99,14 @@ def align_files(
         pool = DynamicPool(pool_type="thread")
 
         # assume processing takes 100x space to align
-        tasks = [
+        tasks: list[tuple[Callable[[Path], Path], int, tuple[Path], dict[str, Any]]] = [
             (align_file, math.ceil(file.stat().st_size / 1e4), (file,), {})
             for file in written_files
         ]
 
         handler.log("\nAlignment provided by MUSCLE:\n")
         handler.log(
-            subprocess.run([MUSCLE_EXEC, "--version"], capture_output=True)
+            subprocess.run([MUSCLE_EXEC, "--version"], capture_output=True, check=False)
             .stdout.decode(encoding="utf8")
             .removesuffix("\n\n")
         )
@@ -133,12 +128,11 @@ def align_files(
             description="Writing final output", total=len(output_parts)
         )
 
-        with open(output_file, "w", encoding="utf8") as combined_output:
+        with output_file.open("w", encoding="utf8") as combined_output:
             for output_part in output_parts:
-                with open(output_part, "r", encoding="utf8") as part:
-                    for line in part:
-                        combined_output.write(line)
+                with output_part.open(encoding="utf8") as part:
+                    combined_output.writelines(part)
                 if not output_all:
-                    os.unlink(output_part)
+                    output_part.unlink()
                 with lock:
                     status.advance(task)

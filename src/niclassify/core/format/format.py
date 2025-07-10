@@ -1,8 +1,9 @@
-from pathlib import Path
-from niclassify.core.interfaces import Handler
-from niclassify.core.utils import read_data
-from niclassify.core.enums import TaxonomicHierarchy
 from multiprocessing import cpu_count
+from pathlib import Path
+
+from niclassify.core.enums import TaxonomicHierarchy
+from niclassify.core.interfaces.handler import Handler
+from niclassify.core.utils.read_data import read_data
 
 
 def format_data(
@@ -51,7 +52,6 @@ def format_data(
     }
 
     with handler.spin() as status:
-
         task = status.add_task(description="Writing new file...", total=1)
 
         data.rename(columns=column_mapping).to_csv(

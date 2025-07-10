@@ -1,0 +1,104 @@
+---
+Africa: [East Tropical Africa, Northern Africa, West Tropical Africa]
+Alaska: []
+Algeria: []
+Asia:
+  - Asia-Temperate
+  - Asia-Tropical
+  - Eastern Asia
+  - Middle Asia
+  - Sri Lanka
+  - Palearctic ecozone
+Asia-Temperate: []
+Asia-Tropical: []
+Atlantic Ocean: [St.Helena]
+Australasia: [Australia, New Zealand]
+Australia: []
+Austria: []
+Canada: [Western Canada, Eastern Canada]
+Caribbean Territories: []
+Central America: []
+Central Pacific Territories: []
+China: [Asia-Temperate]
+Continental US:
+  - Northeastern U.S.A.
+  - Northwestern U.S.A.
+  - Southeastern U.S.A.
+  - Southwestern U.S.A.
+  - Alaska
+East Tropical Africa: []
+Eastern Asia: [China, Japan, Asia-Temperate]
+Eastern Canada: []
+Europe: [Northern Europe, Middle Europe, Italy, Sicilia (Sicily)]
+Hawaii: []
+Italy: []
+Japan: [Asia-Temperate]
+Mexico: []
+Middle Asia: []
+Middle Europe: [Austria, Switzerland, Slovenia]
+New Zealand: []
+North Pacific Ocean: [Hawaii]
+Northeastern U.S.A.: []
+Northern Africa: [Algeria, Tunisia]
+Northern America: [Continental US, Canada]
+Northern Europe: []
+Northwestern U.S.A.: []
+Pacific Ocean: [North Pacific Ocean, Central Pacific Territories]
+Palearctic ecozone: [Northern Africa, Europe]
+Pantropics:
+  - Mexico
+  - Central Pacific Territories
+  - Hawaii
+  - North Pacific Ocean
+  - Pacific Ocean
+  - Caribbean Territories
+  - Central America
+  - Australia
+  - St. Helena
+  - Atlantic Ocean
+  - Asia-Tropical
+  - West Tropical Africa
+  - Algeria
+  - East Tropical Africa
+Sicilia (Sicily): []
+Slovenia: []
+Southeastern U.S.A.: []
+Southwestern U.S.A.: []
+Sri Lanka: [Asia-Tropical]
+St.Helena: []
+Subtropics:
+  - Northern Africa
+  - Algeria
+  - Tunisia
+  - Atlantic Ocean
+  - Australia
+  - Pacific Ocean
+  - North Pacific Ocean
+  - Central Pacific Territories
+  - Mexico
+Switzerland: []
+Tunisia: []
+West Tropical Africa: []
+Western Canada: []
+Mediterranean Region: []
+Southeastern Europe: []
+Southwestern Europe: []
+India: []
+Singapore: []
+Southern America: []
+South America: []
+Argentina Distrito Federal: []
+Argentina Northeast: []
+Western Asia: []
+Tropical Indo-Pacific Region: []
+West-Central Tropical Africa: []
+Malesia: []
+Northern South America: []
+Southern America (WGSRPD:8): []
+Siberia: []
+Papuasia: []
+Madagascar: []
+France: []
+New World Tropics: []
+South Tropical Africa: []
+Northeast Tropical Africa: []

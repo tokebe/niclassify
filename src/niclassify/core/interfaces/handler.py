@@ -1,39 +1,38 @@
+import atexit
+import re
 import traceback
-from types import SimpleNamespace
-from rich import print
-import typer
-from pathlib import Path
 from contextlib import contextmanager
+from pathlib import Path
+from tempfile import NamedTemporaryFile
+from threading import Lock
+from types import SimpleNamespace
+from typing import NoReturn
+
+import typer
+import yaml
+from InquirerPy import inquirer
+from rich import print
 from rich.progress import (
+    BarColumn,
     Progress,
     SpinnerColumn,
     TextColumn,
-    BarColumn,
     TimeRemainingColumn,
 )
-from tempfile import NamedTemporaryFile
-import re
-from typing import List, Union
 
 from niclassify.cli.columnize import columnize
-from threading import Lock
-import atexit
-from pathlib import Path
-import yaml
-from bullet import Bullet
 
 # TODO: automatically handle syntaxwarnings, put them in debug logs
 
 # CONTEXT
-CONTEXT: dict[str, Union[Progress, None]] = {"context": None}
+CONTEXT: dict[str, Progress | None] = {"context": None}
 
-with open(Path(__file__).parent / "prefab.yaml", "r") as prefab_file:
+with open(Path(__file__).parent / "prefab.yaml") as prefab_file:
     prefab = SimpleNamespace(**yaml.safe_load(prefab_file))
 
 
 class Handler:
-    """
-    Interface for interaction and log handling.
+    """Interface for interaction and log handling.
 
     Default interface is CLI.
     """
@@ -89,7 +88,7 @@ class Handler:
         """Log a message with a warning prefix to grab user attention."""
         self.log(self.prefix_with_indent(*message, prefix="[bold yellow]WARNING:[/]"))
 
-    def error(self, *error: Union[str, Exception], abort: Union[bool, int] = False):
+    def error(self, *error: str | Exception, abort: bool | int = False) -> None:
         """Log a message with an error prefix and exit if required.
 
         If provided with an Exception, the traceback will be printed as well.
@@ -139,77 +138,52 @@ class Handler:
 
     def confirm(self, *message: str, abort=False, allow_pre_confirm=True):
         """Get a simply yes/no response from the user."""
-
         if allow_pre_confirm and self.pre_confirm:
             self.log(f"[italic bright_black]{' '.join(message)}: y[/]")
             return True
 
         return typer.confirm(" ".join(message), abort=abort)
 
-    def abort(self) -> None:
+    def abort(self) -> NoReturn:
         raise typer.Abort()
 
-    # TODO make select and select_multiple accept zero-length responses and handle them appropriately
-
-    def select(
-        self,
-        prompt: str,
-        options: List[str],
-        allow_empty: bool = False,
-        abort: bool = False,
-    ) -> Union[str, None]:
+    def select(self, prompt: str, options: list[str], abort: bool = False) -> str:
+        """Prompt user to select one item from a list."""
         self.debug("Options:")
-        self.debug("\n".join([f"{i + 1}) {v}" for i, v in enumerate(options)]))
+        self.debug("\n".join(options))
 
-        selection = Bullet(choices=options, bullet=">", prompt=f"{prompt}:").launch()
+        selection = inquirer.fuzzy(  # pyright:ignore[reportPrivateImportUsage] InquirerPy is a bit weird
+            message=prompt,
+            choices=options,
+            instruction="(Type to filter, Enter to confirm)",
+            info=True,
+        ).execute()
 
-        # print(columnize(options, dry_run=True, number=True))
-        # index = 0
-        # while index is not None and (index < 1 or index > len(options) + 1):
-        #     response = typer.prompt(
-        #         text=f"{prompt} (number)", type=str, default="", show_default=False
-        #     )
-        #     if len(response) == 0 and not (allow_empty or abort):
-        #         continue
-        #     if re.search("[^0-9]", response) is not None:
-        #         continue
-        #     index = int(response) if len(response) > 0 else None
-        # selection = options[index - 1] if index is not None else None
-        #
-        self.debug(f"User selection: {selection}")
         if selection is None and abort:
             raise typer.Abort()
+
+        self.debug(f"User selection: {selection}")
         return selection
 
     def select_multiple(
         self,
         prompt: str,
-        options: List[str],
-        abort: bool = False,
+        options: list[str],
         allow_empty: bool = False,
-    ) -> Union[list[str], None]:
+        abort: bool = False,
+    ) -> list[str] | None:
+        """Prompt user to select multiple items from a list."""
+        self.debug("Options:")
         self.debug("/n".join(options))
 
-        print(columnize(options, dry_run=True, number=True))
-        indexes = [0]
-        while indexes is not None and any(
-            (i < 1 or i > len(options) + 1 for i in indexes)
-        ):
-            response = typer.prompt(
-                text=f"{prompt} (numbers separated by comma)",
-                type=str,
-                default="",
-                show_default=False,
-            )
-            if len(response) == 0 and not (allow_empty or abort):
-                continue
-            if re.search("[^0-9, ]", response) is not None:
-                continue
-            if len(response) == 0:
-                indexes = None
-                continue
-            indexes = list({int(i) for i in response.replace(" ", "").split(",")})
-        selection = [options[i - 1] for i in indexes] if indexes is not None else []
+        selection = inquirer.fuzzy(
+            message=prompt,
+            choices=options,
+            multiselect=True,
+            instruction="(Type to filter, Tab to select, Enter to confirm)",
+            info=True,
+            validate=lambda result: len(result) > 0 if not allow_empty else True,
+        ).execute()
 
         self.debug("User selection:")
         self.debug("\n".join(selection))
@@ -225,7 +199,7 @@ class Handler:
         file.parent.mkdir(exist_ok=True, parents=True)
         return True
 
-    def confirm_multiple_overwrite(self, files: List[Path], abort=False) -> bool:
+    def confirm_multiple_overwrite(self, files: list[Path], abort=False) -> bool:
         overwrite_count = len([True for file in files if file.exists()])
         if overwrite_count > 0:
             return self.confirm(
@@ -254,7 +228,6 @@ class Handler:
     @contextmanager
     def progress(self, transient=False, percent=False):
         """Create a context which allows for one or more spinners with progress bars."""
-
         if percent:
             progress_text = "{task.percentage:>3.0f}% | time remaining"
         else:

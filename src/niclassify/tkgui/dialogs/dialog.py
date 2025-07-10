@@ -1,24 +1,20 @@
 """Handler for generating dialogs from json files."""
-import json
-import os
-import sys
-
 
 import importlib.resources as pkg_resources
+import json
+import os
 
 from . import messages
 
 
 class DialogLibrary:
-    """
-    A library of dialog contents.
+    """A library of dialog contents.
 
     Contains function for generating dialog with given contents.
     """
 
     def __init__(self):
-        """
-        Initialize the library.
+        """Initialize the library.
 
         Args:
             dialogs_folder (str): Path to the folder containing dialog jsons.
@@ -27,8 +23,7 @@ class DialogLibrary:
         files = ["message.json", "warning.json", "error.json"]
         for file in files:
             with pkg_resources.open_text(messages, file) as msg_file:
-                self.items[os.path.splitext(file)[0]] = json.load(
-                    msg_file)
+                self.items[os.path.splitext(file)[0]] = json.load(msg_file)
         # for file in [
         #     f
         #     for f in os.listdir(dialogs_folder)
@@ -42,8 +37,7 @@ class DialogLibrary:
         #                 dialog_file)
 
     def __str__(self):
-        """
-        Return a string representation of the library contents.
+        """Return a string representation of the library contents.
 
         Returns:
             str: str output of self.items dict
@@ -52,8 +46,7 @@ class DialogLibrary:
         return json.dumps(self.items)
 
     def get(self, desc):
-        """
-        Find and return the dialog contents for a given type and desc.
+        """Find and return the dialog contents for a given type and desc.
 
         Args:
             diag_type (str): Type of dialog, used as key for search.
@@ -70,8 +63,7 @@ class DialogLibrary:
         return None
 
     def dialog(self, diag_type, desc, form=(None,), **kwargs):
-        """
-        Get user response to a dialog window with content lookup from lib.
+        """Get user response to a dialog window with content lookup from lib.
 
         Args:
             diag_type (func): A tkinter messagebox method.
@@ -98,8 +90,8 @@ class DialogLibrary:
             title=contents["title"],
             message="{}\n{}".format(
                 contents["message"].format(*form),
-                "code: {}".format(desc) if diag_info[1] == "error" else ""
+                f"code: {desc}" if diag_info[1] == "error" else "",
             ),
-            **kwargs
+            **kwargs,
         )
         return dialog

@@ -1,7 +1,4 @@
-from niclassify.core.interfaces.handler import Handler
-
-
-def combine_status(status_gbif: str, status_itis: str) -> str:
+def combine_status(status_gbif: str | None, status_itis: str | None) -> str | None:
     """Combine given GBIF and ITIS statuses."""
     if status_itis == status_gbif:
         return status_itis

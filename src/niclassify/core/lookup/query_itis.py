@@ -1,23 +1,25 @@
-from niclassify.core.interfaces.handler import Handler
-from typing import Optional, cast
+from typing import cast
 from xml.etree import ElementTree
-from throttler import throttle
-from niclassify.core.lookup.get_ref_hierarchy import get_ref_hierarchy
-from niclassify.core.lookup.geo_contains import geo_contains
-from time import sleep
-from backoff import on_exception, expo
-from ratelimit import limits, RateLimitException
-import httpx
 
-client = httpx.Client(transport=httpx.HTTPTransport(retries=3), timeout=60, follow_redirects=True)
+import httpx
+from backoff import expo, on_exception
+from ratelimit import RateLimitException, limits
+
+from niclassify.config.general import CONFIG
+from niclassify.core.interfaces.handler import Handler
+from niclassify.core.lookup.geo_contains import geo_contains
+
+client = httpx.Client(
+    transport=httpx.HTTPTransport(retries=3), timeout=60, follow_redirects=True
+)
+
 
 @on_exception(expo, RateLimitException)
-@limits(calls=60, period=60)
-def query_itis(species_name: str, geography: str, handler: Handler) -> Optional[str]:
-    tsn_url = "http://www.itis.gov/ITISWebService/services/ITISService/\
-getITISTermsFromScientificName?srchKey="
-    jurisdiction_url = "http://www.itis.gov/ITISWebService/services/ITISService/\
-getJurisdictionalOriginFromTSN?tsn="
+@limits(calls=CONFIG.apis.itis.rate_limit, period=60)
+def query_itis(species_name: str, geography: str, handler: Handler) -> str | None:
+    """Query ITIS to determine if a species is native or introduced to a given reference geography."""
+    tsn_url = f"{CONFIG.apis.itis.host}/getITISTermsFromScientificName?srchKey="
+    jurisdiction_url = f"{CONFIG.apis.itis.host}/getJurisdictionalOriginFromTSN?tsn="
 
     try:
         # get TSN
@@ -28,24 +30,16 @@ getJurisdictionalOriginFromTSN?tsn="
         # get xml tree from response
         result_tree = ElementTree.fromstring(response.content)
         # get any TSN's
-        matched_TSNs = [
+        matched_tsns = [
             i.text
-            for i in result_tree.iter(
-                "{http://data.itis_service.itis.usgs.gov/xsd}tsn"
-            )
+            for i in result_tree.iter("{http://data.itis_service.itis.usgs.gov/xsd}tsn")
         ]
 
-        if matched_TSNs is None:  # skip if there's no tsn to be found
-            handler.debug(f"  (Unknown) ITIS: {species_name}: no data")
+        if len(matched_tsns) != 1:  # skip if there's no tsn to be found
+            handler.debug(f"  {species_name}: ITIS: (Unknown) no data")
             return None
 
-        elif (
-            len(matched_TSNs) != 1
-        ):  # skip if tsn is empty or there are more than one
-            handler.debug(f"  (Unknown) ITIS: {species_name}: no data")
-            return None
-
-        tsn = matched_TSNs[0]  # tsn captured
+        tsn = matched_tsns[0]  # tsn captured
 
         # get jurisdiction
         request = f"{jurisdiction_url}{tsn}"
@@ -54,43 +48,46 @@ getJurisdictionalOriginFromTSN?tsn="
 
     except httpx.HTTPError as error:
         handler.debug(str(error))
-        handler.debug(f"ITIS query failed. See error above.")
+        handler.debug("  ITIS query failed. See error above.")
         return
-
 
     try:
         result_tree = ElementTree.fromstring(response.content)
     except UnicodeDecodeError:
         return None
 
-    jurisdictions = cast(dict[str, str], {
-        j.text: n.text
-        for j, n in zip(
-            result_tree.iter(
-                "{http://data.itis_service.itis.usgs.gov/xsd}jurisdictionValue"
-            ),
-            result_tree.iter("{http://data.itis_service.itis.usgs.gov/xsd}origin"),
-        )
-    })
+    jurisdictions = cast(
+        dict[str, str],
+        {
+            j.text: n.text
+            for j, n in zip(
+                result_tree.iter(
+                    "{http://data.itis_service.itis.usgs.gov/xsd}jurisdictionValue"
+                ),
+                result_tree.iter("{http://data.itis_service.itis.usgs.gov/xsd}origin"),
+                strict=False,
+            )
+        },
+    )
 
+    return determine_status(species_name, geography, jurisdictions, handler)
+
+
+def determine_status(
+    species_name: str, geography: str, jurisdictions: dict[str, str], handler: Handler
+) -> str | None:
+    """Given a reference geography and set of known jurisdictions, return whether the species' status."""
     if len(jurisdictions) == 0:  # or if it's somehow returned empty
-        handler.debug(f"  (Unknown) ITIS: {species_name}: no data")
+        handler.debug(f"  {species_name}: ITIS: (Unknown) no data")
         return None
 
     for jurisdiction, status in jurisdictions.items():
-        # simple first: check if jurisdiction is just current reference geo
-        if jurisdiction == geography:
-            handler.debug(
-                f"  ({status}) ITIS: {species_name}:",
-                f"directly {status.lower()} to reference geography {geography}",
-            )
-            return status if status != "Native&Introduced" else None
-        # otherwise if one contains the other it's native
+        # If the jurisdiction matches the reference, the status is relevant
         if geo_contains(geography, jurisdiction, handler) or geo_contains(
             jurisdiction, geography, handler
         ):
-            handler.debug(
-                f"  ({status}) ITIS: {species_name}:",
+            handler.log(
+                f"  {species_name} ITIS: ({status}):",
                 "reference geography",
                 f"{geography} <=> {status.lower()} range {jurisdiction}",
             )

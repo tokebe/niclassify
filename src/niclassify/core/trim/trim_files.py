@@ -1,15 +1,9 @@
 import os
 from pathlib import Path
-from typing import Any
-import re
 from tempfile import NamedTemporaryFile
-from multiprocessing import cpu_count
 
-from Bio import SeqIO
-
-from niclassify.core.dynamic_pool import DynamicPool
 from niclassify.core.interfaces.handler import Handler
-from niclassify.core.trim import trim
+from niclassify.core.trim.trim import trim
 from niclassify.core.utils.split_fasta import split_files
 
 # TODO: add confirm_overwrites for output_all
@@ -19,11 +13,9 @@ def trim_files(
     input_path: Path,
     output_path: Path,
     handler: Handler,
-    min_agreement,
-    cores: int,
-    output_all,
-):
-
+    min_agreement: float,
+    output_all: bool,
+) -> None:
     n_seq, split_paths = split_files(input_path, handler)
 
     out_files = {
@@ -60,7 +52,7 @@ def trim_files(
         with handler.progress() as progress, open(output_path, "w") as output_file:
             task = progress.add_task("Writing final output", total=n_seq)
             for split, outfile in out_files.items():
-                with open(outfile.name, "r") as file:
+                with open(outfile.name) as file:
                     for line in file:
                         if line.startswith(">"):
                             progress.advance(task)

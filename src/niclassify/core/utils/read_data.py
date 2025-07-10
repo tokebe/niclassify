@@ -1,14 +1,10 @@
-from contextlib import nullcontext
-from pathlib import Path
-from typing import Optional
-import yaml
-import polars as pl
-
-import multiprocessing
 import csv
+from pathlib import Path
+
+import polars as pl
+import yaml
 
 from niclassify.core.interfaces.handler import Handler
-
 
 NANS = []
 
@@ -16,15 +12,14 @@ with open(Path(__file__).parent.parent.parent / "config/nans.yaml") as nansfile:
     NANS = yaml.safe_load(nansfile)
 
 
-def read_data(file: Path, handler: Optional[Handler] = None) -> pl.LazyFrame:
+def read_data(file: Path, handler: Handler | None = None) -> pl.LazyFrame:
     """Determine the dialect of a csv-like file and read it.
 
     Returns Polars LazyFrame.
     """
-
     try:
         # Determine separator
-        with open(file, "r") as datafile:
+        with open(file) as datafile:
             sniffer = csv.Sniffer()
             delimiter = sniffer.sniff(datafile.readline()).delimiter
 

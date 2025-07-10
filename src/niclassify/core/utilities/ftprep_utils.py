@@ -1,35 +1,39 @@
-"""
-Utilities for data, file, and program interactions relating to retrieving
+"""Utilities for data, file, and program interactions relating to retrieving
 sequence data and preparing features for classification.
 
 Generally you want to import by importing the directory, utilities, and
 accessing by utilities.function (instead of utilities.general_utils.function).
 """
 
-import json
 import os
 import re
-import requests
 import shutil
 import subprocess
 import sys
-import xlrd
+from xml.etree import ElementTree
 
 import pandas as pd
+import requests
+from Bio import AlignIO
 
 # from Bio.Align.Applications import MuscleCommandline
 from Bio.Phylo.TreeConstruction import DistanceCalculator
-from Bio import AlignIO
-from xml.etree import ElementTree
 
-from niclassify.core.utilities.general_utils import MAIN_PATH, USER_PATH, REGIONS, R_LOC, RNotFoundError, RScriptFailedError, PLATFORM
 from niclassify.core.bPTP_interface import bPTP
+from niclassify.core.utilities.general_utils import (
+    MAIN_PATH,
+    PLATFORM,
+    R_LOC,
+    REGIONS,
+    USER_PATH,
+    RScriptFailedError,
+)
 
 REQUIRED_COLUMNS = [
     ["processid", "UPID", ""],  # can have one or the other
     "nucleotides",
     ["marker_codes", ""],  # empty means it's optional
-    ["species_name", ""]
+    ["species_name", ""],
 ]
 
 RESERVED_COLUMNS = [
@@ -81,13 +85,12 @@ RESERVED_COLUMNS = [
     "dnaSim_min",
     "dnaSim_max",
     "index",
-    "level_0"
+    "level_0",
 ]
 
 
 def align_fasta(infname, outfname, debug=False):
-    """
-    Generate an alignment for the given fasta file.
+    """Generate an alignment for the given fasta file.
 
     Args:
         infname (str): Path to fasta to be aligned.
@@ -96,7 +99,7 @@ def align_fasta(infname, outfname, debug=False):
     muscle_exec = {
         "Windows": "niclassify/bin/muscle3.8.31_i86win32.exe",
         "Linux": "niclassify/bin/muscle3.8.31_i86linux64",
-        "Darwin": "niclassify/bin/muscle3.8.31_i86darwin64"
+        "Darwin": "niclassify/bin/muscle3.8.31_i86darwin64",
     }[PLATFORM]
 
     # TODO have to use subprocess instead of Bio Application API
@@ -114,31 +117,25 @@ def align_fasta(infname, outfname, debug=False):
         subprocess.run(
             alignment_call.__str__(),
             creationflags=subprocess.CREATE_NEW_CONSOLE,
-            shell=True
+            shell=True, check=False,
         )
     else:
-        subprocess.run(alignment_call.__str__(), shell=True)
+        subprocess.run(alignment_call.__str__(), shell=True, check=False)
 
     r_script = os.path.realpath(
-        os.path.join(
-            MAIN_PATH, "niclassify/core/scripts/trim_alignment.R")
+        os.path.join(MAIN_PATH, "niclassify/core/scripts/trim_alignment.R")
     )
 
-    trim_call = [
-        R_LOC,
-        r_script,
-        outfname,
-        outfname
-    ]
+    trim_call = [R_LOC, r_script, outfname, outfname]
 
     if debug:
         proc = subprocess.run(
             trim_call,
             creationflags=subprocess.CREATE_NEW_CONSOLE,
-            env=os.environ.copy()
+            env=os.environ.copy(), check=False,
         )
     else:
-        proc = subprocess.run(trim_call, env=os.environ.copy())
+        proc = subprocess.run(trim_call, env=os.environ.copy(), check=False)
 
     if os.stat(outfname).st_size == 0:
         raise ChildProcessError("Sequence Alignment Failed")
@@ -148,8 +145,7 @@ def align_fasta(infname, outfname, debug=False):
 
 
 def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
-    """
-    Delimit species by nucleotide sequence using bPTP method.
+    """Delimit species by nucleotide sequence using bPTP method.
 
     Args:
         infname (str): Input file path.
@@ -158,8 +154,7 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
         debug (bool, optional): Save script output to file.
     """
     r_script = os.path.realpath(
-        os.path.join(
-            MAIN_PATH, "niclassify/core/scripts/delim_tree.R")
+        os.path.join(MAIN_PATH, "niclassify/core/scripts/delim_tree.R")
     )
     python_path = sys.executable
     # bPTP = os.path.realpath(
@@ -169,45 +164,27 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
 
     # assign log number, guarantee that both logs have same number
     fs = 0
-    lpath = os.path.join(
-        USER_PATH,
-        "logs/delim"
-    )
-    while os.path.isfile(os.path.join(lpath, "delim/log{}.txt".format(fs))):
+    lpath = os.path.join(USER_PATH, "logs/delim")
+    while os.path.isfile(os.path.join(lpath, f"delim/log{fs}.txt")):
         fs += 1
-    delimlogfile = open(
-        os.path.join(lpath, "delim/log{}.txt".format(fs)), "w"
-    )
-    treelogfile = open(
-        os.path.join(lpath, "tree/log{}.txt".format(fs)), "w"
-    )
+    delimlogfile = open(os.path.join(lpath, f"delim/log{fs}.txt"), "w")
+    treelogfile = open(os.path.join(lpath, f"tree/log{fs}.txt"), "w")
 
     # make tree
     if debug:
         proc = subprocess.run(
-            [
-                R_LOC,
-                r_script,
-                infname,
-                outtreefname
-            ],
+            [R_LOC, r_script, infname, outtreefname],
             stdout=treelogfile,
             stderr=treelogfile,
-            env=os.environ.copy()
+            env=os.environ.copy(), check=False,
         )
     else:
         proc = subprocess.run(
-            [
-                R_LOC,
-                r_script,
-                infname,
-                outtreefname
-            ],
+            [R_LOC, r_script, infname, outtreefname],
             stdout=treelogfile,
             stderr=treelogfile,
             env=os.environ.copy(),
-            creationflags=(
-                0 if PLATFORM != 'Windows' else subprocess.CREATE_NO_WINDOW)
+            creationflags=(0 if PLATFORM != "Windows" else subprocess.CREATE_NO_WINDOW), check=False,
         )
 
     if os.stat(outtreefname).st_size == 0:
@@ -229,16 +206,13 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
         burnin=0.1,
         num_trees=0,
         nmi=False,
-        scale=500
+        scale=500,
     )
     treelogfile.close()
     delimlogfile.close()
 
     # read delimitation file and convert to .tsv
-    with open(
-        outfname + ".PTPMLPartition.txt",
-        "r"
-    ) as dfile:
+    with open(outfname + ".PTPMLPartition.txt") as dfile:
         # read lines of file
         delim = dfile.readlines()
         # first line is useless for data capture
@@ -258,21 +232,19 @@ def delimit_species_bPTP(infname, outtreefname, outfname, debug=False):
         species_expanded = []
         samples_expanded = []
 
-        for sp, sa in {sp: sa for sp, sa in zip(species, samples)}.items():
+        for sp, sa in {sp: sa for sp, sa in zip(species, samples, strict=False)}.items():
             for sample in sa:
                 species_expanded.append(sp)
                 samples_expanded.append(sample)
 
         # convert to dataframe and save to file
-        pd.DataFrame({
-            "Delim_spec": species_expanded,
-            "sample_name": samples_expanded
-        }).to_csv(outfname, index=False)
+        pd.DataFrame(
+            {"Delim_spec": species_expanded, "sample_name": samples_expanded}
+        ).to_csv(outfname, index=False)
 
 
 def delimit_species_GMYC(infname, outtreefname, outfname, debug=False):
-    """
-    Delimit species by nucleotide sequence using GMYC method.
+    """Delimit species by nucleotide sequence using GMYC method.
 
     Args:
         infname (str): Input file path.
@@ -281,44 +253,25 @@ def delimit_species_GMYC(infname, outtreefname, outfname, debug=False):
         debug (bool, optional): Save script output to file.
     """
     r_script = os.path.realpath(
-        os.path.join(
-            MAIN_PATH, "niclassify/core/scripts/delim_tree.R")
+        os.path.join(MAIN_PATH, "niclassify/core/scripts/delim_tree.R")
     )
 
     fs = 0
-    lpath = os.path.join(
-        USER_PATH,
-        "logs/delim/delim"
-    )
-    while os.path.isfile(os.path.join(lpath, "log{}.txt".format(fs))):
+    lpath = os.path.join(USER_PATH, "logs/delim/delim")
+    while os.path.isfile(os.path.join(lpath, f"log{fs}.txt")):
         fs += 1
 
     if debug:
-        with open(
-                os.path.join(lpath, "log{}.txt".format(fs)), "w"
-        ) as logfile:
+        with open(os.path.join(lpath, f"log{fs}.txt"), "w") as logfile:
             proc = subprocess.run(
-                [
-                    R_LOC,
-                    r_script,
-                    infname,
-                    outtreefname,
-                    outfname
-                ],
+                [R_LOC, r_script, infname, outtreefname, outfname],
                 stdout=logfile,
                 stderr=logfile,
-                env=os.environ.copy()
+                env=os.environ.copy(), check=False,
             )
     else:
         proc = subprocess.run(
-            [
-                R_LOC,
-                r_script,
-                infname,
-                outtreefname,
-                outfname
-            ],
-            env=os.environ.copy()
+            [R_LOC, r_script, infname, outtreefname, outfname], env=os.environ.copy(), check=False
         )
 
     if proc.returncode != 0:
@@ -327,37 +280,20 @@ def delimit_species_GMYC(infname, outtreefname, outfname, debug=False):
 
 def generate_measures(fastafname, delimfname, outfname, debug=False):
     r_script = os.path.realpath(
-        os.path.join(
-            MAIN_PATH,
-            "niclassify/core/scripts/create_measures.R"
-        )
+        os.path.join(MAIN_PATH, "niclassify/core/scripts/create_measures.R")
     )
-    ftgen_call = [
-        R_LOC,
-        r_script,
-        fastafname,
-        delimfname,
-        outfname
-    ]
+    ftgen_call = [R_LOC, r_script, fastafname, delimfname, outfname]
     # assign log number
     fs = 0
-    lpath = os.path.join(
-        USER_PATH,
-        "logs/ftgen"
-    )
-    while os.path.isfile(os.path.join(lpath, "log{}.txt".format(fs))):
+    lpath = os.path.join(USER_PATH, "logs/ftgen")
+    while os.path.isfile(os.path.join(lpath, f"log{fs}.txt")):
         fs += 1
-    logfile = open(
-        os.path.join(lpath, "log{}.txt".format(fs)), "w"
-    )
+    logfile = open(os.path.join(lpath, f"log{fs}.txt"), "w")
 
     # run script
     if debug:
         proc = subprocess.run(
-            ftgen_call,
-            stdout=logfile,
-            stderr=logfile,
-            env=os.environ.copy()
+            ftgen_call, stdout=logfile, stderr=logfile, env=os.environ.copy(), check=False
         )
     else:
         proc = subprocess.run(
@@ -365,8 +301,7 @@ def generate_measures(fastafname, delimfname, outfname, debug=False):
             stdout=logfile,
             stderr=logfile,
             env=os.environ.copy(),
-            creationflags=(
-                0 if PLATFORM != 'Windows' else subprocess.CREATE_NO_WINDOW)
+            creationflags=(0 if PLATFORM != "Windows" else subprocess.CREATE_NO_WINDOW), check=False,
         )
 
     if proc.returncode != 0:
@@ -374,8 +309,7 @@ def generate_measures(fastafname, delimfname, outfname, debug=False):
 
 
 def geo_contains(ref_geo, geo):
-    """
-    Check if a given reference geography contains another geography.
+    """Check if a given reference geography contains another geography.
 
     Args:
         ref_geo (str): The reference geography.
@@ -392,8 +326,7 @@ def geo_contains(ref_geo, geo):
     hierarchy = get_ref_hierarchy(ref_geo)
     if hierarchy is None:
         # raise TypeError(
-        print(
-            "reference geography <{}> does not exist!".format(ref_geo))
+        print(f"reference geography <{ref_geo}> does not exist!")
         return False
     if hierarchy["Contains"] is None:
         return False
@@ -416,8 +349,7 @@ def geo_contains(ref_geo, geo):
 
 
 def get_geo_taxon(filename, geo=None, taxon=None, api=None):
-    """
-    Save a request result from the api.
+    """Save a request result from the api.
 
     Args:
         filename (str): Path to file to be created.
@@ -440,9 +372,9 @@ def get_geo_taxon(filename, geo=None, taxon=None, api=None):
     request = []
 
     if taxon is not None:
-        request.append("taxon={}".format(taxon))
+        request.append(f"taxon={taxon}")
     if geo is not None:
-        request.append("geo={}".format(geo))
+        request.append(f"geo={geo}")
     request.append("format=tsv")
 
     request = api + "&".join(request)
@@ -451,14 +383,14 @@ def get_geo_taxon(filename, geo=None, taxon=None, api=None):
         attempts = 3
         while True:
             if attempts == 0:
-                raise request.exceptions.RequestException(
-                    "site keeps timing out")
+                raise request.exceptions.RequestException("site keeps timing out")
                 break
             print("making request...")
             try:
-                with open(filename, "wb") as file, \
-                        requests.get(request, stream=True) as response:
-
+                with (
+                    open(filename, "wb") as file,
+                    requests.get(request, stream=True) as response,
+                ):
                     # error if response isn't success
                     response.raise_for_status()
                     shutil.copyfileobj(response.raw, file)
@@ -467,8 +399,8 @@ def get_geo_taxon(filename, geo=None, taxon=None, api=None):
             except requests.exceptions.Timeout:
                 attempts -= 1
                 print(
-                    "    request timed out, trying again ({} of 3)...".format(
-                        3 - attempts))
+                    f"    request timed out, trying again ({3 - attempts} of 3)..."
+                )
                 pass
             except requests.exceptions.RequestException as e:
                 raise e
@@ -485,13 +417,13 @@ def get_geo_taxon(filename, geo=None, taxon=None, api=None):
 
 
 def get_geographies():
-    """
-    Return a list of all geographies in regions config file.
+    """Return a list of all geographies in regions config file.
 
     Returns:
         list: All geography names as str.
 
     """
+
     def getlist(section):
         items = []
         for name, sub in section.items():
@@ -504,8 +436,7 @@ def get_geographies():
 
 
 def get_jurisdictions(species_name):
-    """
-    Get ITIS jurisdictions for a given species.
+    """Get ITIS jurisdictions for a given species.
 
     Args:
         species_name (str): A binomial species name.
@@ -514,19 +445,14 @@ def get_jurisdictions(species_name):
         dict: A dictionary of jurisdictions and status.
 
     """
-    tsn_link = (
-        "http://www.itis.gov/ITISWebService/services/ITISService/\
+    tsn_link = "http://www.itis.gov/ITISWebService/services/ITISService/\
 getITISTermsFromScientificName?srchKey="
-    )
-    jurisdiction_link = (
-        "http://www.itis.gov/ITISWebService/services/ITISService/\
+    jurisdiction_link = "http://www.itis.gov/ITISWebService/services/ITISService/\
 getJurisdictionalOriginFromTSN?tsn="
-    )
 
     print("making request...")
     # get TSN
-    req = "{}{}".format(
-        tsn_link, species_name.replace(" ", "%20"))
+    req = "{}{}".format(tsn_link, species_name.replace(" ", "%20"))
 
     # query website and check for error
     response = requests.get(req)  # stream this if it's a large response
@@ -536,21 +462,16 @@ getJurisdictionalOriginFromTSN?tsn="
     tree = ElementTree.fromstring(response.content)
     # get any TSN's
     vals = [
-        i.text
-        for i
-        in tree.iter('{http://data.itis_service.itis.usgs.gov/xsd}tsn')
+        i.text for i in tree.iter("{http://data.itis_service.itis.usgs.gov/xsd}tsn")
     ]
 
-    if vals is None:  # skip if there's no tsn to be found
-        return None
-
-    elif len(vals) != 1:  # skip if tsn is empty or there are more than one
+    if vals is None or len(vals) != 1:  # skip if there's no tsn to be found
         return None
 
     tsn = vals[0]  # tsn captured
 
     # get jurisdiction
-    req = "{}{}".format(jurisdiction_link, tsn)
+    req = f"{jurisdiction_link}{tsn}"
 
     response = requests.get(req)
 
@@ -563,12 +484,9 @@ getJurisdictionalOriginFromTSN?tsn="
 
     juris = {
         j.text: n.text
-        for j, n
-        in zip(
-            tree.iter(
-                '{http://data.itis_service.itis.usgs.gov/xsd}jurisdictionValue'
-            ),
-            tree.iter('{http://data.itis_service.itis.usgs.gov/xsd}origin')
+        for j, n in zip(
+            tree.iter("{http://data.itis_service.itis.usgs.gov/xsd}jurisdictionValue"),
+            tree.iter("{http://data.itis_service.itis.usgs.gov/xsd}origin"), strict=False,
         )
     }
 
@@ -579,8 +497,7 @@ getJurisdictionalOriginFromTSN?tsn="
 
 
 def get_native_ranges(species_name):
-    """
-    Get native ranges from GBIF for a given species.
+    """Get native ranges from GBIF for a given species.
 
     Args:
         species_name (str): A binomial species name.
@@ -593,8 +510,7 @@ def get_native_ranges(species_name):
     records_link = "http://api.gbif.org/v1/species/"
 
     # get taxonKey
-    req = "{}{}".format(
-        code_link, species_name.replace(" ", "%20"))
+    req = "{}{}".format(code_link, species_name.replace(" ", "%20"))
 
     response = requests.get(req)  # stream this if it's a large response
 
@@ -612,8 +528,7 @@ def get_native_ranges(species_name):
         taxonKey = taxonKey.group()
 
     # get native range
-    req = "{}{}/descriptions".format(
-        records_link, taxonKey)
+    req = f"{records_link}{taxonKey}/descriptions"
 
     response = requests.get(req)  # stream this if it's a large response
 
@@ -637,8 +552,7 @@ def get_native_ranges(species_name):
 
 
 def get_ref_hierarchy(ref_geo):
-    """
-    Get a hierarchy contained in a given reference geography.
+    """Get a hierarchy contained in a given reference geography.
 
     Args:
         ref_geo (str): A geography name.
@@ -647,6 +561,7 @@ def get_ref_hierarchy(ref_geo):
         dict: The hierarchy contained in the reference geography.
 
     """
+
     def find_geo(level, ref):
         if level is None:
             return None
@@ -665,25 +580,23 @@ def get_ref_hierarchy(ref_geo):
 
 
 def make_genetic_measures(infname, outfname=None):
-    """
-    Make the genetic measures to be used for classification.
+    """Make the genetic measures to be used for classification.
 
     Args:
         infname (str): Input file path.
         outfname (str, optional): Output file path. Defaults to None.
     """
     print("reading data...")
-    aln = AlignIO.read(open(infname), 'fasta')
+    aln = AlignIO.read(open(infname), "fasta")
     print("calculating distances...")
-    calculator = DistanceCalculator('identity')
+    calculator = DistanceCalculator("identity")
     dm = calculator.get_distance(aln)
 
     print(dm)
 
 
 def filter_sequence_data(data, bp=350):
-    """
-    Prepare sequence data previously saved from API.
+    """Prepare sequence data previously saved from API.
 
     Args:
         data (DataFrame): DataFrame of sequence data.
@@ -711,10 +624,12 @@ def filter_sequence_data(data, bp=350):
     # remove rows with less than bp (350 default) base pairs
     data = data[
         data.apply(
-            (lambda x: True
-             if len([i for i in x["nucleotides"] if i.isalpha()]) >= bp
-             else False),
-            axis=1
+            (
+                lambda x: True
+                if len([i for i in x["nucleotides"] if i.isalpha()]) >= bp
+                else False
+            ),
+            axis=1,
         )
     ]
 
@@ -728,10 +643,11 @@ def filter_sequence_data(data, bp=350):
             bad_UPID = data["UPID"]
             data.drop("UPID", axis=1, inplace=True)
             data.insert(
-                0, "UPID",
+                0,
+                "UPID",
                 bad_UPID.astype(str)
                 + "_"
-                + bad_UPID.groupby(bad_UPID).cumcount().add(1).astype(str)
+                + bad_UPID.groupby(bad_UPID).cumcount().add(1).astype(str),
             )
 
     # make new ID column (fix any duplicate processid's)
@@ -739,33 +655,31 @@ def filter_sequence_data(data, bp=350):
         if data["processid"].is_unique:
             data.insert(0, "UPID", data["processid"])
         else:
-            data.insert(0, "UPID", (
-                data["processid"].astype(str)
-                + "_"
-                + data.groupby("processid").cumcount().add(1).astype(str)
-            ))
-
+            data.insert(
+                0,
+                "UPID",
+                (
+                    data["processid"].astype(str)
+                    + "_"
+                    + data.groupby("processid").cumcount().add(1).astype(str)
+                ),
+            )
 
     # neither provided, make new
     else:
-        data.insert(0, "UPID", (
-            "SN" + data.reset_index()["index"].astype(str)
-        ))  # SN stands for Sample Number
+        data.insert(
+            0, "UPID", ("SN" + data.reset_index()["index"].astype(str))
+        )  # SN stands for Sample Number
 
     # drop columns which may interfere with operation
     # TODO add a warning about reserved columns in manual
-    data.drop(
-        columns=RESERVED_COLUMNS,
-        inplace=True,
-        errors='ignore'
-    )
+    data.drop(columns=RESERVED_COLUMNS, inplace=True, errors="ignore")
 
     return data.reset_index(drop=True)
 
 
 def write_fasta(data, filename):
-    """
-    Write a fasta file from a dataframe of sequence data.
+    """Write a fasta file from a dataframe of sequence data.
 
     Args:
         data (DataFrame): sequence data, preferably filtered.

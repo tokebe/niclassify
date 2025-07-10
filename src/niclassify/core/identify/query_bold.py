@@ -1,13 +1,14 @@
-from niclassify.core.interfaces.handler import Handler
-from typing import Optional, cast
-from collections import Counter
-
-from xml.etree import ElementTree
-from typing import Set, Dict
 import json
-from ratelimit import RateLimitException, limits
-from backoff import on_exception, expo
+from collections import Counter
+from typing import cast
+from xml.etree import ElementTree
+
 import httpx
+from backoff import expo, on_exception
+from ratelimit import RateLimitException, limits
+
+from niclassify.config.general import CONFIG
+from niclassify.core.interfaces.handler import Handler
 
 # TODO get order, family, subfamily, genus from top match if identify success
 # TODO state warnings if identify gives
@@ -18,32 +19,19 @@ client = httpx.Client(
 
 
 @on_exception(expo, RateLimitException)
-@limits(calls=500, period=10)
-def query_bold(
+@limits(calls=CONFIG.apis.bold.rate_limit, period=10)
+def query_bold(  # noqa: PLR0913
     uid: str,
     sequence: str,
     min_similarity: float,
     min_agreement: float,
-    orders: Set[str],
+    orders: set[str],
     handler: Handler,
 ) -> dict[str, str | None]:
     """Return the maximum-confidence species name for a given sequence."""
+    normalized_info: dict[str, str | None] = dict.fromkeys(CONFIG.apis.bold.taxon_levels)
 
-    normalized_info: dict[str, str | None] = {
-        "subspecies_name": None,
-        "species_name": None,
-        "subgenus_name": None,
-        "genus_name": None,
-        "tribe_name": None,
-        "subfamily_name": None,
-        "family_name": None,
-        "class_name": None,
-        "phylum_name": None
-    }
-
-    api_url = (
-        "https://www.boldsystems.org/index.php/Ids_xml?db=COX1_SPECIES_PUBLIC&sequence="
-    )
+    api_url = f"{CONFIG.apis.bold.host}/Ids_xml?db=COX1_SPECIES_PUBLIC&sequence="
 
     try:
         request = f"{api_url}{sequence}"
@@ -70,7 +58,7 @@ def query_bold(
         handler.debug(f"  {uid}: No matches found.")
         return normalized_info
 
-    max_similarity = max((similarity for tax, similarity, pid in matches))
+    max_similarity = max((similarity for _tax, similarity, _pid in matches))
 
     if max_similarity < min_similarity:
         handler.debug(f"  {uid}: No matches met minimum similarity.")
@@ -82,7 +70,7 @@ def query_bold(
         if similarity >= max_similarity
     ]
 
-    counts = Counter((tax for tax, similarity, pid in best_matches))
+    counts = Counter((tax for tax, _similarity, _pid in best_matches))
 
     match_proportions = sorted(
         [
@@ -101,13 +89,11 @@ def query_bold(
 
     # get taxonID to use to get hierarchy
     try:
-        request = (
-            f"https://boldsystems.org/index.php/API_Tax/TaxonSearch?taxName={species}"
-        )
+        request = f"{CONFIG.apis.bold.host}/API_Tax/TaxonSearch?taxName={species}"
         response = client.get(request)
         response.raise_for_status()
-        taxID = json.loads(response.text)["top_matched_names"][0]["taxid"]
-        request = f"https://boldsystems.org/index.php/API_Tax/TaxonData?taxId={taxID}&includeTree=true&dataTypes=basic"
+        tax_id = json.loads(response.text)["top_matched_names"][0]["taxid"]
+        request = f"{CONFIG.apis.bold.host}/API_Tax/TaxonData?taxId={tax_id}&includeTree=true&dataTypes=basic"
         response = client.get(request)
         response.raise_for_status()
     except httpx.HTTPError as error:
@@ -115,16 +101,16 @@ def query_bold(
         handler.error("BOLD query failed. See error above.")
         return normalized_info
 
-    for taxID, info in json.loads(response.text).items():
+    for info in json.loads(response.text).values():
         normalized_info[f"{info['tax_rank']}_name"] = info["taxon"]
 
     handler.debug(f"  {uid}: Successfully identified: {species}")
     if (
-        normalized_info.get("order_name", None) is not None
+        normalized_info.get("order_name") is not None
         and normalized_info["order_name"] not in orders
+        and len(orders) > 0
     ):
-        if len(orders) > 0:
-            handler.warning(
-                f"  {uid}: Identified species {species} is of order {normalized_info['order_name']}, which is not present in original data. Please check output for potential misidentification."
-            )
+        handler.warning(
+            f"  {uid}: Identified species {species} is of order {normalized_info['order_name']}, which is not present in original data. Please check output for potential misidentification."
+        )
     return normalized_info

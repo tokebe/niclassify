@@ -1,49 +1,40 @@
-"""
-General file and other interaction utilities.
+"""General file and other interaction utilities.
 
 Generally you want to import by importing the directory, utilities, and
 accessing by utilities.function (instead of utilities.general_utils.function).
 """
 
+import importlib.resources as pkg_resources
 import json
 import os
 import platform
 import shutil
 import subprocess
 import sys
-import userpaths
-import xlrd
 
 import pandas as pd
+import userpaths
 
-import importlib.resources as pkg_resources
 from niclassify.core.utilities import config
 
 PLATFORM = platform.system()
 
 with pkg_resources.open_text(config, "nans.json") as nansfile:
     NANS = json.load(nansfile)
-    MAIN_PATH = os.path.join(
-        os.path.dirname(__file__),
-        "../../../"
-    )
+    MAIN_PATH = os.path.join(os.path.dirname(__file__), "../../../")
 with pkg_resources.open_text(config, "regions.json") as regions:
     REGIONS = json.load(regions)
 with pkg_resources.path(config, "user-manual.pdf") as p:
     HELP_DOC = str(p)
 
-_icon_to_use = {
-    'Windows': "NI.ico",
-    "Linux": "NI.xbm",
-    "Darwin": "NI.icns"
-}
+_icon_to_use = {"Windows": "NI.ico", "Linux": "NI.xbm", "Darwin": "NI.icns"}
 
 with pkg_resources.path(config, _icon_to_use[PLATFORM]) as p:
-    PROGRAM_ICON = str(p) if PLATFORM == 'Windows' else "@" + str(p)
+    PROGRAM_ICON = str(p) if PLATFORM == "Windows" else "@" + str(p)
 
 if PLATFORM == "Windows":
     with pkg_resources.open_text(config, "rloc.txt") as rloc:
-        R_LOC = os.path.join(rloc.read().strip('\n'), "bin/Rscript.exe")
+        R_LOC = os.path.join(rloc.read().strip("\n"), "bin/Rscript.exe")
 else:
     R_LOC = "Rscript"
 
@@ -63,7 +54,7 @@ _required_folders = [
     os.path.join(USER_PATH, "logs/delim/delim"),
     os.path.join(USER_PATH, "logs/ftgen"),
     os.path.join(MAIN_PATH, "data"),
-    os.path.join(USER_PATH, "data/unprepared")
+    os.path.join(USER_PATH, "data/unprepared"),
 ]
 
 # make sure required folders exist and get/prepare user config
@@ -80,7 +71,7 @@ for i, f in enumerate(_required_folders):
         try:  # user nans exist, load
             with open(os.path.join(f, "nans.json")) as nansfile:
                 NANS = json.load(nansfile)
-        except(FileNotFoundError, KeyError):  # nans do not exist, copy
+        except (FileNotFoundError, KeyError):  # nans do not exist, copy
             with open(os.path.join(f, "nans.json"), "w") as user_nans:
                 json.dump(NANS, user_nans)
         try:  # user regions exist, load
@@ -116,8 +107,7 @@ def clean_folder(path):
 
 
 def get_data(filename, excel_sheet=None):
-    """
-    Get raw data from a given filename.
+    """Get raw data from a given filename.
 
     Args:
         parser (ArgumentParser): The argument parse for the program. Used for
@@ -140,14 +130,19 @@ def get_data(filename, excel_sheet=None):
 
     # check if filename exists
     if not os.path.exists(filename):
-        raise ValueError("file {} does not exist.".format(filename))
+        raise ValueError(f"file {filename} does not exist.")
 
     # get raw data
-    if (os.path.splitext(filename)[1]
-        in [".xlsx", ".xlsm", ".xlsb",
-            ".xltx", ".xltm", ".xls",
-            ".xlt", ".xml"
-            ]):  # using excel_sheet file
+    if os.path.splitext(filename)[1] in [
+        ".xlsx",
+        ".xlsm",
+        ".xlsb",
+        ".xltx",
+        ".xltm",
+        ".xls",
+        ".xlt",
+        ".xml",
+    ]:  # using excel_sheet file
         if excel_sheet is not None:  # sheet given
             if excel_sheet.isdigit():  # sheet number
                 raw_data = pd.read_excel(
@@ -176,10 +171,7 @@ def get_data(filename, excel_sheet=None):
 
     elif os.path.splitext(filename)[1] == ".csv":
         raw_data = pd.read_csv(
-            filename,
-            na_values=NANS,
-            keep_default_na=True,
-            engine="python"
+            filename, na_values=NANS, keep_default_na=True, engine="python"
         )
         # chances are something went wrong if there's only one column
         if raw_data.shape[1] == 1:
@@ -188,38 +180,26 @@ def get_data(filename, excel_sheet=None):
                 na_values=NANS,
                 keep_default_na=True,
                 sep="\t",
-                engine="python"
+                engine="python",
             )  # it's either actually 1 column or now it'll read correctly
 
     elif os.path.splitext(filename)[1] == ".tsv":
         raw_data = pd.read_csv(
-            filename,
-            na_values=NANS,
-            keep_default_na=True,
-            sep="\t",
-            engine="python"
+            filename, na_values=NANS, keep_default_na=True, sep="\t", engine="python"
         )
         # chances are something went wrong if there's only one column
         if raw_data.shape[1] == 1:
             raw_data = pd.read_csv(
-                filename,
-                na_values=NANS,
-                keep_default_na=True,
-                engine="python"
+                filename, na_values=NANS, keep_default_na=True, engine="python"
             )  # it's either actually 1 column or now it'll read correctly
 
-    elif (os.path.splitext(filename)[1] == ".txt"):
+    elif os.path.splitext(filename)[1] == ".txt":
         raw_data = pd.read_csv(
-            filename,
-            na_values=NANS,
-            keep_default_na=True,
-            sep=None,
-            engine="python"
+            filename, na_values=NANS, keep_default_na=True, sep=None, engine="python"
         )
 
     else:  # invalid extension
-        raise TypeError(
-            "data file type is unsupported, or file extension not included")
+        raise TypeError("data file type is unsupported, or file extension not included")
 
     return raw_data  # return extracted data
 
@@ -233,8 +213,7 @@ def keyboardInterruptHandler(signal, frame):
 
 
 def view_open_file(filename):
-    """
-    Open a file or directory with system default.
+    """Open a file or directory with system default.
 
     Args:
         filename (str): Path to file, should be absolute.

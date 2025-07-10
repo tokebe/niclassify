@@ -1,5 +1,4 @@
-"""
-Utilities for data, file, and program interactions relating to training and
+"""Utilities for data, file, and program interactions relating to training and
 using an AutoClassifier.
 
 Generally you want to import by importing the directory, utilities, and
@@ -8,15 +7,12 @@ accessing by utilities.function (instead of utilities.general_utils.function).
 
 import logging
 import os
-import xlrd
 
 import matplotlib as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-
-from sklearn import metrics
-from sklearn import preprocessing
+from sklearn import metrics, preprocessing
 from sklearn.impute import SimpleImputer
 
 from niclassify.core.classifiers import AutoClassifier
@@ -26,8 +22,7 @@ sns.set()
 
 
 def get_known(features, metadata, class_column):
-    """
-    Get only known data/metadata given the class label.
+    """Get only known data/metadata given the class label.
 
     Args:
         data (DataFrame): All data, preferably normalized.
@@ -58,7 +53,7 @@ def get_known(features, metadata, class_column):
         )
         features = features.drop(NA_cols, axis=1)
     if len(NA_rows) > 0:
-        if 'UPID' in metadata.columns:
+        if "UPID" in metadata.columns:
             logging.warning(
                 f"removing row{'s' if len(NA_rows) > 1 else ''} due to all NA values {' '.join(metadata.iloc[NA_rows]['UPID'].to_list())} "
             )
@@ -77,8 +72,7 @@ def get_known(features, metadata, class_column):
 
 
 def impute_data(data):
-    """
-    Impute the given data.
+    """Impute the given data.
 
     Args:
         data (DataFrame): Data. Preferably normalized.
@@ -94,21 +88,18 @@ def impute_data(data):
     col_order = data.columns.values
 
     # get categorical columns
-    category_cols = list(data.select_dtypes(
-        exclude=[np.number]).columns.values)
+    category_cols = list(data.select_dtypes(exclude=[np.number]).columns.values)
 
     # split data into categorical and numerical
     categorical = data[category_cols]
     data = data.drop(columns=category_cols)
 
     # impute categorical by frequency
-    categorical = categorical.apply(
-        lambda col: col.fillna(col.value_counts().index[0])
-    )
+    categorical = categorical.apply(lambda col: col.fillna(col.value_counts().index[0]))
 
     feature_cols = data.columns.values
     data = data.to_numpy()
-    imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')
+    imp_mean = SimpleImputer(missing_values=np.nan, strategy="mean")
     data = imp_mean.fit_transform(data)
     # return to dataframe
     data = pd.DataFrame(data)  # removed a scaler fit-transform here
@@ -116,7 +107,7 @@ def impute_data(data):
 
     # combine imputed categorical with numerical
     if categorical.shape[1] > 0:
-        data = pd.concat([data, categorical], axis='columns')
+        data = pd.concat([data, categorical], axis="columns")
 
     # reorder to match original
     data = data[col_order]
@@ -125,8 +116,7 @@ def impute_data(data):
 
 
 def load_classifier(filename):
-    """
-    Load a saved classifier.
+    """Load a saved classifier.
 
     Args:
         filename (str): Path/name of classifier.
@@ -140,9 +130,10 @@ def load_classifier(filename):
 
     # check if filename exists
     if not os.path.exists(filename):
-        raise ValueError("file {} does not exist.".format(filename))
+        raise ValueError(f"file {filename} does not exist.")
 
     from joblib import load
+
     classifier = load(filename)
 
     if not isinstance(classifier, AutoClassifier):
@@ -152,8 +143,7 @@ def load_classifier(filename):
 
 
 def make_confm(clf, features_known, class_labels):
-    """
-    Make a confusion matrix plot of a trained classifier.
+    """Make a confusion matrix plot of a trained classifier.
 
     Args:
         clf (AutoClassifier): An AutoClassifier.
@@ -167,27 +157,22 @@ def make_confm(clf, features_known, class_labels):
     # type error checking
     if type(features_known) is not pd.DataFrame:
         raise TypeError("Cannot save: features_known is not DataFrame.")
-    if (type(class_labels) is not pd.DataFrame
-            and type(class_labels) is not pd.Series):
+    if type(class_labels) is not pd.DataFrame and type(class_labels) is not pd.Series:
         raise TypeError("Cannot save: metadata_known is not DataFrame.")
 
     features_known = impute_data(features_known)
 
     fig, ax = plt.pyplot.subplots(nrows=1, ncols=1)
     metrics.plot_confusion_matrix(
-        clf,
-        features_known,
-        class_labels,
-        ax=ax,
-        normalize="true")
+        clf, features_known, class_labels, ax=ax, normalize="true"
+    )
     ax.grid(False)
 
     return fig
 
 
 def make_pairplot(data, predict):
-    """
-    Make a pairplot figure.
+    """Make a pairplot figure.
 
     Args:
         data (DataFrame): Data predicted on. Preferably normalized.
@@ -207,10 +192,7 @@ def make_pairplot(data, predict):
     print("attempting to generate plot")
     # make the pairplot using seaborn
     pairplot = sns.pairplot(
-        data=df,
-        vars=df.columns[0:data.shape[1]],
-        hue="predict",
-        diag_kind='hist'
+        data=df, vars=df.columns[0 : data.shape[1]], hue="predict", diag_kind="hist"
     )
 
     return pairplot
@@ -223,28 +205,24 @@ def save_clf(clf):
         clf (AutoClassifier): A trained classifier.
     """
     from joblib import dump
+
     i = 0
     while os.path.exists(
         os.path.join(
-            USER_PATH,
-            "output/classifiers/{}{}.gz".format(
-                clf.__class__.__name__, i)
+            USER_PATH, f"output/classifiers/{clf.__class__.__name__}{i}.gz"
         )
     ):
         i += 1
     dump(
         clf,
         os.path.join(
-            USER_PATH,
-            "output/classifiers/{}{}.gz".format(
-                clf.__class__.__name__, i)
-        )
+            USER_PATH, f"output/classifiers/{clf.__class__.__name__}{i}.gz"
+        ),
     )
 
 
 def save_clf_dialog(clf):
-    """
-    Present the user with the option to save the given AutoClassifier.
+    """Present the user with the option to save the given AutoClassifier.
 
     Args:
         clf (AutoClassifier): A trained AutoClassifier.
@@ -263,8 +241,7 @@ def save_clf_dialog(clf):
 
 
 def save_confm(clf, features_known, class_labels, out):
-    """
-    Save a confusion matrix plot of a trained classifier.
+    """Save a confusion matrix plot of a trained classifier.
 
     Args:
         clf (AutoClassifier): An AutoClassifier.
@@ -275,19 +252,17 @@ def save_confm(clf, features_known, class_labels, out):
     # type error checking
     if type(features_known) is not pd.DataFrame:
         raise TypeError("Cannot save: features_known is not DataFrame.")
-    if (type(class_labels) is not pd.DataFrame
-            and type(class_labels) is not pd.Series):
+    if type(class_labels) is not pd.DataFrame and type(class_labels) is not pd.Series:
         raise TypeError("Cannot save: metadata_known is not DataFrame.")
 
     fig = make_confm(clf.clf, features_known, class_labels)
     if not os.path.isabs(out):
         out = os.path.join(USER_PATH, "output/" + out)
-    fig.savefig("{}.cm.png".format(out))
+    fig.savefig(f"{out}.cm.png")
 
 
 def save_pairplot(data, predict, outfname):
-    """
-    Output a pairplot of the predicted values.
+    """Output a pairplot of the predicted values.
 
     Args:
         data (DataFrame): Data predicted on. Preferably normalized.
@@ -303,12 +278,11 @@ def save_pairplot(data, predict, outfname):
     # save pairplot
     if not os.path.isabs(outfname):
         outfname = os.path.join(USER_PATH, "output/" + outfname)
-    out.savefig("{}.png".format(outfname))
+    out.savefig(f"{outfname}.png")
 
 
 def save_predictions(metadata, predict, feature_norm, out, predict_prob=None):
-    """
-    Save a given set of predictions to the given output filename.
+    """Save a given set of predictions to the given output filename.
 
     Args:
         metadata (DataFrame): The full set of metadata.
@@ -323,13 +297,10 @@ def save_predictions(metadata, predict, feature_norm, out, predict_prob=None):
         raise TypeError("Cannot save: metadata is not DataFrame.")
     if type(feature_norm) is not pd.DataFrame:
         raise TypeError("Cannot save: feature_norm is not DataFrame.")
-    if (type(predict) is not pd.DataFrame
-            and type(predict) is not pd.Series):
+    if type(predict) is not pd.DataFrame and type(predict) is not pd.Series:
         raise TypeError("Cannot save: predict is not DataFrame or Series.")
-    if (type(predict_prob) is not pd.DataFrame
-            and type(predict_prob) is not pd.Series):
-        raise TypeError(
-            "Cannot save: predict_prob is not DataFrame or Series.")
+    if type(predict_prob) is not pd.DataFrame and type(predict_prob) is not pd.Series:
+        raise TypeError("Cannot save: predict_prob is not DataFrame or Series.")
 
     logging.info("saving new output...")
     if predict_prob is not None:
@@ -340,21 +311,18 @@ def save_predictions(metadata, predict, feature_norm, out, predict_prob=None):
         if not os.path.isabs(out):
             out = os.path.join(USER_PATH, "output/" + out)
 
-        output_path = os.path.join(
-            "/".join(out.replace("\\", "/").split("/")[:-1]))
+        output_path = os.path.join("/".join(out.replace("\\", "/").split("/")[:-1]))
 
         if not os.path.exists(output_path):
             os.makedirs(output_path)
-        print("  saving files to path: {}".format(
-            os.path.realpath(output_path)))
+        print(f"  saving files to path: {os.path.realpath(output_path)}")
         df.to_csv(out, index=False)
-    except (KeyError, FileNotFoundError, OSError, IOError):
+    except (KeyError, FileNotFoundError, OSError):
         raise OSError("output folder creation failed.")
 
 
 def scale_data(data):
-    """
-    Scale given data to be normalized.
+    """Scale given data to be normalized.
 
     Args:
         data (DataFrame): Data to be scaled.
@@ -365,15 +333,14 @@ def scale_data(data):
     """
     # scale data
     logging.info("scaling data...")
-   # drop completely empty columns
+    # drop completely empty columns
     data.dropna(how="all", axis=1, inplace=True)
 
     # get column order for order preservation
     col_order = data.columns.values
 
     # get categorical columns
-    category_cols = list(data.select_dtypes(
-        exclude=[np.number]).columns.values)
+    category_cols = list(data.select_dtypes(exclude=[np.number]).columns.values)
 
     # split data into categorical and numerical
     categorical = data[category_cols]
@@ -387,7 +354,7 @@ def scale_data(data):
 
     # combine imputed categorical with numerical
     if categorical.shape[1] > 0:
-        data = pd.concat([data, categorical], axis='columns')
+        data = pd.concat([data, categorical], axis="columns")
 
     # reorder to match original
     data = data[col_order]

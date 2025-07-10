@@ -1,28 +1,25 @@
-"""
-Data preparation tool window.
+"""Data preparation tool window.
 
 Used exclusively in tandem with the classifer tool, which handles some key
 functions such as access to the inner-layer StandardProgram.
 """
+
 import csv
 import os
 import re
-import requests
 import shutil
 import tempfile
-import traceback
-
-import numpy as np
-import pandas as pd
 import tkinter as tk
+import traceback
+from tkinter import filedialog, messagebox
 
-from tkinter import filedialog
-from tkinter import messagebox
+import pandas as pd
+import requests
 from pandas.errors import EmptyDataError, ParserError
 
-from .datapanels import RetrievalPanel, PreparationPanel
+from .datapanels import PreparationPanel, RetrievalPanel
 from .smallwindows import ProgressPopup
-from .wrappers import threaded, report_uncaught
+from .wrappers import report_uncaught, threaded
 
 # TODO add any status updates that might be worthwhile
 
@@ -31,8 +28,7 @@ class DataPreparationTool(tk.Toplevel):
     """A window for retrieving data from BOLD."""
 
     def __init__(self, parent, app, tempdir, utilities, *args, **kwargs):
-        """
-        Instantiate the window.
+        """Instantiate the window.
 
         Args:
             parent (TopLevel): The Parent window.
@@ -80,18 +76,12 @@ class DataPreparationTool(tk.Toplevel):
 
         # intialize UI panels
         self.get_data_sec = RetrievalPanel(
-            self,
-            self,
-            text="Data Retrieval",
-            labelanchor=tk.N
+            self, self, text="Data Retrieval", labelanchor=tk.N
         )
         self.get_data_sec.pack(expand=True, fill=tk.X)
 
         self.data_sec = PreparationPanel(
-            self,
-            self,
-            text="Data Preparation",
-            labelanchor=tk.N
+            self, self, text="Data Preparation", labelanchor=tk.N
         )
         self.data_sec.pack(expand=True, fill=tk.X)
 
@@ -107,12 +97,12 @@ class DataPreparationTool(tk.Toplevel):
     @report_uncaught
     def align_seq_data(self):
         """Filter and align sequences."""
+
         # ----- threaded function -----
         @threaded
         @report_uncaught
         def _align_seq_data(self, status_cb, on_finish=None):
-            """
-            Filter and align sequences, in a thread.
+            """Filter and align sequences, in a thread.
 
             Args:
                 on_finish (func): Function to call on completion.
@@ -124,7 +114,7 @@ class DataPreparationTool(tk.Toplevel):
                 prefix="aligned_fasta_",
                 suffix=".fasta",
                 delete=False,
-                dir=self.tempdir.name
+                dir=self.tempdir.name,
             )
             self.fasta_align.close()
             self.app.sp.fasta_align_fname = self.fasta_align.name
@@ -133,29 +123,17 @@ class DataPreparationTool(tk.Toplevel):
             try:
                 self.app.sp.align_fasta(tax=self.taxon_level, debug=False)
             except ChildProcessError:
-                self.dlib.dialog(
-                    messagebox.showerror,
-                    "ALIGN_ERR",
-                    parent=self
-                )
+                self.dlib.dialog(messagebox.showerror, "ALIGN_ERR", parent=self)
                 if on_finish is not None:
                     on_finish()
                 return
             except self.util.RNotFoundError:
-                self.dlib.dialog(
-                    messagebox.showerror,
-                    "R_NOT_FOUND",
-                    parent=self
-                )
+                self.dlib.dialog(messagebox.showerror, "R_NOT_FOUND", parent=self)
                 if on_finish is not None:
                     on_finish()
                 return
             except self.util.RScriptFailedError:
-                self.dlib.dialog(
-                    messagebox.showerror,
-                    "R_SCRIPT_FAILED",
-                    parent=self
-                )
+                self.dlib.dialog(messagebox.showerror, "R_SCRIPT_FAILED", parent=self)
                 if on_finish is not None:
                     on_finish()
                 return
@@ -172,11 +150,11 @@ class DataPreparationTool(tk.Toplevel):
                 on_finish()
 
             # advise the user to check the alignment
-            self.dlib.dialog(
-                messagebox.showinfo, "ALIGNMENT_COMPLETE", parent=self)
+            self.dlib.dialog(messagebox.showinfo, "ALIGNMENT_COMPLETE", parent=self)
 
             # note that the alignment was generated (for warnings)
             self.generated_alignment = self.taxon_level_name
+
         # ----- end threaded function -----
 
         data = self.util.get_data(self.sequence_filtered.name)
@@ -187,8 +165,8 @@ class DataPreparationTool(tk.Toplevel):
                 messagebox.showerror,
                 "TAXON_NOT_PRESENT",
                 form=(self.taxon_level_name,),
-                parent=self
-            )
+                parent=self,
+            ),
         ):
             return
 
@@ -198,8 +176,8 @@ class DataPreparationTool(tk.Toplevel):
                 messagebox.askokcancel,
                 "NAN_TAXON",
                 form=(self.taxon_level_name,),
-                parent=self
-            )
+                parent=self,
+            ),
         ):
             return
 
@@ -210,17 +188,13 @@ class DataPreparationTool(tk.Toplevel):
                 messagebox.askokcancel,
                 "SINGLE_SPLIT",
                 form=(self.taxon_level_name,),
-                parent=self
-            )
+                parent=self,
+            ),
         ):
             return
 
         # disable buttons by opening progress bar
-        progress_popup = ProgressPopup(
-            self,
-            "Alignment",
-            "Aligning Sequences..."
-        )
+        progress_popup = ProgressPopup(self, "Alignment", "Aligning Sequences...")
 
         def finish(self, on_finish):
             self.app.status_bar.set_status("Awaiting user input.")
@@ -236,7 +210,7 @@ class DataPreparationTool(tk.Toplevel):
         _align_seq_data(
             self,
             progress_popup.set_status,
-            lambda: finish(self, on_finish=progress_popup.complete)
+            lambda: finish(self, on_finish=progress_popup.complete),
         )
 
     @report_uncaught
@@ -257,7 +231,7 @@ class DataPreparationTool(tk.Toplevel):
                 prefix="species_delim_",
                 suffix=".csv",
                 delete=False,
-                dir=self.tempdir.name
+                dir=self.tempdir.name,
             )
             self.delim.close()
             self.app.sp.delim_fname = self.delim.name
@@ -265,24 +239,19 @@ class DataPreparationTool(tk.Toplevel):
             # delimit the species
             print("DELIMITING SPECIES...")
             try:
-                self.app.sp.delimit_species(
-                    method, tax=self.taxon_level, debug=False)
+                self.app.sp.delimit_species(method, tax=self.taxon_level, debug=False)
             except (ChildProcessError, FileNotFoundError, IndexError) as err:
                 self.dlib.dialog(
                     messagebox.showerror,
                     "DELIM_ERR",
                     form=(self.taxon_level_name, str(err)),
-                    parent=self
+                    parent=self,
                 )
                 if on_finish is not None:
                     on_finish()
                 return
             except self.util.RScriptFailedError:
-                self.dlib.dialog(
-                    messagebox.showerror,
-                    "R_SCRIPT_FAILED",
-                    parent=self
-                )
+                self.dlib.dialog(messagebox.showerror, "R_SCRIPT_FAILED", parent=self)
                 if on_finish is not None:
                     on_finish()
                 return
@@ -295,11 +264,11 @@ class DataPreparationTool(tk.Toplevel):
             self.data_sec.delim_save_button["state"] = tk.ACTIVE
 
             # advise the user to check the delimitation
-            self.dlib.dialog(
-                messagebox.showinfo, "DELIM_COMPLETE", parent=self)
+            self.dlib.dialog(messagebox.showinfo, "DELIM_COMPLETE", parent=self)
 
             if on_finish is not None:
                 on_finish()
+
         # ----- end threaded function -----
 
         data = self.util.get_data(self.sequence_filtered.name)
@@ -310,8 +279,8 @@ class DataPreparationTool(tk.Toplevel):
                 messagebox.showerror,
                 "TAXON_NOT_PRESENT",
                 form=(self.taxon_level_name,),
-                parent=self
-            )
+                parent=self,
+            ),
         ):
             return
 
@@ -321,8 +290,8 @@ class DataPreparationTool(tk.Toplevel):
                 messagebox.askokcancel,
                 "NAN_TAXON",
                 form=(self.taxon_level_name,),
-                parent=self
-            )
+                parent=self,
+            ),
         ):
             return
 
@@ -332,17 +301,13 @@ class DataPreparationTool(tk.Toplevel):
                 messagebox.askokcancel,
                 "SINGLE_SPLIT",
                 form=(self.taxon_level_name,),
-                parent=self
-            )
+                parent=self,
+            ),
         ):
             return
 
         # make popup to keep user from pressing buttons and breaking it
-        progress = ProgressPopup(
-            self,
-            "Data Preparation",
-            "Delimiting species..."
-        )
+        progress = ProgressPopup(self, "Data Preparation", "Delimiting species...")
 
         def finish(self, on_finish):
             self.app.status_bar.set_status("Awaiting user input.")
@@ -356,26 +321,24 @@ class DataPreparationTool(tk.Toplevel):
 
         # run time-consuming items in thread
         _delim_species(
-            self,
-            progress.set_status,
-            on_finish=lambda: finish(self, progress.complete)
+            self, progress.set_status, on_finish=lambda: finish(self, progress.complete)
         )
 
     @report_uncaught
     def filter_seq_data(self):
         """Filter Sequence Data"""
+
         # ----- threaded function -----
         @threaded
         @report_uncaught
         def _filter_seq_data(self, on_finish=None):
-
             # prepare tempfile for prepped data
             self.sequence_filtered = tempfile.NamedTemporaryFile(
                 mode="w+",
                 prefix="filtered_sequence_",
                 suffix=".tsv",
                 delete=False,
-                dir=self.tempdir.name
+                dir=self.tempdir.name,
             )
             self.sequence_filtered.close()
             self.app.sp.filtered_fname = self.sequence_filtered.name
@@ -386,7 +349,7 @@ class DataPreparationTool(tk.Toplevel):
                 prefix="unaligned_fasta_",
                 suffix=".fasta",
                 delete=False,
-                dir=self.tempdir.name
+                dir=self.tempdir.name,
             )
             self.fasta.close()
             self.app.sp.fasta_fname = self.fasta.name
@@ -409,8 +372,7 @@ class DataPreparationTool(tk.Toplevel):
 
             bp = int(bp) if bp is not None else 0
 
-            data = self.app.sp.filter_sequence_data(
-                self.app.sp.get_sequence_data(), bp)
+            data = self.app.sp.filter_sequence_data(self.app.sp.get_sequence_data(), bp)
 
             # save filtered data for later use
             data.to_csv(self.sequence_filtered.name, sep="\t", index=False)
@@ -448,13 +410,12 @@ class DataPreparationTool(tk.Toplevel):
 
             if on_finish is not None:
                 on_finish()
+
         # ----- end threaded function -----
 
         # disable buttons by opening progress bar
         progress_popup = ProgressPopup(
-            self,
-            "Data Preparation",
-            "Filtering Sequences..."
+            self, "Data Preparation", "Filtering Sequences..."
         )
 
         def finish(self, on_finish):
@@ -467,15 +428,11 @@ class DataPreparationTool(tk.Toplevel):
         self.app.status_bar.progress["mode"] = "indeterminate"
         self.app.status_bar.progress.start()
 
-        _filter_seq_data(
-            self,
-            on_finish=lambda: finish(self, progress_popup.complete)
-        )
+        _filter_seq_data(self, on_finish=lambda: finish(self, progress_popup.complete))
 
     @report_uncaught
     def get_geographies(self):
-        """
-        Return a list of all geographies.
+        """Return a list of all geographies.
 
         Returns:
             list: All configured geographies.
@@ -486,13 +443,11 @@ class DataPreparationTool(tk.Toplevel):
 
     @report_uncaught
     def load_item(self, item):
-        """
-        Load an item into the program.
+        """Load an item into the program.
 
         Args:
             item (str): key for which item to load.
         """
-
         table = [
             ("All files", ".*"),
             ("Comma-separated values", ".csv"),
@@ -513,7 +468,7 @@ class DataPreparationTool(tk.Toplevel):
                 prefix="aligned_fasta_",
                 suffix=".fasta",
                 delete=False,
-                dir=self.tempdir.name
+                dir=self.tempdir.name,
             )
             self.fasta_align.close()
             self.app.sp.fasta_align_fname = self.fasta_align.name
@@ -525,7 +480,7 @@ class DataPreparationTool(tk.Toplevel):
                 prefix="species_delim_",
                 suffix=".csv",
                 delete=False,
-                dir=self.tempdir.name
+                dir=self.tempdir.name,
             )
             self.delim.close()
             self.app.sp.delim_fname = self.delim.name
@@ -534,12 +489,9 @@ class DataPreparationTool(tk.Toplevel):
             "alignment": self.fasta_align.name,
             "filtered": self.sequence_filtered.name,
             "finalized": (
-                self.finalized_data.name
-                if self.finalized_data is not None else None
+                self.finalized_data.name if self.finalized_data is not None else None
             ),
-            "delimitation": (
-                self.delim.name if self.delim is not None else None
-            )
+            "delimitation": (self.delim.name if self.delim is not None else None),
         }
         # ----- threaded function -----
 
@@ -550,10 +502,10 @@ class DataPreparationTool(tk.Toplevel):
             data = self.util.get_data(self.sequence_filtered.name)
 
             # check that the alignment matches the data
-            with open(alignfname, "r") as file:
+            with open(alignfname) as file:
                 names = []
                 # multiple lines per sequence
-                for line in file.readlines():
+                for line in file:
                     names.extend(re.findall("(?<=>).*(?=\n)", line))
 
             # print(names)
@@ -567,10 +519,7 @@ class DataPreparationTool(tk.Toplevel):
                     # print("'{}' not found".format(name))
                     names_not_found.append(name)
 
-            missing = os.path.join(
-                self.util.USER_PATH,
-                "logs/missing_PIDs.log"
-            )
+            missing = os.path.join(self.util.USER_PATH, "logs/missing_PIDs.log")
 
             if os.path.exists(missing):
                 os.remove(missing)
@@ -585,7 +534,7 @@ class DataPreparationTool(tk.Toplevel):
                     messagebox.showwarning,
                     "ALIGN_MISMATCH",
                     parent=self,
-                    form=(missing.replace("/", "\\"),)
+                    form=(missing.replace("/", "\\"),),
                 )
 
             # load file
@@ -609,11 +558,7 @@ class DataPreparationTool(tk.Toplevel):
 
             # check chosen file is not empty
             if os.stat(delimfname).st_size == 0:
-                self.dlib.dialog(
-                    messagebox.showwarning,
-                    "EMPTY_FILE",
-                    parent=self
-                )
+                self.dlib.dialog(messagebox.showwarning, "EMPTY_FILE", parent=self)
                 on_finish()
                 return
 
@@ -622,9 +567,7 @@ class DataPreparationTool(tk.Toplevel):
                 delim = self.util.get_data(delimfname)
             except (TypeError, ValueError):
                 self.dlib.dialog(
-                    messagebox.showerror,
-                    "INCOMPATIBLE_GENERIC",
-                    parent=self
+                    messagebox.showerror, "INCOMPATIBLE_GENERIC", parent=self
                 )
                 on_finish()
                 return
@@ -637,9 +580,7 @@ class DataPreparationTool(tk.Toplevel):
             for col in req_cols:
                 if col not in delim.columns:
                     self.dlib.dialog(
-                        messagebox.showerror,
-                        "MISSING_REQUIRED_COLUMNS",
-                        parent=self
+                        messagebox.showerror, "MISSING_REQUIRED_COLUMNS", parent=self
                     )
                     on_finish()
                     return
@@ -647,8 +588,7 @@ class DataPreparationTool(tk.Toplevel):
             # Get a list of pids which are ignored due to single split
             # These don't need to be in the delimitation
             ignored = (
-                data
-                .groupby(self.taxon_level)
+                data.groupby(self.taxon_level)
                 .filter(lambda g: len(g) == 1)["UPID"]
                 .tolist()
             )
@@ -664,35 +604,23 @@ class DataPreparationTool(tk.Toplevel):
             # make sure nothing appears more than once
             counts = delim["sample_name"].value_counts()
             if sum(counts) != len(counts):
-                self.dlib.dialog(
-                    messagebox.showwarning,
-                    "INVALID_DELIM",
-                    parent=self
-                )
+                self.dlib.dialog(messagebox.showwarning, "INVALID_DELIM", parent=self)
                 on_finish()
                 return
             # ensure no empty entries
             if delim.isnull().values.any():
                 self.dlib.dialog(
-                    messagebox.showwarning,
-                    "DELIM_MISSING_ENTRIES",
-                    parent=self
+                    messagebox.showwarning, "DELIM_MISSING_ENTRIES", parent=self
                 )
                 on_finish()
                 return
 
-            missing = os.path.join(
-                self.util.USER_PATH,
-                "logs/missing_PIDs.log"
-            )
+            missing = os.path.join(self.util.USER_PATH, "logs/missing_PIDs.log")
 
             if os.path.exists(missing):
                 os.remove(missing)
 
-            extra = os.path.join(
-                self.util.USER_PATH,
-                "logs/extra_PIDs.log"
-            )
+            extra = os.path.join(self.util.USER_PATH, "logs/extra_PIDs.log")
 
             if os.path.exists(extra):
                 os.remove(extra)
@@ -708,7 +636,7 @@ class DataPreparationTool(tk.Toplevel):
                     messagebox.showwarning,
                     "MISSING_PIDS",
                     parent=self,
-                    form=(missing.replace("/", "\\"),)
+                    form=(missing.replace("/", "\\"),),
                 )
                 # on_finish()
                 # return
@@ -724,7 +652,7 @@ class DataPreparationTool(tk.Toplevel):
                     messagebox.showwarning,
                     "EXTRA_PIDS",
                     parent=self,
-                    form=(extra.replace("/", "\\"),)
+                    form=(extra.replace("/", "\\"),),
                 )
                 # on_finish()
                 # return
@@ -745,10 +673,9 @@ class DataPreparationTool(tk.Toplevel):
         # prompt the user for the classifier file
         file = filedialog.askopenfilename(
             title="Open Edited Alignment",
-            initialdir=os.path.realpath(
-                os.path.join(self.util.USER_PATH, "data/")),
+            initialdir=os.path.realpath(os.path.join(self.util.USER_PATH, "data/")),
             filetypes=filetypes[item],
-            parent=self
+            parent=self,
         )
 
         # don't do anything if the user selected nothing
@@ -759,11 +686,7 @@ class DataPreparationTool(tk.Toplevel):
         if item == "alignment":
             self.data_sec.align_load_button["state"] = tk.DISABLED
 
-            progress = ProgressPopup(
-                self,
-                "Reading Alignment",
-                "Reading file..."
-            )
+            progress = ProgressPopup(self, "Reading Alignment", "Reading file...")
 
             def finish(self, on_finish):  # specify self for report_uncaught
                 self.data_sec.align_load_button["state"] = tk.ACTIVE
@@ -777,16 +700,12 @@ class DataPreparationTool(tk.Toplevel):
                 self,
                 file,
                 progress.set_status,
-                on_finish=lambda: finish(self, progress.complete)
+                on_finish=lambda: finish(self, progress.complete),
             )
         elif item == "delimitation":
             self.data_sec.delim_load_button["state"] = tk.DISABLED
 
-            progress = ProgressPopup(
-                self,
-                "Reading Delimitation",
-                "Reading file..."
-            )
+            progress = ProgressPopup(self, "Reading Delimitation", "Reading file...")
 
             def finish(self, on_finish):  # specify self for report_uncaught
                 self.data_sec.delim_load_button["state"] = tk.ACTIVE
@@ -799,7 +718,7 @@ class DataPreparationTool(tk.Toplevel):
                 self,
                 file,
                 progress.set_status,
-                on_finish=lambda: finish(self, progress.complete)
+                on_finish=lambda: finish(self, progress.complete),
             )
 
         else:
@@ -809,8 +728,7 @@ class DataPreparationTool(tk.Toplevel):
 
     @report_uncaught
     def load_sequence_data(self):
-        """
-        Get the location of custom user sequence data for later use.
+        """Get the location of custom user sequence data for later use.
 
         Also conditionally enables the 'merge data' button.
         """
@@ -819,7 +737,8 @@ class DataPreparationTool(tk.Toplevel):
         # check if user is overwriting and make sure they're ok with it
         if self.user_sequence_raw is not None:
             if not self.dlib.dialog(
-                    messagebox.askokcancel, "SEQUENCE_OVERWRITE", parent=self):
+                messagebox.askokcancel, "SEQUENCE_OVERWRITE", parent=self
+            ):
                 self.app.status_bar.set_status("Awaiting user input.")
                 return
 
@@ -829,15 +748,14 @@ class DataPreparationTool(tk.Toplevel):
         # prompt the user for the sequence file
         file = filedialog.askopenfilename(
             title="Open Data File",
-            initialdir=os.path.realpath(
-                os.path.join(self.util.USER_PATH, "data/")),
+            initialdir=os.path.realpath(os.path.join(self.util.USER_PATH, "data/")),
             filetypes=[
                 ("Standard deliniated text file", ".txt .tsv .csv"),
                 ("Excel file", ".xlsx .xlsm .xlsb .xltx .xltm .xls .xlt .xml"),
                 ("Comma separated values", ".csv .txt"),
                 ("Tab separated values", ".tsv .txt"),
             ],
-            parent=self
+            parent=self,
         )
         # don't do anything if the user selected nothing
         if len(file) <= 0:
@@ -848,19 +766,16 @@ class DataPreparationTool(tk.Toplevel):
         self.app.status_bar.set_status("Checking user sequence file...")
         try:
             data = self.util.get_data(file)
-        except (ParserError, EmptyDataError, OSError, IOError, KeyError,
-                TypeError, ValueError, csv.Error):
-            self.dlib.dialog(
-                messagebox.showwarning,
-                "FILE_READ_ERR"
-            )
+        except (ParserError, EmptyDataError, OSError, KeyError, TypeError, ValueError, csv.Error):
+            self.dlib.dialog(messagebox.showwarning, "FILE_READ_ERR")
             return
 
         # check if sequence data has required columns
         if not self.app.sp.check.check_required_columns(
             data,
             lambda: self.dlib.dialog(
-                messagebox.showwarning, "MISSING_REQUIRED_COLUMNS", parent=self)
+                messagebox.showwarning, "MISSING_REQUIRED_COLUMNS", parent=self
+            ),
         ):
             self.app.status_bar.set_status("Awaiting user input.")
             return
@@ -870,7 +785,8 @@ class DataPreparationTool(tk.Toplevel):
             if not self.app.sp.check.check_UPID_unique(
                 data,
                 lambda: self.dlib.dialog(
-                    messagebox.askokcancel, "UPID_NOT_UNIQUE", parent=self)
+                    messagebox.askokcancel, "UPID_NOT_UNIQUE", parent=self
+                ),
             ):
                 self.app.status_bar.set_status("Awaiting user input.")
                 return
@@ -879,7 +795,8 @@ class DataPreparationTool(tk.Toplevel):
         if not self.app.sp.check.check_reserved_columns(
             data,
             lambda: self.dlib.dialog(
-                messagebox.askokcancel, "RESERVED_COLUMNS", parent=self)
+                messagebox.askokcancel, "RESERVED_COLUMNS", parent=self
+            ),
         ):
             return
 
@@ -887,7 +804,8 @@ class DataPreparationTool(tk.Toplevel):
         self.app.sp.check.check_has_species_name(
             data,
             lambda: self.dlib.dialog(
-                messagebox.showinfo, "NO_SPECIES_NAME", parent=self)
+                messagebox.showinfo, "NO_SPECIES_NAME", parent=self
+            ),
         )
 
         # set file location
@@ -897,8 +815,7 @@ class DataPreparationTool(tk.Toplevel):
         self.app.status_bar.set_status("Awaiting user input.")
 
         # conditionally enable merge data button
-        if (self.sequence_raw is not None
-                or self.user_sequence_previous is not None):
+        if self.sequence_raw is not None or self.user_sequence_previous is not None:
             self.get_data_sec.merge_button.config(state=tk.ACTIVE)
 
         # enable filter button
@@ -916,13 +833,13 @@ class DataPreparationTool(tk.Toplevel):
 
     @report_uncaught
     def merge_sequence_data(self, bold=False):
-        """
-        Merge multiple sequence files.
+        """Merge multiple sequence files.
 
         Args:
             bold (bool, optional): Denotes merging BOLD search results.
                 Defaults to False.
         """
+
         # ----- threaded function -----
         @threaded
         @report_uncaught
@@ -930,15 +847,11 @@ class DataPreparationTool(tk.Toplevel):
             if self.merged_raw is not None:
                 if bold:
                     answer = self.dlib.dialog(
-                        messagebox.askyesnocancel,
-                        "MESSAGE_MERGE_BOLD",
-                        parent=self
+                        messagebox.askyesnocancel, "MESSAGE_MERGE_BOLD", parent=self
                     )
                 else:
                     answer = self.dlib.dialog(
-                        messagebox.askyesnocancel,
-                        "EXISTING_MERGE_USER",
-                        parent=self
+                        messagebox.askyesnocancel, "EXISTING_MERGE_USER", parent=self
                     )
 
                 if answer is None:
@@ -952,8 +865,7 @@ class DataPreparationTool(tk.Toplevel):
                 else:
                     bold_data = self.util.get_data(self.sequence_raw.name)
                     if bold:
-                        user_data = self.util.get_data(
-                            self.sequence_previous.name)
+                        user_data = self.util.get_data(self.sequence_previous.name)
                     else:
                         user_data = self.util.get_data(self.user_sequence_raw)
 
@@ -969,10 +881,7 @@ class DataPreparationTool(tk.Toplevel):
 
             # merge the two sets
             merged = pd.concat(
-                (bold_data, user_data),
-                axis=0,
-                ignore_index=True,
-                sort=False
+                (bold_data, user_data), axis=0, ignore_index=True, sort=False
             )
 
             # create merged tempfile
@@ -981,7 +890,7 @@ class DataPreparationTool(tk.Toplevel):
                 prefix="merged_seq_unfiltered_",
                 suffix=".tsv",
                 delete=False,
-                dir=self.tempdir.name
+                dir=self.tempdir.name,
             )
             self.merged_raw.close()
 
@@ -1007,8 +916,7 @@ class DataPreparationTool(tk.Toplevel):
             if on_finish is not None:
                 on_finish()
 
-            self.dlib.dialog(
-                messagebox.showinfo, "MERGE_COMPLETE", parent=self)
+            self.dlib.dialog(messagebox.showinfo, "MERGE_COMPLETE", parent=self)
 
         # ----- end threaded function -----
 
@@ -1023,20 +931,14 @@ class DataPreparationTool(tk.Toplevel):
             on_finish()
 
         # make popup to keep user from pressing buttons and breaking it
-        progress = ProgressPopup(
-            self,
-            "Data Merge",
-            "Merging data..."
-        )
+        progress = ProgressPopup(self, "Data Merge", "Merging data...")
 
-        _merge_sequence_data(
-            self,
-            on_finish=lambda: finish(self, progress.complete)
-        )
+        _merge_sequence_data(self, on_finish=lambda: finish(self, progress.complete))
 
     @report_uncaught
     def prep_sequence_data(self):
         """Prepare aligned sequence data."""
+
         # ----- threaded function -----
         @threaded
         @report_uncaught
@@ -1061,7 +963,7 @@ class DataPreparationTool(tk.Toplevel):
                 prefix="features_",
                 suffix=".tsv",
                 delete=False,
-                dir=self.tempdir.name
+                dir=self.tempdir.name,
             )
             self.seq_features.close()
             self.app.sp.seq_features_fname = self.seq_features.name
@@ -1071,7 +973,7 @@ class DataPreparationTool(tk.Toplevel):
                 prefix="finalized_",
                 suffix=".csv",
                 delete=False,
-                dir=self.tempdir.name
+                dir=self.tempdir.name,
             )
             self.finalized_data.close()
             self.app.sp.finalized_fname = self.finalized_data.name
@@ -1104,33 +1006,24 @@ class DataPreparationTool(tk.Toplevel):
             status_cb("Generating species features (This will take some time)...")
             print("GENERATING FEATURES...")
             try:
-                self.app.sp.generate_features(
-                    tax=self.taxon_level, debug=False)
+                self.app.sp.generate_features(tax=self.taxon_level, debug=False)
             except (ChildProcessError, FileNotFoundError) as err:
                 self.dlib.dialog(
                     messagebox.showerror,
                     "FEATURE_GEN_ERR",
                     form=(self.taxon_level_name, str(err)),
-                    parent=self
+                    parent=self,
                 )
                 if on_finish is not None:
                     on_finish()
                 return
             except self.util.RNotFoundError:
-                self.dlib.dialog(
-                    messagebox.showerror,
-                    "R_NOT_FOUND",
-                    parent=self
-                )
+                self.dlib.dialog(messagebox.showerror, "R_NOT_FOUND", parent=self)
                 if on_finish is not None:
                     on_finish()
                 return
             except self.util.RScriptFailedError:
-                self.dlib.dialog(
-                    messagebox.showerror,
-                    "R_SCRIPT_FAILED",
-                    parent=self
-                )
+                self.dlib.dialog(messagebox.showerror, "R_SCRIPT_FAILED", parent=self)
                 if on_finish is not None:
                     on_finish()
                 return
@@ -1138,7 +1031,8 @@ class DataPreparationTool(tk.Toplevel):
             final = self.util.get_data(self.finalized_data.name)
             if "species_name" in final.columns:
                 status_cb(
-                    "Looking up known species statuses (this will take some time)...")
+                    "Looking up known species statuses (this will take some time)..."
+                )
                 print("EXECUTING STATUS LOOKUP...")
                 self.app.status_bar.set_status("Looking up statuses...")
                 # get statuses
@@ -1147,9 +1041,7 @@ class DataPreparationTool(tk.Toplevel):
                     self.app.sp.lookup_status()
                 except ChildProcessError:
                     self.dlib.dialog(
-                        messagebox.showerror,
-                        "GEO_LOOKUP_ERR",
-                        parent=self
+                        messagebox.showerror, "GEO_LOOKUP_ERR", parent=self
                     )
                     if on_finish is not None:
                         on_finish()
@@ -1168,10 +1060,8 @@ class DataPreparationTool(tk.Toplevel):
                 if self.app.sp.check.check_enough_classes(
                     final["final_status"],
                     lambda: self.dlib.dialog(
-                        messagebox.showwarning,
-                        "NOT_ENOUGH_CLASSES",
-                        parent=self
-                    )
+                        messagebox.showwarning, "NOT_ENOUGH_CLASSES", parent=self
+                    ),
                 ):
                     # check that enough samples were classified
                     self.app.sp.check.check_enough_classified(
@@ -1180,17 +1070,16 @@ class DataPreparationTool(tk.Toplevel):
                             messagebox.showwarning,
                             "LOW_CLASS_COUNT",
                             form=(n_classified,),
-                            parent=self
-                        )
+                            parent=self,
+                        ),
                     )
 
                     # check for extreme inbalance using stdev as a heuristic
                     self.app.sp.check.check_inbalance(
                         final["final_status"],
                         lambda: self.dlib.dialog(
-                            messagebox.showwarning,
-                            "HIGH_IMBALANCE"
-                        )
+                            messagebox.showwarning, "HIGH_IMBALANCE"
+                        ),
                     )
 
                 # notify of completion
@@ -1198,11 +1087,12 @@ class DataPreparationTool(tk.Toplevel):
                     messagebox.showinfo,
                     "DATA_PREP_COMPLETE",
                     form=(n_classified,),
-                    parent=self
+                    parent=self,
                 )
 
             if on_finish is not None:
                 on_finish()
+
         # ----- end threaded function -----
 
         data = self.util.get_data(self.sequence_filtered.name)
@@ -1213,8 +1103,8 @@ class DataPreparationTool(tk.Toplevel):
                 messagebox.showerror,
                 "TAXON_NOT_PRESENT",
                 form=(self.taxon_level_name,),
-                parent=self
-            )
+                parent=self,
+            ),
         ):
             return
 
@@ -1224,8 +1114,8 @@ class DataPreparationTool(tk.Toplevel):
                 messagebox.askokcancel,
                 "NAN_TAXON",
                 form=(self.taxon_level_name,),
-                parent=self
-            )
+                parent=self,
+            ),
         ):
             return
 
@@ -1235,17 +1125,13 @@ class DataPreparationTool(tk.Toplevel):
                 messagebox.askokcancel,
                 "SINGLE_SPLIT",
                 form=(self.taxon_level_name,),
-                parent=self
-            )
+                parent=self,
+            ),
         ):
             return
 
         # make popup to keep user from pressing buttons and breaking it
-        progress = ProgressPopup(
-            self,
-            "Data Preparation",
-            "Preparing sequence data..."
-        )
+        progress = ProgressPopup(self, "Data Preparation", "Preparing sequence data...")
 
         def finish(self, on_finish):
             self.app.status_bar.set_status("Awaiting user input.")
@@ -1259,20 +1145,18 @@ class DataPreparationTool(tk.Toplevel):
 
         # run time-consuming items in thread
         _prep_sequence_data(
-            self,
-            progress.set_status,
-            on_finish=lambda: finish(self, progress.complete)
+            self, progress.set_status, on_finish=lambda: finish(self, progress.complete)
         )
 
     @report_uncaught
     def retrieve_seq_data(self):
         """Search for sequence data from BOLD."""
+
         # ----- threaded function -----
         @threaded
         @report_uncaught
         def _retrieve_seq_data(self, on_finish=None):
-            """
-            Pull data from BOLD in a thread.
+            """Pull data from BOLD in a thread.
 
             Args:
                 on_finish (func): Function to call on completion.
@@ -1287,7 +1171,7 @@ class DataPreparationTool(tk.Toplevel):
                 prefix="unfiltered_sequence_",
                 suffix=".tsv",
                 delete=False,
-                dir=self.tempdir.name
+                dir=self.tempdir.name,
             )
 
             self.sequence_raw.close()
@@ -1296,14 +1180,14 @@ class DataPreparationTool(tk.Toplevel):
                 # retrieve the data
                 self.app.sp.retrieve_sequence_data()
             except requests.exceptions.RequestException:
-                self.dlib.dialog(
-                    messagebox.showerror, "BOLD_SEARCH_ERR", parent=self)
+                self.dlib.dialog(messagebox.showerror, "BOLD_SEARCH_ERR", parent=self)
                 if on_finish is not None:
                     on_finish()
                 return
             except UnicodeDecodeError:
                 self.dlib.dialog(
-                    messagebox.showerror, "RESPONSE_DECODE_ERR", parent=self)
+                    messagebox.showerror, "RESPONSE_DECODE_ERR", parent=self
+                )
                 if on_finish is not None:
                     on_finish()
                 return
@@ -1313,21 +1197,22 @@ class DataPreparationTool(tk.Toplevel):
                 print(self.sequence_raw.name)
                 nlines = self.util.get_data(self.sequence_raw.name).shape[0]
             except ParserError:
-                self.dlib.dialog(
-                    messagebox.showerror, "BOLD_FILE_ERR", parent=self)
+                self.dlib.dialog(messagebox.showerror, "BOLD_FILE_ERR", parent=self)
                 if on_finish is not None:
                     on_finish()
                 return
             except EmptyDataError:
                 self.dlib.dialog(
-                    messagebox.showerror, "BOLD_NO_OBSERVATIONS", parent=self)
+                    messagebox.showerror, "BOLD_NO_OBSERVATIONS", parent=self
+                )
                 if on_finish is not None:
                     on_finish()
                 return
             except UnicodeDecodeError:
                 traceback.print_exc()
                 self.dlib.dialog(
-                    messagebox.showerror, "RESPONSE_DECODE_ERR", parent=self)
+                    messagebox.showerror, "RESPONSE_DECODE_ERR", parent=self
+                )
                 if on_finish is not None:
                     on_finish()
                 return
@@ -1340,8 +1225,7 @@ class DataPreparationTool(tk.Toplevel):
 
             self.data_sec.filter_button["state"] = tk.ACTIVE
             self.get_data_sec.save_bold_button["state"] = tk.ACTIVE
-            if (self.merged_raw is not None
-                    or self.sequence_previous is not None):
+            if self.merged_raw is not None or self.sequence_previous is not None:
                 self.get_data_sec.merge_bold_button["state"] = tk.ACTIVE
 
             # disable buttons
@@ -1361,55 +1245,44 @@ class DataPreparationTool(tk.Toplevel):
 
             if nlines == 0:
                 self.dlib.dialog(
-                    messagebox.showwarning,
-                    "BOLD_NO_OBSERVATIONS",
-                    parent=self
+                    messagebox.showwarning, "BOLD_NO_OBSERVATIONS", parent=self
                 )
 
                 return
 
             # tell user it worked/how many lines downloaded
             self.dlib.dialog(
-                messagebox.showinfo,
-                "BOLD_SEARCH_COMPLETE",
-                parent=self,
-                form=(nlines,)
+                messagebox.showinfo, "BOLD_SEARCH_COMPLETE", parent=self, form=(nlines,)
             )
+
         # ----- end threaded function -----
 
         self.app.sp.geo = self.get_data_sec.geo_input.get()
         self.app.sp.taxon = self.get_data_sec.taxon_input.get()
 
-        if (self.app.sp.geo is None or self.app.sp.taxon is None):
+        if self.app.sp.geo is None or self.app.sp.taxon is None or len(self.app.sp.geo) == 0 or len(self.app.sp.taxon) == 0:
             self.dlib.dialog(
-                messagebox.showwarning, "MISSING_SEARCH_TERMS", parent=self)
-            return
-        elif len(self.app.sp.geo) == 0 or len(self.app.sp.taxon) == 0:
-            self.dlib.dialog(
-                messagebox.showwarning, "MISSING_SEARCH_TERMS", parent=self)
-
+                messagebox.showwarning, "MISSING_SEARCH_TERMS", parent=self
+            )
             return
 
         if not self.dlib.dialog(
             messagebox.askokcancel,
             "CONFIRM_SEARCH_TERMS",
             form=(self.app.sp.geo, self.app.sp.taxon),
-            parent=self
+            parent=self,
         ):
             return
 
         progress_popup = ProgressPopup(
-            self,
-            "BOLD Data Download",
-            "Downloading from BOLD API..."
+            self, "BOLD Data Download", "Downloading from BOLD API..."
         )
 
         _retrieve_seq_data(self, on_finish=progress_popup.complete)
 
     @report_uncaught
     def set_taxon_level(self, event):
-        """
-        Set the taxonomic level to the user selection.
+        """Set the taxonomic level to the user selection.
 
         event is kept as argument to avoid too many arguments error.
         """
@@ -1420,22 +1293,22 @@ class DataPreparationTool(tk.Toplevel):
             "Order": "order_name",
             "Family": "family_name",
             "Subfamily": "subfamily_name",
-            "Genus": "genus_name"
+            "Genus": "genus_name",
         }
 
         prev_tln = self.taxon_level_name
         new_tln = self.data_sec.taxon_split_selector.get()
 
         # if an alignment was already generated on this split level
-        if all([
-            self.fasta_align is not None,
-            self.generated_alignment is not False,
-            self.generated_alignment != new_tln
-        ]):
+        if all(
+            [
+                self.fasta_align is not None,
+                self.generated_alignment is not False,
+                self.generated_alignment != new_tln,
+            ]
+        ):
             if not self.dlib.dialog(
-                    messagebox.askokcancel,
-                    "TAXON_CHANGE",
-                    form=(self.generated_alignment,)
+                messagebox.askokcancel, "TAXON_CHANGE", form=(self.generated_alignment,)
             ):
                 self.data_sec.taxon_split_selector.set(prev_tln)
                 return
@@ -1453,7 +1326,7 @@ class DataPreparationTool(tk.Toplevel):
             prefix="final_trimmed_",
             suffix=".csv",
             delete=False,
-            dir=self.tempdir.name
+            dir=self.tempdir.name,
         )
 
         final_trimmed.close()
@@ -1498,7 +1371,7 @@ class DataPreparationTool(tk.Toplevel):
             "dnaSim_mean",
             "dnaSim_med",
             "dnaSim_std",
-            "dnaSim_max"
+            "dnaSim_max",
         ]
 
         data = data.loc[:, data.columns.isin(cols)]

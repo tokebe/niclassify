@@ -1,5 +1,6 @@
-from niclassify.core.lookup import get_geographies
 import typer
+
+from niclassify.core.lookup.get_geographies import get_geographies
 
 GEOGRAPHIES = get_geographies()
 

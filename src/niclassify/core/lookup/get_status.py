@@ -1,14 +1,13 @@
-from typing import Tuple, Optional
-
 from niclassify.core.interfaces.handler import Handler
+from niclassify.core.lookup.combine_status import combine_status
 from niclassify.core.lookup.query_gbif import query_gbif
 from niclassify.core.lookup.query_itis import query_itis
-from niclassify.core.lookup.combine_status import combine_status
 
 
 def get_status(
     species_name: str, geography: str, handler: Handler
-) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+) -> tuple[str | None, str | None, str | None]:
+    """Use GBIF and ITIS to determine whether a given species is native to the given reference geography."""
     status_gbif = query_gbif(species_name, geography, handler)
     status_itis = query_itis(species_name, geography, handler)
     combined = combine_status(status_gbif, status_itis)
@@ -20,4 +19,4 @@ def get_status(
             status_itis if status_itis is not None else "Unknown",
         )
     )
-    return species_name, status_gbif, status_itis, combined
+    return status_gbif, status_itis, combined

@@ -1,13 +1,10 @@
-from pathlib import Path
-from niclassify.core.interfaces import Handler
-from Bio import SeqIO
-from tempfile import NamedTemporaryFile
-import shutil
 from collections import Counter
-import os
+from pathlib import Path
+
+from Bio import SeqIO
 from Bio.Seq import Seq
-import math
-import textwrap
+
+from niclassify.core.interfaces.handler import Handler
 
 
 def trim(
@@ -20,7 +17,7 @@ def trim(
     # TODO: don't replace gaps with Ns, instead catch error and make frame invalid for that seq
 
     with (
-        open(input_path, "r", encoding="utf8") as input_file,
+        open(input_path, encoding="utf8") as input_file,
         handler.spin() as spinner,
     ):
         task = spinner.add_task("Reading FASTA...", total=1)
@@ -58,7 +55,7 @@ def trim(
                 [f"{offset}:{count / n_seq:.2f}" for offset, count in frames.items()]
             )
         )
-        if not any((count / n_seq >= min_agreement for count in frames.values())):
+        if not any(count / n_seq >= min_agreement for count in frames.values()):
             handler.error(
                 "Minimum reading frame offset agreement not met.",
                 "Your sequences may be heavily contaminated.",
@@ -77,7 +74,7 @@ def trim(
     n_written = 0
 
     with (
-        open(input_path, "r", encoding="utf8") as input_file,
+        open(input_path, encoding="utf8") as input_file,
         open(output_path, "w", encoding="utf8") as output_file,
         handler.progress(percent=True) as status,
     ):
@@ -96,7 +93,7 @@ def trim(
                 continue
             output_file.write(f">{record.id}\n")
             output_file.write(
-                "\n".join((str(seq[i : 60 + i]) for i in range(0, len(seq), 60))) + "\n"
+                "\n".join(str(seq[i : 60 + i]) for i in range(0, len(seq), 60)) + "\n"
             )
             n_written += 1
             status.advance(task)

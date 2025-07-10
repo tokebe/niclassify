@@ -1,17 +1,17 @@
-from itertools import zip_longest
-import os
 import math
+import os
+from itertools import zip_longest
+
 from rich import print
 from rich.table import Table
-from typing import List
+
 
 def split(a, n):
     k, m = divmod(len(a), n)
-    return (a[i*k+min(i, m):(i+1)*k+min(i+1, m)] for i in range(n))
+    return (a[i * k + min(i, m) : (i + 1) * k + min(i + 1, m)] for i in range(n))
 
 
-def columnize(values: List[str], dry_run: bool = False, number: bool = False) -> Table:
-
+def columnize(values: list[str], dry_run: bool = False, number: bool = False) -> Table:
     number_len = 0
 
     if number:

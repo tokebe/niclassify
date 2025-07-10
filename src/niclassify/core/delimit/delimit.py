@@ -1,17 +1,16 @@
+import os
+import re
 from multiprocessing import cpu_count
 from pathlib import Path
-import re
-import os
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
-from Bio import AlignIO, SeqIO
-from niclassify.core.enums import Methods, TaxonomicHierarchy
-from niclassify.core.interfaces.handler import Handler
+from Bio import AlignIO
 from Bio.Phylo.TreeConstruction import DistanceCalculator, DistanceTreeConstructor
+from bptp import run_bptp
 
+from niclassify.core.interfaces.handler import Handler
 from niclassify.core.utils.read_data import read_data
 from niclassify.core.utils.split_fasta import split_files
-from bptp import run_bptp
 
 distance_calculator = DistanceCalculator("identity")
 tree_constructor = DistanceTreeConstructor()
@@ -28,7 +27,7 @@ tree_constructor = DistanceTreeConstructor()
 
 def make_tree(fasta_path: Path, handler: Handler) -> str:
     """Read an aligned FASTA file and turn it into a UPGMA tree, in newick-string format."""
-    with open(fasta_path, "r", encoding="utf8") as file:
+    with open(fasta_path, encoding="utf8") as file:
         alignment = AlignIO.read(file, format="fasta")
     try:
         distance_matrix = distance_calculator.get_distance(alignment)
@@ -86,7 +85,7 @@ def delimit(
             while True:
                 pass
         os.unlink(newick_file)
-            # Then grab the desired file from the tempdir and read to tsv output
+        # Then grab the desired file from the tempdir and read to tsv output
 
     # Step 1: split the existing fasta into multiple fasta files
 

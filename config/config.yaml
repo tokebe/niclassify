@@ -1,0 +1,22 @@
+---
+apis:
+  bold:
+    host: https://v4.boldsystems.org/index.php
+    taxon_levels:
+      - subspecies_name
+      - species_name
+      - subgenus_name
+      - genus_name
+      - tribe_name
+      - subfamily_name
+      - family_name
+      - order_name
+      - class_name
+      - phylum_name
+    rate_limit: 500 # in requests/min
+  gbif:
+    host: https://api.gbif.org/v1
+    rate_limit: 60 # in requests/min
+  itis:
+    host: http://www.itis.gov/ITISWebService/services/ITISService
+    rate_limit: 60 # in requests/min

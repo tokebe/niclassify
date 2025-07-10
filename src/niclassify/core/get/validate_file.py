@@ -1,9 +1,11 @@
 from pathlib import Path
 from typing import cast
-from niclassify.core.utils import read_data
-import yaml
-from niclassify.core.interfaces import Handler
+
 import polars as pl
+import yaml
+
+from niclassify.core.interfaces.handler import Handler
+from niclassify.core.utils.read_data import read_data
 
 NANS = []
 
@@ -17,7 +19,7 @@ def validate_file(file: Path, handler: Handler) -> None:
         try:
             data = read_data(file, handler=handler)
             retrieved_count = cast(
-                int, data.select(pl.len()).collect(streaming=True).item()
+                int, data.select(pl.len()).collect(engine="streaming").item()
             )
         except pl.NoDataError:
             handler.error(handler.prefab.ERR_BOLD_NO_OBSERVATIONS, abort=True)
