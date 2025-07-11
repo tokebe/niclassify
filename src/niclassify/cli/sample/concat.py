@@ -3,19 +3,15 @@ from typing import Annotated
 
 import typer
 
-from niclassify.core.filter.filter import filter_samples
+from niclassify.core.concat.concat import concat
 from niclassify.core.interfaces.handler import Handler
 
 
-def cli_filter(  # noqa: PLR0913
-    input_file: Annotated[
-        Path,
-        typer.Option(
-            "--input",
-            "-i",
-            help="Data to be filtered.",
-            prompt=True,
-            show_default=False,
+def cli_concat(
+    input_files: Annotated[
+        list[Path],
+        typer.Argument(
+            help="Data to concatenate. Must have at least 2.",
             exists=True,
             file_okay=True,
             dir_okay=False,
@@ -42,20 +38,14 @@ def cli_filter(  # noqa: PLR0913
             rich_help_panel="Requirements",
         ),
     ],
-    marker_codes: Annotated[
-        str,
+    relaxed: Annotated[
+        bool,
         typer.Option(
-            "--marker-codes",
-            "-m",
-            help="Marker codes to keep, separated by a comma.",
+            "--relaxed",
+            "-r",
+            help="If set, combine even some files have columns that others do not, setting nulls where appropriate.",
         ),
-    ] = "COI-5P",
-    base_pairs: Annotated[
-        int,
-        typer.Option(
-            "--base-pairs", "-b", help="Minimum base pair count allowed.", min=0
-        ),
-    ] = 350,
+    ] = False,
     pre_confirm: Annotated[
         bool,
         typer.Option(
@@ -72,14 +62,13 @@ def cli_filter(  # noqa: PLR0913
         ),
     ] = False,
 ) -> None:
-    """Filter input data. See options for default filtering cases.
+    """Concatenate multiple TSV sample files into one file.
 
-    If [bold]marker_codes[/] column is provided, only allowed marker codes will be kept.
-    If [bold]base_pairs[] column is provided, only sequences longer than --base-pairs will
+    Useful to combine data obtained from BOLD with project data.
 
-    Options in the 'Requirements' section will be prompted for if not provided.
+    Requires that each file is in the same format so columns may be joined appropriately.
     """
     handler = Handler(pre_confirm=pre_confirm, debug=debug)
 
     handler.confirm_overwrite(output_file, abort=True)
-    filter_samples(input_file, output_file, marker_codes, base_pairs, handler)
+    concat(input_files, output_file, handler=handler, diagonal=relaxed)

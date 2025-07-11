@@ -13,24 +13,14 @@ RESERVED_COLUMNS = [
 
 
 def filter_samples(
-    input_files: list[Path],
+    input_files: Path,
     output_file: Path,
     marker_codes: str,
     base_pairs: int,
     handler: Handler,
 ) -> None:
     """Filter given samples to only valid samples and output to given filepath."""
-    data_parts = [read_data(input_file, handler=handler) for input_file in input_files]
-
-    try:
-        data = pl.concat(data_parts, how="vertical", rechunk=True)
-    except ValueError as error:
-        handler.debug(str(error))
-        handler.error(
-            handler.prefab.ERR_TSV_CONCAT,
-            abort=True,
-        )
-        sys.exit(1)
+    data = read_data(input_files, handler)
 
     columns = data.collect_schema().names()
 
@@ -46,9 +36,7 @@ def filter_samples(
         )
         # Remove rows missing allowed marker_codes
         if "marker_codes" in columns:
-            data = data.with_columns(
-                pl.col.marker_codes.cast(pl.String, strict=False)
-            )
+            data = data.with_columns(pl.col.marker_codes.cast(pl.String, strict=False))
             for code in marker_codes.split(","):
                 data = data.filter(pl.col.marker_codes.str.contains(code))
 
@@ -73,6 +61,6 @@ def filter_samples(
         )
 
     handler.log(
-        f"File{'s' if len(input_files) > 1 else ''} filtered successfully",
+        "File filtered successfully",
         f"(removed {before_rows - after_rows} rows).",
     )

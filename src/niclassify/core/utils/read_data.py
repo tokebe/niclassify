@@ -19,7 +19,7 @@ def read_data(file: Path, handler: Handler | None = None) -> pl.LazyFrame:
     """
     try:
         # Determine separator
-        with open(file) as datafile:
+        with file.open("r") as datafile:
             sniffer = csv.Sniffer()
             delimiter = sniffer.sniff(datafile.readline()).delimiter
 
@@ -29,6 +29,7 @@ def read_data(file: Path, handler: Handler | None = None) -> pl.LazyFrame:
             quote_char=None,
             null_values=NANS,
             rechunk=True,
+            infer_schema_length=0,  # just make it all string
         )
 
         return data

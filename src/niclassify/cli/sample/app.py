@@ -1,5 +1,6 @@
 import typer
 
+from niclassify.cli.sample.concat import cli_concat
 from niclassify.cli.sample.filter import cli_filter
 from niclassify.cli.sample.format import cli_format
 from niclassify.cli.sample.get import cli_get
@@ -13,8 +14,9 @@ sample_command = typer.Typer(
     no_args_is_help=True,
     help="Operate on tab-delimited sample data.",
 )
-format = sample_command.command(name="format")(cli_format)
+format_samples = sample_command.command(name="format")(cli_format)
 get = sample_command.command(name="get")(cli_get)
-filter = sample_command.command(name="filter")(cli_filter)
+concat = sample_command.command(name="concat")(cli_concat)
+filter_samples = sample_command.command(name="filter")(cli_filter)
 identify = sample_command.command(name="identify")(cli_identify)
 lookup = sample_command.command(name="lookup")(cli_lookup)
