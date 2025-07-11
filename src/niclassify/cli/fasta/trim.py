@@ -46,7 +46,6 @@ def cli_trim(  # noqa:PLR0913
     no_split: Annotated[
         bool,
         typer.Option(
-            False,
             "--no-split",
             "-s",
             help="Set if the input Aligned FASTA was generated without splits (see align help)",
@@ -55,7 +54,6 @@ def cli_trim(  # noqa:PLR0913
     agreement: Annotated[
         float,
         typer.Option(
-            0.9,
             "--min-agreement",
             "-a",
             help="Minimum proportion of aligned sequences that must agree on a reading frame.",
@@ -66,7 +64,6 @@ def cli_trim(  # noqa:PLR0913
     output_all: Annotated[
         bool,
         typer.Option(
-            False,
             "--output-all",
             "-a",
             help="Output all trimmed FASTA (.fasta) files separately for each split. Ignored if --no-split is set.",
@@ -75,7 +72,6 @@ def cli_trim(  # noqa:PLR0913
     pre_confirm: Annotated[
         bool,
         typer.Option(
-            False,
             "--yes",
             "-y",
             help="Automatically confirm dialogs such as file overwrite confirmations.",
@@ -84,7 +80,6 @@ def cli_trim(  # noqa:PLR0913
     debug: Annotated[
         bool,
         typer.Option(
-            False,
             "--debug",
             help="Output debug logs to stdout.",
         ),
