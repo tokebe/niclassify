@@ -23,7 +23,7 @@ dependencies = [
     "bptp",
     "pyqt5~=5.15",
     "pyyaml~=6.0",
-    "typer~=0.16",
+    "typer~=0.15,!=0.16.0",
     "pydantic~=2.11",
     "pydantic-settings~=2.10",
     "chardet~=5.2",
