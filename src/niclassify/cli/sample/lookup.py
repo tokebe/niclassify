@@ -8,14 +8,13 @@ from niclassify.cli.completion.geography import complete_geography
 from niclassify.cli.validation.geography import validate_geography
 from niclassify.config.regions import REGIONS_FLAT
 from niclassify.core.interfaces.handler import Handler
-from niclassify.core.lookup.get_geographies import get_geographies
 from niclassify.core.lookup.lookup import lookup
 
 
 def list_geographies(value: bool) -> None:
     """Print all geographies to a list fitting the terminal."""
     if value:
-        columnize(get_geographies(), number=True)
+        columnize(list(REGIONS_FLAT.keys()), number=True)
         raise typer.Exit()
 
 
@@ -100,7 +99,7 @@ def cli_lookup(
     Options in the 'Requirements' section will be prompted for if not provided.
     """
     handler = Handler(pre_confirm=pre_confirm, debug=debug)
-    geographies = get_geographies()
+    geographies = list(REGIONS_FLAT.keys())
     # try to parse int input
     if not geography:
         geography = handler.select(
