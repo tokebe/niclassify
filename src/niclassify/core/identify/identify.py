@@ -75,7 +75,7 @@ def identify(
                     identified_count[0] = identified_count[0] + 1
                 status.update(
                     task,
-                    completed=1,
+                    advance=1,
                     description=f"Querying BOLD (Identified {identified_count[0]})",
                 )
             return identification
