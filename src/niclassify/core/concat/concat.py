@@ -23,7 +23,9 @@ def concat(
                 rechunk=True,
                 parallel=True,
             ).sink_csv(output_file, separator="\t")
-            spinner.update(task, complete=1)
+            spinner.update(
+                task, description="Attempting to combine files...done.", complete=1
+            )
         handler.log("Files combined successfully!")
     except Exception as error:
         handler.debug(escape(str(error)))
