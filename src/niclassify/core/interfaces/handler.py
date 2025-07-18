@@ -194,7 +194,8 @@ class Handler:
     def confirm_overwrite(self, file: Path, abort=False) -> bool:
         if file.exists():
             return self.confirm(
-                f"File {file.absolute()} already exists. Overwrite?", abort=abort
+                f"{'Directory' if file.is_dir() else 'File'} {file.absolute()} already exists. Overwrite?",
+                abort=abort,
             )
         file.parent.mkdir(exist_ok=True, parents=True)
         return True
