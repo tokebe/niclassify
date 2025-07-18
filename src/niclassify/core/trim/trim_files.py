@@ -1,12 +1,9 @@
-import os
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 from niclassify.core.interfaces.handler import Handler
 from niclassify.core.trim.trim import trim
 from niclassify.core.utils.split_fasta import split_files
-
-# TODO: add confirm_overwrites for output_all
 
 
 def trim_files(
@@ -16,52 +13,47 @@ def trim_files(
     min_agreement: float,
     output_all: bool,
 ) -> None:
+    """Take a combined FASTA (which splits on a given rule) and trim its components."""
     n_seq, split_paths = split_files(input_path, handler)
 
-    out_files = {
-        split: (
-            open(
+    output_paths = dict[str, Path]()
+
+    for split in split_paths:
+        if output_all:
+            output_paths[split] = (
                 output_path.parent
-                / f"{output_path.stem}_{split}_trim{output_path.suffix}",
-                "w",
-                encoding="utf8",
+                / f"{output_path.stem}_{split}_trim{output_path.suffix}"
             )
-            if output_all
-            else NamedTemporaryFile(
+        else:
+            with NamedTemporaryFile(
                 suffix=f"_{split}_trim{output_path.suffix}",
                 mode="w",
                 encoding="utf8",
                 delete=False,
-            )
+            ) as file:
+                output_paths[split] = Path(file.name)
+
+    if output_all:
+        handler.confirm_multiple_overwrite(list(output_paths.values()), abort=True)
+
+    for split, split_path in split_paths.items():
+        handler.log(f"Trimming split {split}...")
+        trim(
+            split_path,
+            output_paths[split],
+            handler,
+            min_agreement,
         )
-        for split in split_paths.keys()
-    }
-
-    for file in out_files.values():
-        file.close()
-
-    try:
-        for split, split_path in split_paths.items():
-            trim(
-                split_path,
-                Path(out_files[split].name),
-                handler,
-                min_agreement,
-            )
-            os.unlink(split_path)
-        with handler.progress() as progress, open(output_path, "w") as output_file:
-            task = progress.add_task("Writing final output", total=n_seq)
-            for split, outfile in out_files.items():
-                with open(outfile.name) as file:
-                    for line in file:
-                        if line.startswith(">"):
-                            progress.advance(task)
-                        output_file.write(line)
-                if not output_all:
-                    os.unlink(outfile.name)
-
-    finally:
-        for file in out_files.values():
-            file.close()
+        split_path.unlink()
+    with handler.progress() as progress, output_path.open("w") as output_file:
+        task = progress.add_task("Writing final output", total=n_seq)
+        for out_path in output_paths.values():
+            with out_path.open("r") as file:
+                for line in file:
+                    if line.startswith(">"):
+                        progress.advance(task)
+                    output_file.write(line)
+            if not output_all:
+                out_path.unlink()
 
     handler.log(f"Wrote {n_seq} sequences to combined file.")

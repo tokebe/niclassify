@@ -94,7 +94,7 @@ def write(  # noqa:PLR0913
                 )
             ask = True
             handler.warning(
-                f"Split [bold]{split_name}[/] has insufficient samples to perform an alignment and will be skipped."
+                f"Split [bold]{split_name}[/] has insufficient samples ({n_written}) to perform an alignment and will be skipped."
             )
     if ask:
         handler.confirm("Continue with skipped files? (Abort otherwise)", abort=True)

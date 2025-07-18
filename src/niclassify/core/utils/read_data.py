@@ -12,7 +12,12 @@ with open(Path(__file__).parent.parent.parent / "config/nans.yaml") as nansfile:
     NANS = yaml.safe_load(nansfile)
 
 
-def read_data(file: Path, handler: Handler | None = None) -> pl.LazyFrame:
+def read_data(
+    file: Path,
+    handler: Handler | None = None,
+    skip_rows: int = 0,
+    has_header: bool = True,
+) -> pl.LazyFrame:
     """Determine the dialect of a csv-like file and read it.
 
     Returns Polars LazyFrame.
@@ -30,6 +35,8 @@ def read_data(file: Path, handler: Handler | None = None) -> pl.LazyFrame:
             null_values=NANS,
             rechunk=True,
             infer_schema_length=0,  # just make it all string
+            skip_rows=skip_rows,
+            has_header=has_header,
         )
 
         return data
