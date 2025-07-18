@@ -11,7 +11,6 @@ RESOURCES_DEFAULT = math.ceil(
     (psutil.virtual_memory().total - 2e9) / 1e6
 )  # leaves 2GB to system
 
-P = TypeVar("P")
 R = TypeVar("R")
 
 
@@ -38,7 +37,7 @@ class DynamicPool:
         self.failed: bool = False
 
     def add_task(
-        self, task: Callable[[P], R], cost: int = 1, *args: Any, **kwargs: Any
+        self, task: Callable[..., R], cost: int = 1, *args: Any, **kwargs: Any
     ) -> pool.AsyncResult[R]:
         """Schedule a task to be added to the pool as soon as resources are available."""
         # block until enough resources are available
@@ -62,19 +61,18 @@ class DynamicPool:
         """
         self.resources.release(min(cost, self.resources_size))
 
+    # FIX: doesn't let pool.map() call stop blocking
     def task_failed(self) -> None:
         """Cancel all tasks and close the pool."""
         self.failed = True
         self.pool.terminate()
-        self.pool.join()
         raise RuntimeError("A task in the pool failed.")
 
     def map(
-        self, tasks: list[tuple[Callable[[P], R], int, tuple[Any, ...], dict[str, Any]]]
+        self, tasks: list[tuple[Callable[..., R], int, tuple[Any, ...], dict[str, Any]]]
     ) -> list[R]:
         """Schedule a number of tasks and await their completion."""
         for func, cost, args, kwargs in tasks:
-            self.add_task(func, cost, *args, **kwargs)
             self.queue.append(self.add_task(func, cost, *args, *kwargs))
         return [result.get() for result in self.queue]
 

@@ -1,13 +1,16 @@
-import os
-import re
-from multiprocessing import cpu_count
+import math
+import shutil
+import sys
+from collections.abc import Callable
 from pathlib import Path
-from tempfile import NamedTemporaryFile, TemporaryDirectory
+from threading import Lock
+from typing import Any
 
-from Bio import AlignIO
+import polars as pl
 from Bio.Phylo.TreeConstruction import DistanceCalculator, DistanceTreeConstructor
-from bptp import run_bptp
+from itaxotools import asapy
 
+from niclassify.core.dynamic_pool import DynamicPool
 from niclassify.core.interfaces.handler import Handler
 from niclassify.core.utils.read_data import read_data
 from niclassify.core.utils.split_fasta import split_files
@@ -16,79 +19,113 @@ distance_calculator = DistanceCalculator("identity")
 tree_constructor = DistanceTreeConstructor()
 
 
-# TODO: evaluate alternatives to bPTP
-# - ABGD may work, can run purely binary, however you'll have to check licensing for redist
-# - mPTP seems mildly promising, possibly an improvement over bPTP, same issue as above
-# - Look into ASAP (Assemble Species by Automatic Partitioning)
-#   https://github.com/iTaxoTools/ASAPy
-
-# TODO add spinners/progress bars
-
-
-def make_tree(fasta_path: Path, handler: Handler) -> str:
-    """Read an aligned FASTA file and turn it into a UPGMA tree, in newick-string format."""
-    with open(fasta_path, encoding="utf8") as file:
-        alignment = AlignIO.read(file, format="fasta")
-    try:
-        distance_matrix = distance_calculator.get_distance(alignment)
-        upgma_tree = tree_constructor.upgma(distance_matrix)
-        return upgma_tree.format("newick")
-    except Exception as error:
-        handler.error(error)
-        handler.error(
-            "Error constructing UPGMA tree for delimitation. See information above.",
-            abort=True,
-        )
-        return ""
-
-
-def delimit(
+def delimit(  # noqa:PLR0913
     input_path: Path,
     input_fasta: Path,
     output_path: Path,
     split: bool,
     handler: Handler,
-    cores: int = cpu_count(),
-):
+    output_all: bool = True,
+) -> None:
+    """Delimit samples into OTUs for use in feature generation."""
     data = read_data(input_path)
+    columns = data.collect_schema().names()
 
-    if "nucleotides" not in data.columns:
+    if "nucleotides" not in columns:
         handler.error(handler.prefab.MISSING_NUCLEOTIDES_COLUMN, abort=True)
         return
 
-    if "UID" not in data.columns:
+    if "UID" not in columns:
         handler.error(handler.prefab.MISSING_UID, abort=True)
 
-    # TODO if no split, skip
     if split:
         _, split_paths = split_files(input_fasta, handler)
     else:
         split_paths = {"nosplit": input_fasta}
 
-    # TODO: parallelize
-    for path in split_paths.values():
-        newick = make_tree(path, handler)
-        match = re.findall(r".*_(.*)_smartsplit\..*", path.name)
-        if len(match) == 0:
-            handler.error(
-                f"Error finding split in pathname {path} prior to delimitation. Make sure you chose the right split option for your data.",
-                abort=True,
+    if output_all and handler.confirm_overwrite(
+        output_path.parent.joinpath(output_path.stem), abort=True
+    ):
+        shutil.rmtree(output_path.parent.joinpath(output_path.stem), ignore_errors=True)
+        output_path.parent.joinpath(output_path.stem).mkdir()
+
+    first_run = [True]
+    lock = Lock()
+    total_samples = [0]
+    total_otus = [0]
+    data_held = [data]
+
+    with handler.progress() as progress:
+        task = progress.add_task("Delimiting OTUs", total=len(split_paths))
+
+        def delim_task(split_name: str, path: Path) -> None:
+            analysis = asapy.PartitionAnalysis(str(path))
+            analysis.launch()
+            if output_all:
+                try:
+                    analysis.fetch(  # pyright:ignore[reportUnknownMemberType] Arg untyped
+                        str(output_path.parent / output_path.stem / split_name)
+                    )
+                except Exception as e:
+                    handler.error(e)
+            if analysis.results is None:
+                handler.error(
+                    "ASAP delimitation failed for unknown reasons.", abort=True
+                )
+                sys.exit(1)
+            uid_to_otu_mapping = {
+                # Cut out the split name so it's just the original UID
+                # Have to strip because whitespace is left in on read
+                name.replace(
+                    f"{split_name}_" if split_name != "nosplit" else "", ""
+                ).strip(): f"{split_name}_{otu.strip()}"
+                for name, otu in dict[str, str](
+                    read_data(
+                        Path(f"{analysis.results}/{path.stem}.Partition_1.csv"),
+                        handler,
+                        has_header=False,
+                    )
+                    .collect(engine="streaming")
+                    .iter_rows()
+                ).items()
+            }
+            with lock:
+                data_held[0] = data_held[0].with_columns(
+                    pl.col("UID" if first_run[0] else "delim_OTU")
+                    .replace(
+                        list(uid_to_otu_mapping.keys()),
+                        list(uid_to_otu_mapping.values()),
+                    )
+                    .alias("delim_OTU")
+                )
+                first_run[0] = False
+                total_samples[0] = total_samples[0] + len(uid_to_otu_mapping)
+                total_otus[0] = total_otus[0] + len(set(uid_to_otu_mapping.values()))
+                progress.advance(task)
+
+        pool = DynamicPool(pool_type="thread")
+
+        # assume processing takes 5x space to delimit
+        tasks: list[
+            tuple[Callable[[str, Path], None], int, tuple[str, Path], dict[str, Any]]
+        ] = [
+            (
+                delim_task,
+                math.ceil(path.stat().st_size / 1e6) * 5,
+                (split_name, path),
+                {},
             )
-            return
-        split_name = match[0]
-        with NamedTemporaryFile(suffix=f"{split_name}_newick", delete=False) as file:
-            file.write(newick.encode("utf8"))
-            newick_file = Path(file.name).resolve()
-        with TemporaryDirectory() as tempdir:
-            run_bptp(newick_file, (Path(tempdir) / "bptp_out"))
-            print(tempdir)
-            while True:
-                pass
-        os.unlink(newick_file)
-        # Then grab the desired file from the tempdir and read to tsv output
+            for split_name, path in split_paths.items()
+        ]
 
-    # Step 1: split the existing fasta into multiple fasta files
+        pool.map(tasks)
 
-    # TODO: implement bPTP delimitation
-    # make a distance matrix, then UPGMA tree, from fasta
-    # run bPTP
+    with handler.spin() as status:
+        task = status.add_task("Writing finished file...", total=1)
+        data_held[0].sink_csv(output_path, separator="\t")
+        status.update(task, completed=1, description="Writing finished file...done.")
+    message = f"Delimited {total_samples[0]} samples into {total_otus[0]} OTUs"
+    if len(split_paths) > 1:
+        message += f" across {len(split_paths)} splits" if len(split_paths) > 1 else ""
+    message += "."
+    handler.log(message)
