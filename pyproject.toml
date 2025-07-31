@@ -29,6 +29,7 @@ dependencies = [
     "polars~=1.31",
     "inquirerpy>=0.3.4",
     "asapy",
+    "itaxotools-common",
 ]
 
 [project.urls]
@@ -56,6 +57,7 @@ config-settings = { editable_mode = "compat" }
 
 [tool.uv.sources]
 asapy = { git = "https://github.com/iTaxoTools/ASAPy.git", tag = "v0.1.2" }
+itaxotools-common = { git = "https://github.com/iTaxoTools/itt-common.git", tag = "v0.2.4" }
 
 [tool.taskipy.tasks]
 lint = 'ruff check src/niclassify'
