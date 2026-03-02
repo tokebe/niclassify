@@ -1,5 +1,3 @@
-import atexit
-import re
 import traceback
 from contextlib import contextmanager
 from pathlib import Path
@@ -20,7 +18,7 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
-from niclassify.cli.columnize import columnize
+from niclassify.core.utils.rich import strip_markup
 
 # TODO: automatically handle syntaxwarnings, put them in debug logs
 
@@ -124,17 +122,24 @@ class Handler:
                     ]
                 )
                 if self.crashlog is None:
-                    atexit.register(lambda: print(message))
+                    print()
+                    print(message)
                 self.crashlog = logdump.name
                 # filter out the 'end log' to ensure it only appears at the end
                 self.logbuffer = [log for log in self.logbuffer if log != message]
                 self.logbuffer.append(message)
                 for log in self.logbuffer:
                     # strip rich markup
-                    logdump.write(re.sub(r"(?<!\\)\[[^\]]+\]", "", log))
+                    logdump.write(strip_markup(log))
                     logdump.write("\n")
                 logdump.close()
-                raise typer.Exit(code=1 if not isinstance(abort, int) else abort)
+
+                if self.confirm("Copy crashlog to custom file?"):
+                    out_path = self.file_path()
+                    out_path.write_bytes(Path(logdump.name).read_bytes())
+                    print(f"Crashlog copied to {out_path}")
+
+                raise typer.Exit(code=1 if isinstance(abort, bool) else abort)
 
     def confirm(self, *message: str, abort=False, allow_pre_confirm=True):
         """Get a simply yes/no response from the user."""
@@ -209,6 +214,14 @@ class Handler:
         for file in files:
             file.parent.mkdir(exist_ok=True, parents=True)
         return True
+
+    def file_path(self) -> Path:
+        """Get a file path to write to."""
+        return Path(
+            inquirer.filepath(
+                message="Enter a path to save to:", only_directories=True
+            ).execute()
+        )
 
     @contextmanager
     def spin(self, transient=False):
