@@ -24,7 +24,7 @@ def identify(
     if "UID" not in columns:
         handler.error(handler.prefab.ERR_MISSING_UID, abort=True)
 
-    if "nucleotides" not in columns:
+    if "nuc" not in columns:
         handler.error(handler.prefab.ERR_MISSING_NUCLEOTIDES_COLUMN, abort=True)
         return
 
@@ -32,9 +32,9 @@ def identify(
         "Attempting to identify sequences of unknown species (this will take some time)..."
     )
 
-    if "order_name" in columns:
+    if "order" in columns:
         orders = set[str](
-            data.select(pl.col.order_name)
+            data.select(pl.col.order)
             .unique()
             .collect(engine="streaming")
             .to_series()
@@ -44,8 +44,8 @@ def identify(
         orders = set[str]()
 
     unknown_species: int = (
-        (data.select(pl.col.species_name.null_count()).collect(engine="streaming").item())
-        if "species_name" in columns
+        (data.select(pl.col.species.null_count()).collect(engine="streaming").item())
+        if "species" in columns
         else data.select(pl.len()).collect(engine="streaming").item()
     )
 
@@ -58,18 +58,18 @@ def identify(
         def count_assign(
             row: dict[str, Any], identified_count: list[int], lock: Lock
         ) -> dict[str, str | None]:
-            if row["species_name"] is not None:
+            if row["species"] is not None:
                 return {name: row.get(name) for name in CONFIG.apis.bold.taxon_levels}
             identification = query_bold(
                 row["UID"],
-                row["nucleotides"],
+                row["nuc"],
                 min_similarity,
                 min_agreement,
                 orders,
                 handler,
             )
             with lock:
-                if identification["species_name"] is not None:
+                if identification["species"] is not None:
                     # Using mutable to keep info because there isn't
                     # a more convenient alternative
                     identified_count[0] = identified_count[0] + 1
@@ -86,7 +86,7 @@ def identify(
                 for name in CONFIG.apis.bold.taxon_levels
             }
         ).with_columns(
-            pl.struct("UID", "nucleotides", *CONFIG.apis.bold.taxon_levels)
+            pl.struct("UID", "nuc", *CONFIG.apis.bold.taxon_levels)
             .map_elements(
                 lambda row: count_assign(row, identified_count, lock),
                 skip_nulls=False,

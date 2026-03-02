@@ -10,6 +10,7 @@ from ratelimit import RateLimitException, limits
 from niclassify.config.general import CONFIG
 from niclassify.core.interfaces.handler import Handler
 
+# TODO: update to BOLDv5
 # TODO get order, family, subfamily, genus from top match if identify success
 # TODO state warnings if identify gives
 
@@ -106,11 +107,11 @@ def query_bold(  # noqa: PLR0913
 
     handler.debug(f"  {uid}: Successfully identified: {species}")
     if (
-        normalized_info.get("order_name") is not None
-        and normalized_info["order_name"] not in orders
+        normalized_info.get("order") is not None
+        and normalized_info["order"] not in orders
         and len(orders) > 0
     ):
         handler.warning(
-            f"  {uid}: Identified species {species} is of order {normalized_info['order_name']}, which is not present in original data. Please check output for potential misidentification."
+            f"  {uid}: Identified species {species} is of order {normalized_info['order']}, which is not present in original data. Please check output for potential misidentification."
         )
     return normalized_info

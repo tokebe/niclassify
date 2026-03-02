@@ -50,7 +50,7 @@ def format_data(input_file: Path, output: Path, handler: Handler) -> None:
         )
 
     column_mapping = {
-        nucleotides_column: "nucleotides",
+        nucleotides_column: "nuc",
         **taxon_columns,
     }
     if marker_codes:

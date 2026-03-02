@@ -13,6 +13,7 @@ client = httpx.Client(
     transport=httpx.HTTPTransport(retries=3), timeout=60, follow_redirects=True
 )
 
+# TODO: handle `cosmopolitan`
 
 @on_exception(expo, RateLimitException)
 @limits(calls=CONFIG.apis.itis.rate_limit, period=60)

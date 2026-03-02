@@ -7,18 +7,18 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class BOLDAPISettings(BaseModel):
     """Settings concerning interface with the BOLD API."""
 
-    host: str = "https://v4.boldsystems.org/index.php"
+    host: str = "https://portal.boldsystems.org/api"
     taxon_levels: list[str] = [
-        "subspecies_name",
-        "species_name",
-        "subgenus_name",
-        "genus_name",
-        "tribe_name",
-        "subfamily_name",
-        "family_name",
-        "order_name",
-        "class_name",
-        "phylum_name",
+        "subspecies",
+        "species",
+        "subgenus",
+        "genus",
+        "tribe",
+        "subfamily",
+        "family",
+        "order",
+        "class",
+        "phylum",
     ]
     rate_limit: int = 500
 

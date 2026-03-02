@@ -23,7 +23,7 @@ def align(
 
     columns = data.collect_schema().names()
 
-    if "nucleotides" not in columns:
+    if "nuc" not in columns:
         handler.error(
             handler.prefab.ERR_MISSING_NUCLEOTIDES_COLUMN,
             abort=True,
@@ -104,7 +104,7 @@ def align(
 
     written_files = write(
         data,
-        cast(set[str], splits),
+        cast(set[str] | None, splits),
         output_file,
         split_level,
         handler,

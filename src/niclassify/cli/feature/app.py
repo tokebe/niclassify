@@ -10,5 +10,5 @@ feature_command = typer.Typer(
     no_args_is_help=True,
     help="Generate and select features for the classifier.",
 )
-featgen = feature_command.command(name="featgen")(cli_featgen)
+featgen = feature_command.command(name="generate")(cli_featgen)
 column_select = feature_command.command(name="select")(cli_column_select)

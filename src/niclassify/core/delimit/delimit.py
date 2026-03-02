@@ -31,7 +31,7 @@ def delimit(  # noqa:PLR0913
     data = read_data(input_path)
     columns = data.collect_schema().names()
 
-    if "nucleotides" not in columns:
+    if "nuc" not in columns:
         handler.error(handler.prefab.MISSING_NUCLEOTIDES_COLUMN, abort=True)
         return
 
@@ -70,7 +70,7 @@ def delimit(  # noqa:PLR0913
                     handler.error(e)
             if analysis.results is None:
                 handler.error(
-                    "ASAP delimitation failed for unknown reasons.", abort=True
+                    "ASAP delimitation failed for unknown reason.", abort=True
                 )
                 sys.exit(1)
             uid_to_otu_mapping = {

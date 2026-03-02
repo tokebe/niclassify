@@ -1,7 +1,7 @@
 ---
 apis:
   bold:
-    host: https://v4.boldsystems.org/index.php
+    host: https://portal.boldsystems.org/api
     taxon_levels:
       - subspecies_name
       - species_name

@@ -24,7 +24,7 @@ def filter_samples(
 
     columns = data.collect_schema().names()
 
-    if "nucleotides" not in columns:
+    if "nuc" not in columns:
         handler.error(handler.prefab.ERR_MISSING_NUCLEOTIDES_COLUMN, abort=True)
         return
 
@@ -42,8 +42,8 @@ def filter_samples(
 
         # Remove rows with fewer than base_pairs count
         data = data.with_columns(
-            pl.col.nucleotides.cast(pl.String, strict=False)
-        ).filter(pl.col.nucleotides.str.len_chars() >= base_pairs)
+            pl.col.nuc.cast(pl.String, strict=False)
+        ).filter(pl.col.nuc.str.len_chars() >= base_pairs)
 
         after_rows = cast(int, data.select(pl.len()).collect(engine="streaming").item())
 

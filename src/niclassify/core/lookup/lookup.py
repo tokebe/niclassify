@@ -1,4 +1,3 @@
-from itertools import repeat
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from threading import Lock
@@ -8,7 +7,6 @@ import polars as pl
 from niclassify.core.interfaces.handler import Handler
 from niclassify.core.lookup.get_status import get_status
 from niclassify.core.utils.read_data import read_data
-
 
 RESERVED_COLUMNS = {"gbif_status", "itis_status", "final_status"}
 
@@ -23,7 +21,7 @@ def lookup(
     data = read_data(input_file)
     columns = data.collect_schema().names()
 
-    if "species_name" not in columns:
+    if "species" not in columns:
         handler.error(handler.prefab.ERR_NO_SPECIES_NAME, abort=True)
 
     if not RESERVED_COLUMNS.isdisjoint(set(columns)) and not handler.confirm(
@@ -37,7 +35,7 @@ def lookup(
 
     # get all species statuses, avoiding duplicates
     species_names = set(
-        data.select(pl.col.species_name.drop_nulls().unique())
+        data.select(pl.col.species.drop_nulls().unique())
         .collect(engine="streaming")
         .to_series()
         .to_list()
@@ -74,15 +72,15 @@ def lookup(
     ]
 
     data = data.with_columns(
-        pl.col.species_name.replace(
+        pl.col.species.replace(
             list(found_statuses.keys()),
             [status_gbif for status_gbif, _, _ in found_statuses.values()],
         ).alias("gbif_status"),
-        pl.col.species_name.replace(
+        pl.col.species.replace(
             list(found_statuses.keys()),
             [status_itis for _, status_itis, _ in found_statuses.values()],
         ).alias("itis_status"),
-        pl.col.species_name.replace(
+        pl.col.species.replace(
             list(found_statuses.keys()),
             [status for _, _, status in found_statuses.values()],
         ).alias("final_status"),

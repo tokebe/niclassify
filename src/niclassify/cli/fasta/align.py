@@ -30,7 +30,7 @@ def cli_align(  # noqa:PLR0913
             rich_help_panel="Requirements",
         ),
     ],
-    output: Annotated[
+    output_file: Annotated[
         Path,
         typer.Option(
             "--output",
@@ -82,13 +82,13 @@ def cli_align(  # noqa:PLR0913
 ) -> None:
     """Generate an aligned FASTA file using MUSCLE.
 
-    The specified [italic]split_level[/] must be present in the data (for example, default order requires [bold]order_name[/]). If the appropriate column is not provided, you will be asked whether to continue or not.
+    The specified [italic]split_level[/] must be present in the data (for example, default order requires [bold]order[/]). If the appropriate column is not provided, you will be asked whether to continue or not.
 
     If splitting occurs, the output file will be a single combined FASTA file, where each group is labeled by the split level, with each group being aligned, but with no guarantee groups are aligned to one another. This file will be useable by the other steps without modification.
 
     Options in the 'Requirements' section will be prompted for if not provided.
     """
     handler = Handler(pre_confirm=pre_confirm, debug=debug)
-    handler.confirm_overwrite(output, abort=True)
+    handler.confirm_overwrite(output_file, abort=True)
 
-    align(input_file, output, split_level, handler, output_all)
+    align(input_file, output_file, split_level, handler, output_all)

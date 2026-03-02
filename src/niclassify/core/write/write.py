@@ -77,7 +77,7 @@ def write(  # noqa:PLR0913
                 return df
 
             data.select(
-                pl.col.UID, pl.col.nucleotides, pl.col(f"{split_level.value}_name")
+                pl.col.UID, pl.col.nuc, pl.col(f"{split_level.value}_name")
             ).map_batches(compute_part).collect(engine="streaming")
 
     finally:

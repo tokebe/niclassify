@@ -83,9 +83,9 @@ def cli_identify( # noqa: PLR0913
 ) -> None:
     """Identify species by looking up sequences on the Barcode of Life Data System (WARNING: SLOW).
 
-    Requires [bold]nucleotides[/] column with sequences.
-    If [bold]species_name[/] column is provided, pre-identified species will be skipped.
-    If [bold]order_name[/] column is provided, any mismatching orders will produce warnings.
+    Requires [bold]nuc[/] column with sequences.
+    If [bold]species[/] column is provided, pre-identified species will be skipped.
+    If [bold]order[/] column is provided, any mismatching orders will produce warnings.
 
     Options in the 'Requirements' section will be prompted for if not provided.
     """

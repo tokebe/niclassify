@@ -24,7 +24,7 @@ def cli_lookup(
         typer.Option(
             "--input",
             "-i",
-            help="Input data containing known species names. Must have column named [bold]species_name[/].",
+            help="Input data containing known species names. Must have column named [bold]species[/].",
             prompt=True,
             show_default=False,
             exists=True,
@@ -94,7 +94,7 @@ def cli_lookup(
 ) -> None:
     """Establish any known species statuses as native or introduced using Global Biodiversity Information Facility and Integrated Taxonomic Information System.
 
-    Requires [bold]species_name[/] column.
+    Requires [bold]species[/] column.
 
     Options in the 'Requirements' section will be prompted for if not provided.
     """
